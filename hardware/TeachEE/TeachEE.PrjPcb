@@ -258,8 +258,10 @@ UniqueID=08B58CF3-FBB0-46D4-8007-7926F95F1861
 Description=BUILD
 AllowFabrication=0
 ParameterCount=0
-VariationCount=1
+VariationCount=3
 Variation1=Designator=R?|UniqueId=\LBNGFHLP\AGIOTTSO|Kind=1|AlternatePart= 
+Variation2=Designator=R?|UniqueId=\VODZXJGN\FFQARDJX|Kind=1|AlternatePart= 
+Variation3=Designator=R?|UniqueId=\XTKLOLQJ\IPTIUUNG|Kind=1|AlternatePart= 
 ParamVariationCount=0
 
 [Configuration1]
