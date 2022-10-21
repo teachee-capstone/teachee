@@ -43,6 +43,7 @@ CrossRefPorts=3
 CrossRefCrossSheets=1
 CrossRefSheetEntries=0
 CrossRefFollowFromMainSettings=1
+CurrentVariant=BUILD
 
 [Preferences]
 PrefsVaultGUID=
@@ -185,23 +186,6 @@ GenerateClassCluster=0
 DocumentUniqueId=
 
 [Document9]
-DocumentPath=AFE.SchDoc
-AnnotationEnabled=1
-AnnotateStartValue=1
-AnnotationIndexControlEnabled=0
-AnnotateSuffix=
-AnnotateScope=All
-AnnotateOrder=6
-DoLibraryUpdate=1
-DoDatabaseUpdate=1
-ClassGenCCAutoEnabled=1
-ClassGenCCAutoRoomEnabled=1
-ClassGenNCAutoScope=None
-DItemRevisionGUID=
-GenerateClassCluster=0
-DocumentUniqueId=LIXCCRRV
-
-[Document10]
 DocumentPath=FPGA_MODULE.Harness
 AnnotationEnabled=1
 AnnotateStartValue=1
@@ -218,7 +202,7 @@ DItemRevisionGUID=
 GenerateClassCluster=0
 DocumentUniqueId=
 
-[Document11]
+[Document10]
 DocumentPath=CURRENT_MONITOR.SchDoc
 AnnotationEnabled=1
 AnnotateStartValue=1
@@ -235,7 +219,7 @@ DItemRevisionGUID=
 GenerateClassCluster=0
 DocumentUniqueId=FYYQPPYS
 
-[Document12]
+[Document11]
 DocumentPath=TeachEE.OutJob
 AnnotationEnabled=1
 AnnotateStartValue=1
@@ -252,7 +236,7 @@ DItemRevisionGUID=
 GenerateClassCluster=0
 DocumentUniqueId=
 
-[Document13]
+[Document12]
 DocumentPath=ADC.SchDoc
 AnnotationEnabled=1
 AnnotateStartValue=1
@@ -269,17 +253,40 @@ DItemRevisionGUID=
 GenerateClassCluster=0
 DocumentUniqueId=TRNAGGET
 
+[Document13]
+DocumentPath=AFE_DIFF.SchDoc
+AnnotationEnabled=1
+AnnotateStartValue=1
+AnnotationIndexControlEnabled=0
+AnnotateSuffix=
+AnnotateScope=All
+AnnotateOrder=9
+DoLibraryUpdate=1
+DoDatabaseUpdate=1
+ClassGenCCAutoEnabled=1
+ClassGenCCAutoRoomEnabled=1
+ClassGenNCAutoScope=None
+DItemRevisionGUID=
+GenerateClassCluster=0
+DocumentUniqueId=LMDUWSMY
+
 [ProjectVariant1]
 UniqueID=08B58CF3-FBB0-46D4-8007-7926F95F1861
 Description=BUILD
 AllowFabrication=0
 ParameterCount=0
-VariationCount=5
+VariationCount=11
 Variation1=Designator=R?|UniqueId=\LBNGFHLP\AGIOTTSO|Kind=1|AlternatePart= 
 Variation2=Designator=R?|UniqueId=\VODZXJGN\FFQARDJX|Kind=1|AlternatePart= 
 Variation3=Designator=R?|UniqueId=\XTKLOLQJ\IPTIUUNG|Kind=1|AlternatePart= 
 Variation4=Designator=P5|UniqueId=\OYFGXCBK|Kind=1|AlternatePart= 
 Variation5=Designator=P?|UniqueId=\WQNNZLYN|Kind=1|AlternatePart= 
+Variation6=Designator=R?_AFE_CHANNEL_A|UniqueId=\XTKLOLQJ\HGIPUFXO|Kind=1|AlternatePart= 
+Variation7=Designator=R?_AFE_CHANNEL_A|UniqueId=\XTKLOLQJ\SVYEMEFU|Kind=1|AlternatePart= 
+Variation8=Designator=R?_AFE_CHANNEL_B|UniqueId=\NRKJCZNO\SVYEMEFU|Kind=1|AlternatePart= 
+Variation9=Designator=R?_AFE_CHANNEL_B|UniqueId=\NRKJCZNO\HGIPUFXO|Kind=1|AlternatePart= 
+Variation10=Designator=R30|UniqueId=\OWEEZVDB\FSKDXFUU|Kind=1|AlternatePart= 
+Variation11=Designator=R31|UniqueId=\OWEEZVDB\GURVCMRO|Kind=1|AlternatePart= 
 ParamVariationCount=0
 
 [Configuration1]
