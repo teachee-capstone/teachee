@@ -1,0 +1,83 @@
+\documentclass[letterpaper,12pt]{article}
+\usepackage{amsmath}
+\usepackage{float}
+\usepackage[margin=1in]{geometry}
+\usepackage{graphicx}
+\usepackage{placeins}
+\usepackage{siunitx}
+\usepackage[title]{appendix}
+\usepackage{pdflscape}
+\usepackage{tabularx}
+\usepackage{times}
+\usepackage{url}
+\usepackage{setspace}
+
+
+\begin{document}
+
+\begin{titlepage}
+    \begin{center}
+        \vspace*{1cm}
+
+        \Large
+        \textbf{ELEC 490/498 Project Blueprint Document}
+
+        \vspace{0.5cm}
+        Group 18\\
+        TeachEE\\
+        \vspace{0.5cm}
+        \normalsize
+        \textbf{John Giorshev (20103586, john.giorshev@queensu.ca) \\ Eric Yang (20120750, e.yang@queensu.ca) \\ Ethan Peterson (20105011, 17emp5@queensu.ca) \\ Timothy Morland (20096286, 17tm22@queensu.ca)}\\
+        \vspace{0.5cm}
+        Submitted November 15, 2022\\
+
+        \vfill
+            
+        \textbf{To:}\\
+        Instructor and Supervisor Dr. Sean Whitehall (sw109@queensu.ca) \\
+        Supervisor Dr. Thomas Dean (tom.dean@queensu.ca) \\
+            
+        \vspace{1.8cm}
+
+    \end{center}
+\end{titlepage}
+\section*{Executive Summary}
+% pop a one pager in here. Ideally less
+
+\newpage
+
+\tableofcontents
+\listoffigures
+\listoftables
+\newpage
+\setstretch{1.5}
+% REPORT BODY (20 Page Max)
+\section{Introduction} \label{sec:intro} % John
+% half a page ish
+Welcome to this 1.5 spaced introduction. it should be 1.5 spaced. See the setstretch command shown above in the tex file.
+
+\section{Work Breakdown Structure} % Eric
+% A bit of preamble followed by WBS diagram figure
+
+\section{Progress to Date} % Ethan / Tim for HW/SW respectively
+\subsection{Hardware Design}
+\subsection{Software Design}
+
+\section{Budget} % Ethan
+% include some preamble wrt board quantities and BOM table
+% consider ActiveBOM from Altium for this.
+
+\section{Potential Technical Problems and Mitigation Strategies}
+% Ethan / John HW/SW
+\section{Strategies to address the wider impact of the project}
+% John / Ethan
+\section{Conclusion}
+
+\newpage
+\bibliographystyle{IEEEtran}
+\bibliography{./report}
+\newpage
+
+\section{Appendix}
+% NOTE: might be a cleaner way to do this w latex features
+\end{document}
