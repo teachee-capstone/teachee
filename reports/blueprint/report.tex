@@ -45,7 +45,7 @@
 \end{titlepage}
 \section*{Executive Summary}
 % pop a one pager in here. Ideally less
-
+% Timothy
 \newpage
 
 \tableofcontents
@@ -125,6 +125,7 @@ respectively.
         \textbf{2} & \textbf{Interface Requirements} \\
         \hline
         2.1 & Something about driver interface to GUI Idk (write in the formal format I showed above plz) \\
+        2.1 & Also try to write some stuff about how FTDI driver interfaces with backend which in turn interfaces with frontend. What are the interface signatures and tools used? \\
         \hline
         \textbf{3} & \textbf{Performance Requirements} \\
         \hline
@@ -144,11 +145,23 @@ respectively.
 \subsection{Validation}
 
 \section{Progress to Date} % Ethan / Tim for HW/SW respectively
-
-
+Since TeachEE is a project originally proposed in ELEC390, there is progress in
+the development of hardware and software.
 % Explain that there has been a completed hardware design.
 % include schematics, layout and BOM in Appendices
+
 \subsection{Hardware Design}
+As of this blueprint submission, the initial printed circuit board schematic and
+layout are complete. The PCB system block diagram is shown in the figure below.
+Full schematic and layout prints are supplied in Appendix
+\ref{appendix:schematic} and \ref{appendix:layout} respectively.
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=16cm]{../../misc/TeachEE-System-Diagram.drawio.png}
+    \caption{TeachEE PCB System Block Diagram}
+    \label{fig:pcb-block-diagram}
+\end{figure}
+
 \subsection{Software Design}
 \subsection{Milestones and Division of Labour}
 % Table of major and intermediate milestones (ERIC)
@@ -164,8 +177,8 @@ respectively.
 \section{Potential Problems and Mitigation Strategies}
 % Ethan (Make a single table)
 \section{Strategies to address the wider impact of the project}
-% John
-% 0.5 pages max
+% John 0.5 pages max also just some BS (maybe how it can change labs for the
+% better as a business proposition)
 \section{Conclusion}
 % Tim (0.5 pages of BS is an order)
 \newpage
@@ -176,9 +189,10 @@ respectively.
 
 \begin{appendices}
     \section{Schematics}
+    \label{appendix:schematic}
     \section{PCB Layout}
+    \label{appendix:layout}
     \section{Full Bill of Materials}
+    \label{appendix:bom}
 \end{appendices}
-% NOTE: might be a cleaner way to do this w latex features
-% TODO
 \end{document}
