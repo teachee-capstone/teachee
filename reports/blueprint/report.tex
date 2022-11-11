@@ -147,7 +147,7 @@ respectively.
         \hline
         3.1 & The software shall be able to render waveforms at a rate of \SI{30}{\hertz} on screen.
     \end{tabularx} 
-\label{hw:specs-table}
+\label{sw:specs-table}
 \end{table}
 
 
@@ -163,6 +163,7 @@ respectively.
 \section{Progress to Date} % Ethan / Tim for HW/SW respectively
 Since TeachEE is a project originally proposed in ELEC390, there is progress in
 the development of hardware and software.
+
 % Explain that there has been a completed hardware design.
 % include schematics, layout and BOM in Appendices
 
@@ -171,17 +172,28 @@ As of this blueprint submission, the initial printed circuit board schematic and
 layout are complete. The PCB system block diagram is shown in the figure below.
 Full schematic and layout prints are supplied in Appendix
 \ref{appendix:schematic} and \ref{appendix:layout} respectively.
-\begin{figure}[h!]
+\begin{figure}[H]
     \centering
     \includegraphics[width=16cm]{../../misc/TeachEE-System-Diagram.drawio.png}
     \caption{TeachEE PCB System Block Diagram}
     \label{fig:pcb-block-diagram}
 \end{figure}
-% Add note that you can find the full Bill of materials below.
-% discuss the speed the FIFO will be capable of.
-% Discuss the max sample rate of the ADC
-% Discuss sampling theorem and LPFs / analog front end stuff.
-% maybe also add references to datasheets of major components
+
+\noindent
+The block diagram above is a simplified version of the schematic and thus does
+not enumerate each part on the PCB. A full bill of materials for the PCB can be
+found in \ref{appendix:bom}. The two critical blocks of the diagram are the USB
+FIFO and ADC. Data rate and sample rate can be found in Table
+\ref{hw:specs-table} containing the hardware specifications. Voltage samples are
+fed into TeachEE via the BNC connectors on the PCB. Two additional voltage
+channels are added for redundancy purposes, but the minimum requirement is one
+channel. By adding additional functionality to the hardware, the team has room
+to make extensions to its software in the future. The ADC input going directly
+to the FPGA is filtered by a Low Pass Filter (LPF) to prevent aliasing in the
+frequency domain. The discrete ADC also has an LPF in addition to a dedicated
+driver for the differential inputs on the chip. The driver amplifier protects
+the ADC against out of bounds voltages.
+
 \subsection{Software Design}
 \subsection{Milestones and Division of Labour}
 % Table of major and intermediate milestones (ERIC)
@@ -212,7 +224,7 @@ Full schematic and layout prints are supplied in Appendix
     \label{appendix:schematic}
     \section{PCB Layout}
     \label{appendix:layout}
-    \section{Full Bill of Materials}
+    \section{PCB Bill of Materials}
     \label{appendix:bom}
 \end{appendices}
 \end{document}
