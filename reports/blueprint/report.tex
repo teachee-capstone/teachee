@@ -64,13 +64,19 @@ budget, and strategies to mitigate issues. Appendices are
 included for relevant technical information that does not fit in the main body
 of the document.
 
+% NOTE: what I had before: (came after remote delivered eng labs)
+% At a design level, the device will require
+% both a custom Printed Circuit Board, device driver, and graphical user interface
+% to function correctly. There are two key technical challenges in this project;
+% the Printed Circuit Board (PCB) and device driver software.
 \subsection{Design Problem}
 TeachEE is a device that acts as a general purpose electronics measurement
 instrument for remotely delivered engineering labs. The device acts as both a
-USB oscilloscope and current monitor. At a design level, the device will require
-both a custom Printed Circuit Board, device driver, and graphical user interface
-to function correctly. There are two key technical challenges in this project;
-the Printed Circuit Board (PCB) and device driver software.
+USB oscilloscope and current monitor. Currently, there are few instrumentation
+options for students completing their labs remotely. The TeachEE bundles
+together the functionality most commonly required for electrical engineering
+labs and packages it with portable software that can run on lower end computers
+with any operating system.
 \\~\\
 The PCB is a large technical undertaking as the PCB must be able to capture both
 voltage and current samples at a rate that is useful to undergraduate student.
