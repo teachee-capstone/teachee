@@ -53,10 +53,16 @@
 \listoftables
 \newpage
 \setstretch{1.5}
-\section{Introduction} \label{sec:intro} % John
-% As short as possible. Total BS LMAO
-Welcome to this 1.5 spaced introduction. it should be 1.5 spaced. See the
-setstretch command shown above in the tex file.
+\section{Introduction} \label{sec:intro} % Ethan
+This blueprint outlines Group 18's capstone project TeachEE, which was
+originally proposed in ELEC390. This report is intended the ELEC 498 instructors
+and Group 18's supervisors. The report provides the baseline requirements for
+TeachEE. These requirements should be treated as the minimum performance
+required for the showcase of the project in March. This blueprint consists of a
+work breakdown structure, progress up to the time of writing this document,
+budget, and strategies to mitigate issues. Appendices are
+included for relevant technical information that does not fit in the main body
+of the document.
 
 \subsection{Design Problem}
 TeachEE is a device that acts as a general purpose electronics measurement
@@ -110,7 +116,9 @@ respectively.
         9 &Voltage Sample Rate& \SI{1}{\mega\samplepersec} & \SI{0}{\mega\samplepersec}\\
         10 &Current Sample Rate& \SI{1}{\mega\samplepersec} & \SI{0}{\mega\samplepersec} \\
         11 &PCB Thickness& \SI{1.6}{\milli\metre} & $\pm \SI{0.1}{\milli\metre}$ \\
-        12 &PCB Dimensions& \SI{0.04}{\meter\squared} & $\pm \SI{400}{\milli\metre\squared}$
+        12 &PCB Dimensions& \SI{0.04}{\meter\squared} & $\pm \SI{400}{\milli\metre\squared}$ \\
+        13 &Voltage Sample Error against commercial scope & N/A & $\pm \SI{10}{\percent}$ \\
+        14 &Current Sample Error against commercial meter& N/A & $\pm \SI{10}{\percent}$
     \end{tabularx} 
 \label{hw:specs-table}
 \end{table}
