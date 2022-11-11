@@ -153,37 +153,34 @@ a Rust binary as a backend and JavaScript, HTML, and CSS as the frontend.
 
 \subsection{Design Tools, Hardware, Instrumentation}
 Tauri was chosen as the application framework because of its high performance
-and low binary size when compared to other Rust frameworks. As TeachEE is
-intended for remote use, being lightweight is important for quick deployment
-and operation. Tauri also compiles to all Windows, macOS, and Linux platforms,
-which allows use of the product no matter what machine a user may have.
-https://tauri.app/v1/references/benchmarks/
+and low binary size when compared to other Rust frameworks 
+\cite{tauri_benchmarks}. As TeachEE is intended for remote use, being
+lightweight is important for quick deployment and operation. Tauri also compiles
+to all Windows, macOS, and Linux platforms, which allows use of the product no
+matter what machine a user may have.
 \\~\\
 The Rust programming language will be used to address the high throughput and
-data processing requirements due to its speed. Furthermore, Rust provides
-support for concurrent programming by preventing race conditions at compile
-time. Concurrency may be necessary to speed up data stream processing (e.g.
-Fast Fourier Transform).
-https://kornel.ski/rust-c-speed
+data processing requirements due to its high run time speed \cite{rust_speed}.
+Furthermore, Rust provides support for concurrent programming by preventing race
+conditions at compile time. Concurrency may be necessary to speed up data stream
+processing (e.g. Fast Fourier Transform).
 \\~\\
 The frontend will be written in plain JavaScript to avoid the performance
-overhead due to abstractions in JavaScript frameworks. Although modularization
-can improve code maintainability, it is not necessary for this project because
-the user interface is intended to be simple.
+overhead due to abstractions in JavaScript frameworks \cite{javascript_speed}.
+Although modularization can improve code maintainability, it is not necessary
+for this project because the user interface is intended to be simple.
 
 \subsection{Validation}
 Tauri provides Tauri Action, which is a Github Action that builds Tauri
-applications into native binaries on Windows, macOS, and Linux. This feature
-will be used to provide continuous integration to the project and ensure
-correctness on all targeted platforms.
-https://github.com/tauri-apps/tauri-action
+applications into native binaries on Windows, macOS, and Linux
+\cite{tauri_actions}. This feature will be used to provide continuous integration
+to the project and ensure correctness on all targeted platforms.
 \\~\\
 A waveform generator can be used as a test dummy to generate a waveform that
 can be compared with the output displayed by measuring it with TeachEE.
 This output can also be compared with measurements obtained from a commercial
 oscilloscope. Test success will be indicated by voltage/current differences
 given by the target percentages in the hardware specifications.
-https://tauri.app/v1/guides/building/cross-platform/
 
 \section{Progress to Date} % Ethan / Tim for HW/SW respectively
 
