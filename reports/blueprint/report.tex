@@ -1,0 +1,328 @@
+\documentclass[letterpaper,12pt]{article}
+\usepackage{amsmath}
+\usepackage{float}
+\usepackage[margin=1in]{geometry}
+\usepackage{graphicx}
+\usepackage{placeins}
+\usepackage{siunitx}
+\usepackage[title]{appendix}
+\usepackage{pdflscape}
+\usepackage{tabularx}
+\usepackage{times}
+\usepackage{url}
+\usepackage{setspace}
+\usepackage[none]{hyphenat}
+
+\DeclareSIUnit{\samplepersec}{SPS}
+
+\begin{document}
+
+\begin{titlepage}
+    \begin{center}
+        \vspace*{1cm}
+
+        \Large
+        \textbf{ELEC 490/498 Project Blueprint Document}
+
+        \vspace{0.5cm}
+        Group 18\\
+        TeachEE\\
+        \vspace{0.5cm}
+        \normalsize
+        \textbf{John Giorshev (20103586, john.giorshev@queensu.ca) \\ Eric Yang (20120750, e.yang@queensu.ca) \\ Ethan Peterson (20105011, 17emp5@queensu.ca) \\ Timothy Morland (20096286, 17tm22@queensu.ca)}\\
+        \vspace{0.5cm}
+        Submitted November 22, 2022\\
+
+        \vfill
+            
+        \textbf{To:}\\
+        Instructor and Supervisor Dr. Sean Whitehall (sw109@queensu.ca) \\
+        Supervisor Dr. Thomas Dean (tom.dean@queensu.ca) \\
+            
+        \vspace{1.8cm}
+
+    \end{center}
+\end{titlepage}
+\section*{Executive Summary}
+% pop a one pager in here. Ideally less
+% Timothy
+\newpage
+
+\tableofcontents
+\listoffigures
+\listoftables
+\newpage
+\setstretch{1.5}
+\section{Introduction} \label{sec:intro} % Ethan
+This blueprint outlines Group 18's capstone project TeachEE, which was
+originally proposed in ELEC390 \cite{prop_390}. This report is intended for the
+ELEC 498 instructors and Group 18's supervisors. The report provides the
+baseline specifications for TeachEE. These specifications should be treated as
+the minimum performance required for the showcase of the project in March. This
+blueprint consists of the methodology of completing the project, progress up to
+the time of writing this document, budget, and strategies to mitigate issues.
+The appendices of this report include technical information that supplements the
+report body.
+
+% NOTE: what I had before: (came after remote delivered eng labs)
+% At a design level, the device will require
+% both a custom Printed Circuit Board, device driver, and graphical user interface
+% to function correctly. There are two key technical challenges in this project;
+% the Printed Circuit Board (PCB) and device driver software.
+\subsection{Design Problem}
+TeachEE is a device that acts as a general purpose electronics measurement
+instrument for remotely delivered engineering labs. The device acts as both a
+USB oscilloscope and current monitor. Currently, there are few instrumentation
+options for students completing their labs remotely. The TeachEE bundles
+together the functionality most commonly required for electrical engineering
+labs and packages it with portable software that can run on lower end computers
+with any operating system.
+\\~\\
+The PCB is a large technical undertaking as the PCB must be able to capture both
+voltage and current samples at a rate that is useful to undergraduate student.
+Moreover, the PCB must contain custom circuitry to relay the sample data over
+USB. USB is a high speed interface requiring controlled impedance transmission
+lines on the PCB. Additionally, the PCB will need multiple high speed clocks for
+the USB PHY and Analog to Digital Converter (ADC). There are also further
+technical challenges with respect to the analog signalling and sufficiently
+filtering and protecting the inputs.
+\\~\\
+The second key technical challenge in this project is the device driver for the
+oscilloscope. The USB 2.0 link between the device and laptop has a throughput as
+high as 480 Mbps. This requires performant driver software that can process the
+sample data in a timely manner and relay it to the GUI frontend. In addition to
+the requirement for low latency, the software will also require a packet framing
+technique that can efficiently separate current and voltage samples. In regard
+to changes from the ELEC390 proposal, our team has removed the voltage power
+sources and changed the microcontroller to an FPGA.
+% Ethan
+% Explain the design problem Hardware software timeline
+% 275 words max
+\subsection{System Specifications}
+Since the TeachEE has both a hardware and software component. The system
+specifications have been broken up into hardware and software tables
+respectively.
+
+% \newcolumntype{b}{X}
+% \newcolumntype{s}{>{\hsize=.2\hsize}X}
+% \newcolumntype{m}{>{\hsize=.4\hsize}X}
+\begin{table}[h!]
+    \caption{Hardware Specifications}
+    \begin{tabularx}{\textwidth}{l|l|l|l}
+          & Specification & Target Value & Tolerance \\
+        \hline
+        1 &Voltage Input Bandwidth&\SI{100}{\kilo\hertz}& $\pm \SI{1}{\kilo\hertz}$ \\
+        2 &Current Input Bandwidth&\SI{100}{\kilo\hertz}& $\pm \SI{1}{\kilo\hertz}$ \\
+        3 &Measureable Current Range&\SI{-15}{\ampere} to \SI{+15}{\ampere}& $\pm \SI{5}{\ampere}$ \\
+        4 &Measureable Voltage Range&\SI{0}{\volt} to \SI{3.3}{\volt}& $\pm \SI{200}{\milli\volt}$ \\
+        5 &Number of Current Input Channels& $1$ & $0$ \\ 
+        6 &Number of Voltage Input Channels& $1$ & $+2$ \\
+        7 &Power Input Voltage Rating& \SI{5}{\volt} & $\pm \SI{500}{\milli\volt}$ \\
+        8 &Power Current Consumption Rating& \SI{500}{\milli\ampere} & $\pm \SI{250}{\milli\ampere}$ \\
+        9 &Voltage Sample Rate& \SI{1}{\mega\samplepersec} & \SI{0}{\mega\samplepersec}\\
+        10 &Current Sample Rate& \SI{1}{\mega\samplepersec} & \SI{0}{\mega\samplepersec} \\
+        11 &PCB Thickness& \SI{1.6}{\milli\metre} & $\pm \SI{0.1}{\milli\metre}$ \\
+        12 &PCB Dimensions& \SI{0.04}{\meter\squared} & $\pm \SI{400}{\milli\metre\squared}$ \\
+        13 &Voltage Sample Error against commercial scope & N/A & $\pm \SI{10}{\percent}$ \\
+        14 &Current Sample Error against commercial meter& N/A & $\pm \SI{10}{\percent}$
+    \end{tabularx} 
+\label{hw:specs-table}
+\end{table}
+
+% Timbo / Ethan
+\begin{table}[h!]
+    \caption{Software Specifications}
+    \begin{tabularx}{\textwidth}{l|l}
+        \textbf{1} & \textbf{Functional Requirements}\\
+        \hline
+        1.1 & The software shall be able to modulate the sample rate. \\
+        1.2 & The software shall be able to modify the trigger voltage. \\
+        \hline
+        \textbf{2} & \textbf{Interface Requirements} \\
+        \hline
+        2.1 & Something about driver interface to GUI Idk (write in the formal format I showed above plz) \\
+        2.1 & Also try to write some stuff about how FTDI driver interfaces with backend which in turn interfaces with frontend. What are the interface signatures and tools used? \\
+        \hline
+        \textbf{3} & \textbf{Performance Requirements} \\
+        \hline
+        3.1 & The software shall be able to render waveforms at a rate of \SI{30}{\hertz} on screen.
+    \end{tabularx} 
+\label{sw:specs-table}
+\end{table}
+
+% 1-2 tables (maybe one for HW SW)
+% Ethan will write some hardware and software specs here in a table
+
+\section{Methodology} % ERIC
+% 1.5 pages max for everything
+
+\subsection{Approach}
+% Hardware
+
+% Software
+The software portion of the USB oscilloscope will be a desktop application
+displaying the user interface with web technologies. The issue of cost is
+addressed here as the display and processing power of the user's machine
+can be used in place of additional display and processing hardware. Exporting
+sample data to a CSV file will easily be done through a button on the user's
+screen. The application will be built using Tauri, a framework that utilizes
+a Rust binary as a backend and JavaScript, HTML, and CSS as the frontend.
+
+\subsection{Design Tools, Hardware, Instrumentation}
+Tauri was chosen as the application framework because of its high performance
+and low binary size when compared to other Rust frameworks 
+\cite{tauri_benchmarks}. As TeachEE is intended for remote use, being
+lightweight is important for quick deployment and operation. Tauri also compiles
+to all Windows, macOS, and Linux platforms, which allows use of the product no
+matter what machine a user may have.
+\\~\\
+The Rust programming language will be used to address the high throughput and
+data processing requirements due to its high run time speed \cite{rust_speed}.
+Furthermore, Rust provides support for concurrent programming by preventing race
+conditions at compile time. Concurrency may be necessary to speed up data stream
+processing (e.g. Fast Fourier Transform).
+\\~\\
+The frontend will be written in plain JavaScript to avoid the performance
+overhead due to abstractions in JavaScript frameworks \cite{javascript_speed}.
+Although modularization can improve code maintainability, it is not necessary
+for this project because the user interface is intended to be simple.
+
+\subsection{Validation}
+Tauri provides Tauri Action, which is a Github Action that builds Tauri
+applications into native binaries on Windows, macOS, and Linux
+\cite{tauri_actions}. This feature will be used to provide continuous integration
+to the project and ensure correctness on all targeted platforms.
+\\~\\
+A waveform generator can be used as a test dummy to generate a waveform that
+can be compared with the output displayed by measuring it with TeachEE.
+This output can also be compared with measurements obtained from a commercial
+oscilloscope. Test success will be indicated by voltage/current differences
+given by the target percentages in the hardware specifications.
+
+\section{Progress to Date} % Ethan / Tim for HW/SW respectively
+Since the start of the term, the team has completed a set of both hardware
+software tasks.
+% Explain that there has been a completed hardware design.
+% include schematics, layout and BOM in Appendices
+
+\subsection{Hardware Design}
+As of this blueprint submission, the initial printed circuit board schematic and
+layout are complete. The PCB system block diagram is shown in the figure below.
+Full schematic and layout prints are supplied in Appendix
+\ref{appendix:schematic} and \ref{appendix:layout} respectively.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=16cm]{../../misc/TeachEE-System-Diagram.drawio.png}
+    \caption{TeachEE PCB System Block Diagram}
+    \label{fig:pcb-block-diagram}
+\end{figure}
+
+\noindent
+The block diagram above is a simplified version of the schematic and thus does
+not enumerate each part on the PCB. A full bill of materials for the PCB can be
+found in \ref{appendix:bom}. The two critical blocks of the diagram are the USB
+FIFO and ADC. Data rate and sample rate can be found in Table
+\ref{hw:specs-table} containing the hardware specifications. Voltage samples are
+fed into TeachEE via the BNC connectors on the PCB. Two additional voltage
+channels are added for redundancy purposes, but the minimum requirement is one
+channel. By adding additional functionality to the hardware, the team has room
+to make extensions to its software in the future. The ADC input going directly
+to the FPGA is filtered by a Low Pass Filter (LPF) to prevent aliasing in the
+frequency domain. The discrete ADC also has an LPF in addition to a dedicated
+driver for the differential inputs on the chip. The driver amplifier protects
+the ADC against out of bounds voltages.
+
+\subsection{Software Design}
+\subsection{Milestones and Division of Labour}
+% Table of major and intermediate milestones (ERIC)
+% Each table cell should include due date and assigned member
+\begin{table}[h!]
+    \caption{Milestones}
+    \begin{tabularx}{\textwidth}{l|l|l|l}
+        No. & Milestone & Due date & Responsible Member(s) \\
+        \hline
+        1 & Design and order PCB & Week 4 & Ethan \\
+        2 & Create skeleton of application & Week 11 & Tim \\
+        3 & Submit blueprint report & Week 11 & All members \\
+        4 & Verify PCB is functional & Week 12 & Ethan \\
+        5 & Read values from USB driver & Week 13 & Tim and John \\
+        6 & Create basic UI and waveform display & Week 14 & Eric \\
+        7 & FPGA programming & Week 16 & Ethan \\
+        8 & Implement oscilloscope triggering & Week 16 & John \\
+        9 & Implement CSV exporting and all UI functionality & Week 17 & Eric \\
+        10 & Testing of application & Week 18 & Tim, Eric, and John \\
+        11 & Testing of PCB & Week 18 & Ethan \\
+        12 & Testing of complete system & Week 20 & All members \\
+        13 & Open House & Week 22 & \\
+        14 & Final deliverable & Week 23 & \\
+        15 & Final project report & Week 24 & All members \\
+    \end{tabularx} 
+\label{hw:specs-table}
+\end{table}
+\section{Budget} % Ethan
+The budget of 600 dollars provided by the department is sufficient for this
+project assuming only one unit of the device is manufactured. In reality three
+PCB units are on order. However, the group will only submit a reimbursement
+request for one unit allowing the team to stay within budget. The extra two
+units will be treated as a personal expense since group members will be able to
+keep the extra devices and only submit the one paid for by the ECE department.
+The following table breaks down the cost of the PCB fabrication and assembly as
+quoted by the supplier. The supplier contracted for TeachEE is Bittele (7PCB),
+they take care of both the fabrication and soldering of the PCBs. Moreover,
+Bittele takes the generated output from the EDA software and procures all the
+parts directly to their facility.
+
+\begin{table}[h!]
+    \caption{TeachEE Bill of Materials}
+    \begin{tabularx}{\textwidth}{l|l|l}
+        \textbf{Item / Part Number} & \textbf{Supplier} & \textbf{Cost (USD)} \\
+        \hline
+        PCB Fabrication & Bittele & \$104.37\\
+        PCB Total BOM Procurement & Bittele & \$126.67\\
+        PCB Assembly & Bittele & \$289.76\\
+        \hline
+        Total & & \$520.80\\
+        \hline
+        Budget Remaining & & \$79.20
+    \end{tabularx} 
+\label{tab:abbreviated-bom}
+\end{table}
+
+\noindent
+As shown above, a full unit of the PCB comes in \$80 under budget. This leaves
+the time with some additional budget to purchase any replacement components or
+cover unexpected expenses. Should the project still exceed the budget, the team
+will first contact the project supervisors to see if there is a possibility of
+additional funding. The fully expanded component BOM for the PCB is provided in
+Appendix \ref{appendix:bom}.
+
+% include some preamble wrt board quantities and BOM table
+% consider ActiveBOM from Altium for this.
+% BOM probably takes too many pages, will need to attenuate
+\subsection{Materials and Supplies}
+\subsection{Contributions From Other Sources}
+There are no outside contributions at the time of writing this report. However,
+the team will reach out should additional funding be required.
+
+\section{Potential Problems and Mitigation Strategies}
+% Ethan (Make a single table)
+\section{Strategies to address the wider impact of the project}
+% John 0.5 pages max also just some BS (maybe how it can change labs for the
+% better as a business proposition)
+\section{Conclusion}
+% Tim (0.5 pages of BS is an order)
+\newpage
+% For this references section we need to at least reference our 390 report
+\bibliographystyle{IEEEtran}
+\bibliography{report}
+\newpage
+
+\begin{appendices}
+    \section{Schematics}
+    \label{appendix:schematic}
+    \section{PCB Layout}
+    \label{appendix:layout}
+    \section{PCB Bill of Materials}
+    \label{appendix:bom}
+\end{appendices}
+\end{document}
