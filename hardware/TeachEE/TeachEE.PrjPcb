@@ -33,7 +33,7 @@ FSMCodingStyle=eFMSDropDownList_OneProcess
 FSMEncodingStyle=eFMSDropDownList_OneHot
 IsProjectConflictPreventionWarningsEnabled=0
 IsVirtualBomDocumentRemoved=0
-OutputPath=
+OutputPath=Project Outputs for TeachEE
 LogFolderPath=
 ManagedProjectGUID=
 IncludeDesignInRelease=0
@@ -270,6 +270,23 @@ DItemRevisionGUID=
 GenerateClassCluster=0
 DocumentUniqueId=LMDUWSMY
 
+[Document14]
+DocumentPath=TeachEE_ASSY_Notes.PCBDwf
+AnnotationEnabled=1
+AnnotateStartValue=1
+AnnotationIndexControlEnabled=0
+AnnotateSuffix=
+AnnotateScope=All
+AnnotateOrder=-1
+DoLibraryUpdate=1
+DoDatabaseUpdate=1
+ClassGenCCAutoEnabled=1
+ClassGenCCAutoRoomEnabled=1
+ClassGenNCAutoScope=None
+DItemRevisionGUID=
+GenerateClassCluster=0
+DocumentUniqueId=JSNYJTXJ
+
 [ProjectVariant1]
 UniqueID=08B58CF3-FBB0-46D4-8007-7926F95F1861
 Description=BUILD
@@ -297,162 +314,154 @@ Variation18=Designator=P6|UniqueId=\LBNGFHLP\OENJPEKJ|Kind=1|AlternatePart=
 ParamVariationCount=0
 
 [GeneratedDocument1]
-DocumentPath=Project Outputs for TeachEE\BOM\Bill of Materials-PCB(BUILD).xls
-DItemRevisionGUID=
-
-[GeneratedDocument2]
 DocumentPath=Project Outputs for TeachEE\BOM\Bill of Materials-PCB(BUILD).xlsx
 DItemRevisionGUID=
 
-[GeneratedDocument3]
-DocumentPath=Project Outputs for TeachEE\BOM\Bill of Materials-TeachEE(BUILD).xls
-DItemRevisionGUID=
-
-[GeneratedDocument4]
+[GeneratedDocument2]
 DocumentPath=Project Outputs for TeachEE\Design Rule Check - PCB.html
 DItemRevisionGUID=
 
-[GeneratedDocument5]
+[GeneratedDocument3]
 DocumentPath=Project Outputs for TeachEE\Board Files\Gerber Files\PCB.1
 DItemRevisionGUID=
 
-[GeneratedDocument6]
+[GeneratedDocument4]
 DocumentPath=Project Outputs for TeachEE\Board Files\Gerber Files\PCB.2
 DItemRevisionGUID=
 
-[GeneratedDocument7]
+[GeneratedDocument5]
 DocumentPath=Project Outputs for TeachEE\Board Files\Gerber Files\PCB.3
 DItemRevisionGUID=
 
-[GeneratedDocument8]
+[GeneratedDocument6]
 DocumentPath=Project Outputs for TeachEE\Board Files\NC Drill Files\PCB.DRR
 DItemRevisionGUID=
 
-[GeneratedDocument9]
+[GeneratedDocument7]
 DocumentPath=Project Outputs for TeachEE\Board Files\Gerber Files\PCB.EXTREP
 DItemRevisionGUID=
 
-[GeneratedDocument10]
+[GeneratedDocument8]
 DocumentPath=Project Outputs for TeachEE\Board Files\Gerber Files\PCB.G1
 DItemRevisionGUID=
 
-[GeneratedDocument11]
+[GeneratedDocument9]
 DocumentPath=Project Outputs for TeachEE\Board Files\Gerber Files\PCB.G2
 DItemRevisionGUID=
 
-[GeneratedDocument12]
+[GeneratedDocument10]
 DocumentPath=Project Outputs for TeachEE\Board Files\Gerber Files\PCB.GBL
 DItemRevisionGUID=
 
-[GeneratedDocument13]
+[GeneratedDocument11]
 DocumentPath=Project Outputs for TeachEE\Board Files\Gerber Files\PCB.GBO
 DItemRevisionGUID=
 
-[GeneratedDocument14]
+[GeneratedDocument12]
 DocumentPath=Project Outputs for TeachEE\Board Files\Gerber Files\PCB.GBP
 DItemRevisionGUID=
 
-[GeneratedDocument15]
+[GeneratedDocument13]
 DocumentPath=Project Outputs for TeachEE\Board Files\Gerber Files\PCB.GBS
 DItemRevisionGUID=
 
-[GeneratedDocument16]
+[GeneratedDocument14]
 DocumentPath=Project Outputs for TeachEE\Board Files\Gerber Files\PCB.GKO
 DItemRevisionGUID=
 
-[GeneratedDocument17]
+[GeneratedDocument15]
 DocumentPath=Project Outputs for TeachEE\Board Files\Gerber Files\PCB.GM1
 DItemRevisionGUID=
 
-[GeneratedDocument18]
+[GeneratedDocument16]
 DocumentPath=Project Outputs for TeachEE\Board Files\Gerber Files\PCB.GM2
 DItemRevisionGUID=
 
-[GeneratedDocument19]
+[GeneratedDocument17]
 DocumentPath=Project Outputs for TeachEE\Board Files\Gerber Files\PCB.GM3
 DItemRevisionGUID=
 
-[GeneratedDocument20]
+[GeneratedDocument18]
 DocumentPath=Project Outputs for TeachEE\Board Files\Gerber Files\PCB.GM4
 DItemRevisionGUID=
 
-[GeneratedDocument21]
+[GeneratedDocument19]
 DocumentPath=Project Outputs for TeachEE\Board Files\Gerber Files\PCB.GM5
 DItemRevisionGUID=
 
-[GeneratedDocument22]
+[GeneratedDocument20]
 DocumentPath=Project Outputs for TeachEE\Board Files\Gerber Files\PCB.GM13
 DItemRevisionGUID=
 
-[GeneratedDocument23]
+[GeneratedDocument21]
 DocumentPath=Project Outputs for TeachEE\Board Files\Gerber Files\PCB.GM15
 DItemRevisionGUID=
 
-[GeneratedDocument24]
+[GeneratedDocument22]
 DocumentPath=Project Outputs for TeachEE\Board Files\Gerber Files\PCB.GM16
 DItemRevisionGUID=
 
-[GeneratedDocument25]
+[GeneratedDocument23]
 DocumentPath=Project Outputs for TeachEE\Board Files\Gerber Files\PCB.GM20
 DItemRevisionGUID=
 
-[GeneratedDocument26]
+[GeneratedDocument24]
 DocumentPath=Project Outputs for TeachEE\Board Files\Gerber Files\PCB.GM21
 DItemRevisionGUID=
 
-[GeneratedDocument27]
+[GeneratedDocument25]
 DocumentPath=Project Outputs for TeachEE\Board Files\Gerber Files\PCB.GM23
 DItemRevisionGUID=
 
-[GeneratedDocument28]
+[GeneratedDocument26]
 DocumentPath=Project Outputs for TeachEE\Board Files\Gerber Files\PCB.GM24
 DItemRevisionGUID=
 
-[GeneratedDocument29]
+[GeneratedDocument27]
 DocumentPath=Project Outputs for TeachEE\Board Files\Gerber Files\PCB.GML
 DItemRevisionGUID=
 
-[GeneratedDocument30]
+[GeneratedDocument28]
 DocumentPath=Project Outputs for TeachEE\Board Files\Gerber Files\PCB.GPB
 DItemRevisionGUID=
 
-[GeneratedDocument31]
+[GeneratedDocument29]
 DocumentPath=Project Outputs for TeachEE\Board Files\Gerber Files\PCB.GPT
 DItemRevisionGUID=
 
-[GeneratedDocument32]
+[GeneratedDocument30]
 DocumentPath=Project Outputs for TeachEE\Board Files\Gerber Files\PCB.GTL
 DItemRevisionGUID=
 
-[GeneratedDocument33]
+[GeneratedDocument31]
 DocumentPath=Project Outputs for TeachEE\Board Files\Gerber Files\PCB.GTO
 DItemRevisionGUID=
 
-[GeneratedDocument34]
+[GeneratedDocument32]
 DocumentPath=Project Outputs for TeachEE\Board Files\Gerber Files\PCB.GTP
 DItemRevisionGUID=
 
-[GeneratedDocument35]
+[GeneratedDocument33]
 DocumentPath=Project Outputs for TeachEE\Board Files\Gerber Files\PCB.GTS
 DItemRevisionGUID=
 
-[GeneratedDocument36]
+[GeneratedDocument34]
 DocumentPath=Project Outputs for TeachEE\Board Files\NC Drill Files\PCB.LDP
 DItemRevisionGUID=
 
-[GeneratedDocument37]
+[GeneratedDocument35]
 DocumentPath=Project Outputs for TeachEE\Board Files\Gerber Files\PCB.REP
 DItemRevisionGUID=
 
-[GeneratedDocument38]
+[GeneratedDocument36]
 DocumentPath=Project Outputs for TeachEE\Board Files\Gerber Files\PCB.RUL
 DItemRevisionGUID=
 
-[GeneratedDocument39]
+[GeneratedDocument37]
 DocumentPath=Project Outputs for TeachEE\Board Files\NC Drill Files\PCB.TXT
 DItemRevisionGUID=
 
-[GeneratedDocument40]
+[GeneratedDocument38]
 DocumentPath=Project Outputs for TeachEE\Pick Place\Pick Place for PCB(BUILD).txt
 DItemRevisionGUID=
 
@@ -503,7 +512,7 @@ SCH_HasExpandLogicalToPhysicalSheets=-1
 SaveSettingsToOutJob=-1
 
 [Generic_EDE]
-OutputDir=
+OutputDir=Project Outputs for TeachEE
 
 [OutputGroup1]
 Name=Netlist Outputs
