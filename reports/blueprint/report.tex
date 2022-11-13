@@ -255,22 +255,31 @@ the ADC against out of bounds voltages.
         12 & Testing of complete system & Week 20 & All members \\
         13 & Open House & Week 22 & \\
         14 & Final deliverable & Week 23 & \\
-        15 & Final project report & Week 24 & All members \\
+        15 & Final project report & Week 24 & All members
     \end{tabularx} 
-\label{hw:specs-table}
+\label{hw:milestones-table}
 \end{table}
 \section{Budget} % Ethan
+% include some preamble wrt board quantities and BOM table
+% consider ActiveBOM from Altium for this.
+% BOM probably takes too many pages, will need to attenuate
+
 The budget of 600 dollars provided by the department is sufficient for this
 project assuming only one unit of the device is manufactured. In reality three
 PCB units are on order. However, the group will only submit a reimbursement
 request for one unit allowing the team to stay within budget. The extra two
 units will be treated as a personal expense since group members will be able to
 keep the extra devices and only submit the one paid for by the ECE department.
+Additional electrical instruments, such as oscilloscopes and signal generators
+for debugging are not included in the budget as they will be accessible via
+Walter Light Hall on campus.
+
+\subsection{Materials and Supplies}
 The following table breaks down the cost of the PCB fabrication and assembly as
-quoted by the supplier. The supplier contracted for TeachEE is Bittele (7PCB),
-they take care of both the fabrication and soldering of the PCBs. Moreover,
-Bittele takes the generated output from the EDA software and procures all the
-parts directly to their facility.
+quoted by the supplier. The supplier contracted for TeachEE is Bittele (7PCB).
+Bittele takes care of both the fabrication and soldering of the PCBs. Moreover,
+Bittele takes the generated output from the EDA software (Altium) and procures
+all the parts directly to their facility.
 
 \begin{table}[h!]
     \caption{TeachEE Bill of Materials}
@@ -296,16 +305,79 @@ will first contact the project supervisors to see if there is a possibility of
 additional funding. The fully expanded component BOM for the PCB is provided in
 Appendix \ref{appendix:bom}.
 
-% include some preamble wrt board quantities and BOM table
-% consider ActiveBOM from Altium for this.
-% BOM probably takes too many pages, will need to attenuate
-\subsection{Materials and Supplies}
 \subsection{Contributions From Other Sources}
 There are no outside contributions at the time of writing this report. However,
-the team will reach out should additional funding be required.
+the team will reach out should additional funding be required. 
 
 \section{Potential Problems and Mitigation Strategies}
 % Ethan (Make a single table)
+There are two main categories for which technical problems can arise in this
+project. Issues are likely to come in the PCB design and in the FPGA Real Time
+Logic (RTL) code. Software remains less of a concern as compile times are
+instantaneous when compared to FPGA synthesis or lead time of a new hardware
+revision. Software can still be a source of potential problems, however,
+hardware or FPGA failure are of greater severity. Given below is a table
+summarizing possible issues in the PCB and FPGA along with ways to reduce their
+possibility or recover from them.
+
+\begin{table}[h!]
+    \caption{Potential Problems and Mitigation}
+    \begin{tabularx}{\textwidth}{p{2in}|p{2in}|p{2in}}
+        \textbf{Problem Description} & \textbf{Possibility Reduction} & \textbf{Course of Recovery} \\
+        \hline
+        USB FIFO chip on the PCB does not work or the FPGA cannot successfully
+        interface with it.
+
+        & Design review from all group members and close attention to reference
+        designs. PCB layout that is suited to the high-speed control signals
+        running between the USB-FIFO, ADC and FPGA.
+
+        & The FPGA module has USB communication for debugging built in. This
+        link is USB 2.0 High Speed, which is only 12Mbps. The chip on the PCB
+        supports up to 480 Mbps. The slower speed will still allow the team to
+        reach the required sample rate of \SI{1}{\mega\samplepersec} and
+        \SI{100}{\kilo\hertz} bandwidth.\\
+        \hline
+        Discrete ADC does not work.
+
+        & Following the reference design given in the datasheet in addition to
+        installing differential ADC drivers for input protection.
+
+        & The ADC only provides two out of the three possible voltage channels
+        on TeachEE. The third channel is connected directly to a built-in ADC on
+        the FPGA module. This built-in ADC reaches our
+        \SI{1}{\mega\samplepersec} and \SI{100}{\kilo\hertz} bandwidth
+        requirements. If needed, the discrete ADC can be removed from the PCB
+        entirely. \\
+
+        \hline
+        Voltage Regulator Failure
+
+        & Choosing a well documented automotive grade linear voltage regulator
+        that provides two times more current than required.
+
+        & The PCB has headers for the \SI{3.3}{\volt} power rail, If needed an
+        external 3.3 V source can be soldered to these pins. \\
+
+        \hline
+        FPGA Failure
+
+        & Using an FPGA breakout board rather than doing a full from scratch
+        design. This breakout board is not soldered in but instead connects
+        through a pin header.
+
+        & Recover by purchasing a new module and replacing the broken one in the
+        pin header.
+        % PCB Total BOM Procurement & Bittele & \$126.67\\
+        % PCB Assembly & Bittele & \$289.76\\
+        % \hline
+        % Total & & \$520.80\\
+        % \hline
+        % Budget Remaining & & \$79.20
+    \end{tabularx}
+\label{tab:issue-mitigation}
+\end{table}
+
 \section{Strategies to address the wider impact of the project}
 % John 0.5 pages max also just some BS (maybe how it can change labs for the
 % better as a business proposition)
