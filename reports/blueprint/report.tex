@@ -1,4 +1,5 @@
 \documentclass[letterpaper,12pt]{article}
+\usepackage[parfill]{parskip} % Remove paragraph indentation
 \usepackage{amsmath}
 \usepackage{float}
 \usepackage[margin=1in]{geometry}
@@ -217,7 +218,6 @@ Full schematic and layout prints are supplied in Appendix
     \label{fig:pcb-block-diagram}
 \end{figure}
 
-\noindent
 The block diagram above is a simplified version of the schematic and thus does
 not enumerate each part on the PCB. A full bill of materials for the PCB can be
 found in \ref{appendix:bom}. The two critical blocks of the diagram are the USB
@@ -297,7 +297,6 @@ all the parts directly to their facility.
 \label{tab:abbreviated-bom}
 \end{table}
 
-\noindent
 As shown above, a full unit of the PCB comes in \$80 under budget. This leaves
 the time with some additional budget to purchase any replacement components or
 cover unexpected expenses. Should the project still exceed the budget, the team
@@ -320,6 +319,7 @@ hardware or FPGA failure are of greater severity. Given below is a table
 summarizing possible issues in the PCB and FPGA along with ways to reduce their
 possibility or recover from them.
 
+% this table is too big and breaks up the page weird. Thoughts on placement?
 \begin{table}[h!]
     \caption{Potential Problems and Mitigation}
     \begin{tabularx}{\textwidth}{p{2in}|p{2in}|p{2in}}
@@ -381,6 +381,65 @@ possibility or recover from them.
 \section{Strategies to address the wider impact of the project}
 % John 0.5 pages max also just some BS (maybe how it can change labs for the
 % better as a business proposition)
+
+\subsection{Environmental Impact}
+
+Given that TeachEE aims to provide an incredibly cheap and prolific device, it
+runs the risk of being considered disposable. In the current setting,
+oscilloscopes are not owned by students; they are expensive devices that are the
+property of universities. They are stationary, used on university property, in a
+lab within full view of peers, TAs, and professors. Hence, they are less likely
+to be abused, and can be reused over many classes. This can be recognized as an
+efficient sharing-economy system.
+
+These properties are in contrast with TeachEE's device, which will be used in
+private. They are made out of cheaper components, not only being more
+susceptible to damage, people will be less careful with its use due to perceived
+lack of value. And, although the business model for these devices is yet to be
+decided, one can imagine a situation in which the students are required to
+purchase a device for a class, similar to how one would purchase a textbook.
+This gives an inefficient system since many students will purchase a device,
+with a risk that the device is not reused between students and classes. The
+disposed devices will fill up landfills, which yields an environmental strain.
+
+Before discussing mitigation techniques, its note worthy that an inefficient
+circulation of these devices leads to more devices begin purchased. This
+business strategy is commonly called planned obsolescence. This discussion
+should be deferred out of scope the capstone project. For now, it can be assumed
+that the wider impact of the project is mitigated in a benevolent way:
+
+\begin{itemize}
+    \item Perception of Quality. Everything from a fancy box to glossy materials
+    will allow the device to have the perception of quality, and as such is more
+    likely.
+    \item Shared Economy. Somehow, the sharing of devices between students and
+    between classes should be encourage. For example, a sharing forum can be
+    linked on the box itself.
+    \item Robust components. The device can be design in a robust manner, such
+    that it is difficult to break.
+\end{itemize}
+
+\subsection{Educational Impact}
+
+Universities are typically institutions that have existed for a very long time.
+This contrasts to the digital age, which is recent. Universities developed with
+certain assumptions; as an example: for students to partake in university
+activities, they must be at the university's physical location. Otherwise, there
+might be untenable competitions between education sources. One
+can see this in the widespread dissemination of educational content via the
+internet.
+
+This can give rise to growing pains which a university must react to. One could
+argue that physical attendance at a university is still required due to its
+facilities, but TeachEE challenges this by allowing facilities to be
+decentralized.
+
+It can be said that TeachEE positively impacts society. Poor quality of
+service is prevalent in areas where the service is monopolized. The devices help
+to break-up the control of education, which opens the door for positive
+competition, and a healthier society overall.
+
+
 \section{Conclusion}
 % Tim (0.5 pages of BS is an order)
 \newpage
