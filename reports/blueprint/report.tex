@@ -12,6 +12,8 @@
 \usepackage{url}
 \usepackage{setspace}
 \usepackage[none]{hyphenat}
+\usepackage{pdfpages}
+\usepackage{longtable}
 
 \DeclareSIUnit{\samplepersec}{SPS}
 
@@ -320,9 +322,12 @@ the team will reach out should additional funding be required.
 \begin{appendices}
     \section{Schematics}
     \label{appendix:schematic}
+    \includepdf[pages=-]{../../hardware/prints/Schematics/TeachEE.pdf}
     \section{PCB Layout}
     \label{appendix:layout}
+    \includepdf[pages=-]{../../hardware/prints/Layout/TeachEE.pdf}
     \section{PCB Bill of Materials}
     \label{appendix:bom}
+    \include{bom.tex}
 \end{appendices}
 \end{document}
