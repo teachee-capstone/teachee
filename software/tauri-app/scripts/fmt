@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+set -Eeuo pipefail
+
+script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
+
+cd "${script_dir}/.."
+npx prettier --write --ignore-unknown .
+
+cd "${script_dir}/../src-tauri"
+cargo fmt

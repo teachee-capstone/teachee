@@ -1,0 +1,26 @@
+on: [push]
+
+name: Check Tauri App
+
+jobs:
+  check-tauri-app:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+          components: rustfmt, clippy
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18.12.1
+
+      - run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev webkit2gtk-4.0 libappindicator3-dev librsvg2-dev patchelf
+
+      - run: ./software/tauri-app/scripts/setup
+      - run: ./software/tauri-app/scripts/check
