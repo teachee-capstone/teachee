@@ -319,7 +319,7 @@ revision. Software can still be a source of potential problems, however,
 hardware or FPGA failure are of greater severity. Given below is a table
 summarizing possible issues in the PCB and FPGA along with ways to reduce their
 possibility or recover from them.
-
+\newpage
 \begin{table}[h!]
     \caption{Potential Problems and Mitigation}
     \begin{tabularx}{\textwidth}{p{2in}|p{2in}|p{2in}}
@@ -367,13 +367,17 @@ possibility or recover from them.
         through a pin header.
 
         & Recover by purchasing a new module and replacing the broken one in the
-        pin header.
-        % PCB Total BOM Procurement & Bittele & \$126.67\\
-        % PCB Assembly & Bittele & \$289.76\\
-        % \hline
-        % Total & & \$520.80\\
-        % \hline
-        % Budget Remaining & & \$79.20
+        pin header.\\
+        
+        \hline
+        Software Conversion Rate Problems
+
+        & It is possible that the software can bottleneck the processing of ADC
+        samples or be unable to achieve the framerates needed for the GUI.
+
+        & If the group is unable to make performance gains in the software, the
+        resolution will be to lower sampling rates until the software is able to
+        handle the stream of data.
     \end{tabularx}
 \label{tab:issue-mitigation}
 \end{table}
