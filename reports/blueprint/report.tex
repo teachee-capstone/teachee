@@ -449,14 +449,23 @@ competition, and a healthier society overall.
 \bibliographystyle{IEEEtran}
 \bibliography{report}
 \newpage
+\pagestyle{empty}
 
     \begin{appendices}
+        \begin{landscape}
         \section{Schematics}
         \label{appendix:schematic}
-        \includepdf[pages=-]{../../hardware/prints/Schematics/TeachEE.pdf}
+    \centering
+    \includegraphics[height=15cm]{schematics/schematic1-1.png}
+        \end{landscape}
+    \includepdf[pages=-,landscape=true]{schematics/schematic2-8.pdf}
+
+        \begin{landscape}
         \section{PCB Layout}
         \label{appendix:layout}
-        \includepdf[pages=-]{../../hardware/prints/Layout/TeachEE.pdf}
+    \includegraphics[height=15cm]{schematics/Layout.png}
+        \end{landscape}
+
         \section{PCB Bill of Materials}
         \label{appendix:bom}
     \begin{table}[h!]
