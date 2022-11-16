@@ -3,11 +3,12 @@
 
 use eframe::{self, epaint::Vec2, NativeOptions, Theme};
 
-use teachee_desktop::storage::Storage;
+use teachee_desktop::{
+    storage::Storage,
+    usb_manager::{MockUsbManager, RealUsbManager, UsbManager},
+};
 
 fn main() {
-    tracing_subscriber::fmt::init();
-
     let options = NativeOptions {
         default_theme: Theme::Light,
         min_window_size: Some(Vec2 { x: 600.0, y: 400.0 }),
@@ -19,7 +20,13 @@ fn main() {
         options,
         Box::new(|_cc| {
             let storage = Storage::default();
-            storage.clone().spawn_usb_manager_thread();
+
+            if cfg!(feature = "mock_usb") {
+                MockUsbManager::spawn_thread(storage.clone());
+            } else {
+                RealUsbManager::spawn_thread(storage.clone());
+            }
+
             Box::new(storage)
         }),
     );

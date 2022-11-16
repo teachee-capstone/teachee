@@ -5,7 +5,9 @@
 $ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 # run app
 $ cargo run
-# test app
+# run app with mock usb
+$ cargo run --features mock_usb
+# run tests
 $ cargo test
 # format code
 $ cargo fmt
