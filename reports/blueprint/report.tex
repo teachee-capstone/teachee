@@ -281,11 +281,14 @@ and signal generators for debugging, are not included in the budget as they will
 accessible on campus.
 
 \subsection{Materials and Supplies}
-Table \ref{tab:abbreviated-bom} below breaks down the cost of the PCB fabrication and assembly as
-quoted by the supplier. The supplier contracted for TeachEE is Bittele (7PCB).
-Bittele takes care of both the fabrication and soldering of the PCBs. Moreover,
-Bittele takes the generated output from the EDA software (Altium) and procures
-all the parts directly to their facility.
+Table \ref{tab:abbreviated-bom} below breaks down the cost of the PCB
+fabrication and assembly as quoted by the supplier. The supplier contracted for
+TeachEE is Bittele (7PCB). Bittele takes care of both the fabrication and
+soldering of the PCBs. Moreover, Bittele takes the generated output from the EDA
+software (Altium) and procures all the parts directly to their facility. The
+procurement cost is expanded in the budget table with the major functional
+components on the PCB. An exhaustive list is not included as there are hundreds
+of miscellaneous resistors, capacitors, and inductors whose cost is marginal.
 
 A full unit of the PCB comes in \$80 under budget. This leaves
 additional budget to purchase any replacement components or
@@ -301,6 +304,14 @@ Appendix \ref{appendix:bom}.
         \hline
         PCB Fabrication & Bittele & \$104.37\\
         PCB Total BOM Procurement & Bittele & \$126.67\\
+        \hline
+        \textbf{Major Components (Included in cost above)}& &\\
+        \hline
+        AD9288BSTZ-40 ADC & Digi-Key & \$14.70\\
+        AD8138ARZ-R7 ADC Driver & Digi-Key & \$26.85\\
+        FT232HQ-REEL USB FIFO & Digi-Key & \$6.41\\
+        ACS720KLATR-15AB-T Current Sensor & Digi-Key & \$9.81\\
+        \hline
         PCB Assembly & Bittele & \$289.76\\
         \hline
         Total & & \$520.80\\
