@@ -160,7 +160,6 @@ respectively.
 % 1.5 pages max for everything
 
 \subsection{Approach}
-% Hardware
 
 % Software
 The software portion of the USB oscilloscope will be a desktop application
@@ -170,6 +169,15 @@ can be used in place of additional display and processing hardware. Exporting
 sample data to a CSV file will easily be done through a button on the user's
 screen. The application will be built using Tauri, a framework that utilizes
 a Rust binary as a backend and JavaScript, HTML, and CSS as the frontend.
+\\~\\
+% Hardware
+The TeachEE hardware design will be a standalone PCB which provides an FPGA with
+access to USB controller and Analog to Digital Converter (ADC). The FPGA will
+not be soldered directly to the PCB, instead the TeachEE will have a socket to
+connect an off-the-shelf FPGA module. FPGAs are highly complex with requirements
+for multiple clocks and voltage rails. The module will save the team time and
+allow the FPGA to be replaced in the event of a hardware failure. A full
+hardware system block diagram is given in Figure \ref{fig:pcb-block-diagram}.
 
 \subsection{Design Tools, Hardware, Instrumentation}
 Tauri was chosen as the application framework because of its high performance
@@ -189,6 +197,13 @@ The frontend will be written in plain JavaScript to avoid the performance
 overhead due to abstractions in JavaScript frameworks \cite{javascript_speed}.
 Although modularization can improve code maintainability, it is not necessary
 for this project because the user interface is intended to be simple.
+\\~\\
+The primary design tool used for the hardware is Altium with the PDN Analyzer
+extension. Altium is full PCB schematic and layout design suite. The software
+will also produce fabrication files in a standard format that can be given to
+manufacturers. PDN Analyzer provides tools for checking the Power Distribution
+Network (PDN) of the PCB. The tool is used as a final verification that the PCB
+traces can carry enough current to supply all devices on the board.
 
 \subsection{Validation}
 Tauri provides Tauri Action, which is a Github Action that builds Tauri
@@ -467,14 +482,23 @@ likely to be successful within the capstone project's scope.
 \bibliographystyle{IEEEtran}
 \bibliography{report}
 \newpage
+\pagestyle{empty}
 
     \begin{appendices}
+        \begin{landscape}
         \section{Schematics}
         \label{appendix:schematic}
-        \includepdf[pages=-]{../../hardware/prints/Schematics/TeachEE.pdf}
+    \centering
+    \includegraphics[height=15cm]{schematics/schematic1-1.png}
+        \end{landscape}
+    \includepdf[pages=-,landscape=true]{schematics/schematic2-8.pdf}
+
+        \begin{landscape}
         \section{PCB Layout}
         \label{appendix:layout}
-        \includepdf[pages=-]{../../hardware/prints/Layout/TeachEE.pdf}
+    \includegraphics[height=15cm]{schematics/Layout.png}
+        \end{landscape}
+
         \section{PCB Bill of Materials}
         \label{appendix:bom}
     \begin{table}[h!]
