@@ -39,6 +39,9 @@
         \vfill
             
         \textbf{To:}\\
+        Instructor Dr. Michael Korenberg (korenber@queensu.ca) \\
+        Instructor Dr. Alireza Bakhshai (alireza.bakhshai@queensu.ca) \\
+        Instructor Dr. Alex Tait (alex.tait@queensu.ca) \\
         Instructor and Supervisor Dr. Sean Whitehall (sw109@queensu.ca) \\
         Supervisor Dr. Thomas Dean (tom.dean@queensu.ca) \\
             
@@ -57,15 +60,15 @@
 \newpage
 \setstretch{1.5}
 \section{Introduction} \label{sec:intro} % Ethan
-This blueprint outlines Group 18's capstone project TeachEE, which was
-originally proposed in ELEC390 \cite{prop_390}. This report is intended for the
-ELEC 498 instructors and Group 18's supervisors. The report provides the
-baseline specifications for TeachEE. These specifications should be treated as
-the minimum performance required for the showcase of the project in March. This
-blueprint consists of the methodology of completing the project, progress up to
-the time of writing this document, budget, and strategies to mitigate issues.
-The appendices of this report include technical information that supplements the
-report body.
+This blueprint outlines Group 18's capstone project TeachEE,
+originally proposed in ELEC390 \cite{prop_390}, and provides the baseline
+specifications for TeachEE. These specifications should be treated as guidelines
+for the minimum project performance required at the Open House in March. This
+report is intended for the ELEC 498 instructors and Group 18's supervisors. It
+consists of the methodology of completing the project, progress up to
+the time of writing this document, budget, and strategies to mitigate potential
+issues. The appendices of this report include technical information that
+supplement the report body.
 
 % NOTE: what I had before: (came after remote delivered eng labs)
 % At a design level, the device will require
@@ -76,35 +79,33 @@ report body.
 TeachEE is a device that acts as a general purpose electronics measurement
 instrument for remotely delivered engineering labs. The device acts as both a
 USB oscilloscope and current monitor. Currently, there are few instrumentation
-options for students completing their labs remotely. The TeachEE bundles
+options for students completing their labs remotely. TeachEE bundles
 together the functionality most commonly required for electrical engineering
 labs and packages it with portable software that can run on lower end computers
 with any operating system.
-\\~\\
-The PCB is a large technical undertaking as the PCB must be able to capture both
-voltage and current samples at a rate that is useful to undergraduate student.
+
+The PCB is a large technical undertaking as it must be able to capture both
+voltage and current samples at a rate that is useful to undergraduate students.
 Moreover, the PCB must contain custom circuitry to relay the sample data over
-USB. USB is a high speed interface requiring controlled impedance transmission
-lines on the PCB. Additionally, the PCB will need multiple high speed clocks for
-the USB PHY and Analog to Digital Converter (ADC). There are also further
-technical challenges with respect to the analog signalling and sufficiently
-filtering and protecting the inputs.
-\\~\\
+USB, which requires controlled impedance transmission
+lines. Additionally, the PCB will need multiple high speed clocks for
+the USB PHY and Analog to Digital Converter (ADC). Further challenges include
+analog signaling and sufficiently filtering and protecting the inputs.
+
 The second key technical challenge in this project is the device driver for the
-oscilloscope. The USB 2.0 link between the device and laptop has a throughput as
-high as 480 Mbps. This requires performant driver software that can process the
-sample data in a timely manner and relay it to the GUI frontend. In addition to
-the requirement for low latency, the software will also require a packet framing
-technique that can efficiently separate current and voltage samples. In regard
-to changes from the ELEC390 proposal, our team has removed the voltage power
-sources and changed the microcontroller to an FPGA.
+oscilloscope. The USB 2.0 link between the device and laptop has a throughput of
+up to 480 Mbps. This requires performant driver software that can quickly process
+the sample data and relay it to the GUI frontend. The software will also require
+a packet framing technique that can efficiently separate current and voltage
+samples. With respect to changes from the ELEC390 proposal, the voltage power
+sources have been removed and the microcontroller has been changed to an FPGA,
+which has been discussed with the team's hardware supervisor.
 % Ethan
 % Explain the design problem Hardware software timeline
 % 275 words max
-\subsection{System Specifications}
-Since the TeachEE has both a hardware and software component. The system
-specifications have been broken up into hardware and software tables
-respectively.
+\subsection{System Specifications} \label{sec:specs}
+The following tables outline the target hardware and software specifications of
+this project.
 
 % \newcolumntype{b}{X}
 % \newcolumntype{s}{>{\hsize=.2\hsize}X}
@@ -126,8 +127,8 @@ respectively.
         10 &Current Sample Rate& \SI{1}{\mega\samplepersec} & \SI{0}{\mega\samplepersec} \\
         11 &PCB Thickness& \SI{1.6}{\milli\metre} & $\pm \SI{0.1}{\milli\metre}$ \\
         12 &PCB Dimensions& \SI{0.04}{\meter\squared} & $\pm \SI{400}{\milli\metre\squared}$ \\
-        13 &Voltage Sample Error against commercial scope & N/A & $\pm \SI{10}{\percent}$ \\
-        14 &Current Sample Error against commercial meter& N/A & $\pm \SI{10}{\percent}$
+        13 &Voltage Sample Error against commercial scope & N/A & $\pm \SI{20}{\percent}$ \\
+        14 &Current Sample Error against commercial meter& N/A & $\pm \SI{20}{\percent}$
     \end{tabularx} 
 \label{hw:specs-table}
 \end{table}
@@ -144,7 +145,7 @@ respectively.
         \textbf{2} & \textbf{Interface Requirements} \\
         \hline
         2.1 & Something about driver interface to GUI Idk (write in the formal format I showed above plz) \\
-        2.1 & Also try to write some stuff about how FTDI driver interfaces with backend which in turn interfaces with frontend. What are the interface signatures and tools used? \\
+        2.2 & Also try to write some stuff about how FTDI driver interfaces with backend which in turn interfaces with frontend. What are the interface signatures and tools used? \\
         \hline
         \textbf{3} & \textbf{Performance Requirements} \\
         \hline
@@ -162,97 +163,87 @@ respectively.
 \subsection{Approach}
 
 % Software
-The software portion of the USB oscilloscope will be a desktop application
-displaying the user interface with web technologies. The issue of cost is
-addressed here as the display and processing power of the user's machine
-can be used in place of additional display and processing hardware. Exporting
-sample data to a CSV file will easily be done through a button on the user's
-screen. The application will be built using Tauri, a framework that utilizes
-a Rust binary as a backend and JavaScript, HTML, and CSS as the frontend.
-\\~\\
+The software aspect of TeachEE will be a desktop application
+with a web-based user interface. This reduces costs as the display and
+processing power of the user's machine can be used instead of additional
+hardware. Exporting voltage and current samples to a CSV file can be done
+by saving the stored sample data to a file. The application will be built using
+Tauri, a framework that utilizes a Rust binary as a backend and JavaScript,
+HTML, and CSS as the frontend.
+
 % Hardware
-The TeachEE hardware design will be a standalone PCB which provides an FPGA with
-access to USB controller and Analog to Digital Converter (ADC). The FPGA will
-not be soldered directly to the PCB, instead the TeachEE will have a socket to
-connect an off-the-shelf FPGA module. FPGAs are highly complex with requirements
-for multiple clocks and voltage rails. The module will save the team time and
-allow the FPGA to be replaced in the event of a hardware failure. A full
-hardware system block diagram is given in Figure \ref{fig:pcb-block-diagram}.
+The TeachEE hardware design will be a standalone PCB and FPGA module with
+access to a USB controller and an Analog to Digital Converter (ADC). This FPGA
+module will be connected to a socket on the PCB rather than soldered on. As
+FPGAs are highly complex, this approach will reduce development time and allow
+the FPGA to be replaced in the event of a hardware failure. A full hardware
+system block diagram is given in Figure \ref{fig:pcb-block-diagram} below.
 
 \subsection{Design Tools, Hardware, Instrumentation}
 Tauri was chosen as the application framework because of its high performance
 and low binary size when compared to other Rust frameworks 
 \cite{tauri_benchmarks}. As TeachEE is intended for remote use, being
-lightweight is important for quick deployment and operation. Tauri also compiles
-to all Windows, macOS, and Linux platforms, which allows use of the product no
-matter what machine a user may have.
-\\~\\
-The Rust programming language will be used to address the high throughput and
+lightweight is important for quick deployment and operation.
+
+The backend will be written in Rust to address the high throughput and
 data processing requirements due to its high run time speed \cite{rust_speed}.
-Furthermore, Rust provides support for concurrent programming by preventing race
-conditions at compile time. Concurrency may be necessary to speed up data stream
-processing (e.g. Fast Fourier Transform).
-\\~\\
-The frontend will be written in plain JavaScript to avoid the performance
-overhead due to abstractions in JavaScript frameworks \cite{javascript_speed}.
-Although modularization can improve code maintainability, it is not necessary
-for this project because the user interface is intended to be simple.
-\\~\\
+Furthermore, Rust provides support for concurrent programming, which may be
+necessary to speed up data stream processing. The frontend will be written in
+plain JavaScript to avoid the performance overhead of abstractions in
+JavaScript frameworks \cite{javascript_speed}. Although modularization can
+improve code maintainability, it is not necessary for this project because the
+user interface will be relatively simple.
+
 The primary design tool used for the hardware is Altium with the PDN Analyzer
-extension. Altium is full PCB schematic and layout design suite. The software
+extension. Altium is a full PCB schematic and layout design suite. The software
 will also produce fabrication files in a standard format that can be given to
 manufacturers. PDN Analyzer provides tools for checking the Power Distribution
-Network (PDN) of the PCB. The tool is used as a final verification that the PCB
-traces can carry enough current to supply all devices on the board.
+Network (PDN) of the PCB. It is used as a final verification that the PCB
+traces can carry enough current to supply all the devices on the board.
 
 \subsection{Validation}
 Tauri provides Tauri Action, which is a Github Action that builds Tauri
 applications into native binaries on Windows, macOS, and Linux
 \cite{tauri_actions}. This feature will be used to provide continuous integration
-to the project and ensure correctness on all targeted platforms.
-\\~\\
+to the project and ensure correctness on all targeted platforms. Additionally, unit
+tests can be written for signal processing functions such as Fast Fourier Transform.
+
 A waveform generator can be used as a test dummy to generate a waveform that
-can be compared with the output displayed by measuring it with TeachEE.
+can be compared with the output by measuring it with TeachEE.
 This output can also be compared with measurements obtained from a commercial
-oscilloscope. Test success will be indicated by voltage/current differences
-given by the target percentages in the hardware specifications.
+oscilloscope. Test success will be indicated by voltage and current differences
+given by the target percentages in Table \ref{hw:specs-table} above.
 
 \section{Progress to Date} % Ethan / Tim for HW/SW respectively
-Since the start of the term, the team has completed a set of both hardware
+Since the start of the term, the team has completed a set of both hardware and
 software tasks.
 % Explain that there has been a completed hardware design.
 % include schematics, layout and BOM in Appendices
 
 \subsection{Hardware Design}
-As of this blueprint submission, the initial printed circuit board schematic and
-layout are complete. The PCB system block diagram is shown in the figure below.
-Full schematic and layout prints are supplied in Appendix
-\ref{appendix:schematic} and \ref{appendix:layout} respectively.
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=16cm]{../../misc/TeachEE-System-Diagram.drawio.png}
-    \caption{TeachEE PCB System Block Diagram}
-    \label{fig:pcb-block-diagram}
-\end{figure}
+At this time, the initial printed circuit board schematic and
+layout are complete. The PCB system block diagram is shown in Appendix
+\ref{appendix:block-diagram}. Full schematic and layout prints are supplied
+in Appendix \ref{appendix:schematic} and \ref{appendix:layout} respectively.
 
-The block diagram above is a simplified version of the schematic and thus does
+The block diagram is a simplified version of the schematic and thus does
 not enumerate each part on the PCB. A full bill of materials for the PCB can be
-found in \ref{appendix:bom}. The two critical blocks of the diagram are the USB
-FIFO and ADC. Data rate and sample rate can be found in Table
-\ref{hw:specs-table} containing the hardware specifications. Voltage samples are
-fed into TeachEE via the BNC connectors on the PCB. Two additional voltage
-channels are added for redundancy purposes, but the minimum requirement is one
-channel. By adding additional functionality to the hardware, the team has room
-to make extensions to its software in the future. The ADC input going directly
-to the FPGA is filtered by a Low Pass Filter (LPF) to prevent aliasing in the
-frequency domain. The discrete ADC also has an LPF in addition to a dedicated
-driver for the differential inputs on the chip. The driver amplifier protects
-the ADC against out of bounds voltages.
+found in Appendix \ref{appendix:bom}. The two critical blocks of the diagram are
+the USB FIFO and ADC. Voltage samples are fed into TeachEE via the BNC connectors
+on the PCB. Two additional voltage channels are added for redundancy purposes,
+but the minimum requirement is one channel. Adding additional functionality to
+the hardware allows for extensibility for software features in the future. The
+ADC input going directly to the FPGA is filtered by a Low Pass Filter (LPF) to
+prevent aliasing in the frequency domain. The discrete ADC also has an LPF in
+addition to a dedicated driver for the differential inputs on the chip. The
+driver amplifier protects the ADC against out of bound voltages.
 
 \subsection{Software Design}
 \subsection{Milestones and Division of Labour}
 % Table of major and intermediate milestones (ERIC)
 % Each table cell should include due date and assigned member
+The following table lists the milestones associated with this project and the
+team member(s) responsible for each.
 \begin{table}[h!]
     \caption{Milestones}
     \begin{tabularx}{\textwidth}{l|l|l|l}
@@ -282,26 +273,31 @@ the ADC against out of bounds voltages.
 % BOM probably takes too many pages, will need to attenuate
 
 The budget of 600 dollars provided by the department is sufficient for this
-project assuming only one unit of the device is manufactured. In reality three
-PCB units are on order. However, the group will only submit a reimbursement
-request for one unit allowing the team to stay within budget. The extra two
-units will be treated as a personal expense since group members will be able to
-keep the extra devices and only submit the one paid for by the ECE department.
-Additional electrical instruments, such as oscilloscopes and signal generators
-for debugging are not included in the budget as they will be accessible via
-Walter Light Hall on campus.
+project assuming only one unit of the device is manufactured, nonetheless,
+three units have been ordered. However, the team will only submit a reimbursement
+request for one unit. The two extra units will be personally expensed and will
+be for personal use only. Additional electrical instruments, such as oscilloscopes
+and signal generators for debugging, are not included in the budget as they will be
+accessible on campus.
 
 \subsection{Materials and Supplies}
-The following table breaks down the cost of the PCB fabrication and assembly as
+Table \ref{tab:abbreviated-bom} below breaks down the cost of the PCB fabrication and assembly as
 quoted by the supplier. The supplier contracted for TeachEE is Bittele (7PCB).
 Bittele takes care of both the fabrication and soldering of the PCBs. Moreover,
 Bittele takes the generated output from the EDA software (Altium) and procures
 all the parts directly to their facility.
 
-\begin{table}[h!]
+A full unit of the PCB comes in \$80 under budget. This leaves
+additional budget to purchase any replacement components or
+cover unexpected expenses. Should the project still exceed the budget, the team
+will first contact the project supervisors to see if there is a possibility of
+additional funding. The full BOM for the PCB is provided in
+Appendix \ref{appendix:bom}.
+
+\begin{table}[H]
     \caption{TeachEE Bill of Materials}
     \begin{tabularx}{\textwidth}{l|l|l}
-        \textbf{Item / Part Number} & \textbf{Supplier} & \textbf{Cost (USD)} \\
+        \textbf{Item / Part Number} & \textbf{Supplier} & \textbf{Cost (CAD)} \\
         \hline
         PCB Fabrication & Bittele & \$104.37\\
         PCB Total BOM Procurement & Bittele & \$126.67\\
@@ -313,13 +309,6 @@ all the parts directly to their facility.
     \end{tabularx} 
 \label{tab:abbreviated-bom}
 \end{table}
-
-As shown above, a full unit of the PCB comes in \$80 under budget. This leaves
-the time with some additional budget to purchase any replacement components or
-cover unexpected expenses. Should the project still exceed the budget, the team
-will first contact the project supervisors to see if there is a possibility of
-additional funding. The fully expanded component BOM for the PCB is provided in
-Appendix \ref{appendix:bom}.
 
 \subsection{Contributions From Other Sources}
 There are no outside contributions at the time of writing this report. However,
@@ -336,54 +325,38 @@ hardware or FPGA failure are of greater severity. Given below is a table
 summarizing possible issues in the PCB and FPGA along with ways to reduce their
 possibility or recover from them.
 
-% this table is too big and breaks up the page weird. Thoughts on placement?
-\begin{table}[h!]
+\begin{table}[H]
     \caption{Potential Problems and Mitigation}
-    \begin{tabularx}{\textwidth}{p{2in}|p{2in}|p{2in}}
+    \begin{tabularx}{\textwidth}{p{1.5in}|p{2in}|p{2.5in}}
         \textbf{Problem Description} & \textbf{Possibility Reduction} & \textbf{Course of Recovery} \\
         \hline
         USB FIFO chip on the PCB does not work or the FPGA cannot successfully
         interface with it.
-
-        & Design review from all group members and close attention to reference
-        designs. PCB layout that is suited to the high-speed control signals
+        & Choosing a PCB layout that is suited to the high-speed control signals
         running between the USB-FIFO, ADC and FPGA.
-
-        & The FPGA module has USB communication for debugging built in. This
-        link is USB 2.0 High Speed, which is only 12Mbps. The chip on the PCB
-        supports up to 480 Mbps. The slower speed will still allow the team to
-        reach the required sample rate of \SI{1}{\mega\samplepersec} and
-        \SI{100}{\kilo\hertz} bandwidth.\\
+        & Use the built in USB unit on the FPGA module, which supports 12Mbps.
+        The slower speed satisfies the required sample rate of
+        \SI{1}{\mega\samplepersec} and \SI{100}{\kilo\hertz} bandwidth.\\
         \hline
         Discrete ADC does not work.
-
-        & Following the reference design given in the datasheet in addition to
+        & Following the reference design given in the datasheet and
         installing differential ADC drivers for input protection.
-
-        & The ADC only provides two out of the three possible voltage channels
-        on TeachEE. The third channel is connected directly to a built-in ADC on
-        the FPGA module. This built-in ADC reaches our
+        & Use the built in ADC on the FPGA module. This built-in ADC satisfies our
         \SI{1}{\mega\samplepersec} and \SI{100}{\kilo\hertz} bandwidth
-        requirements. If needed, the discrete ADC can be removed from the PCB
-        entirely. \\
+        requirements. \\
 
         \hline
         Voltage Regulator Failure
-
-        & Choosing a well documented automotive grade linear voltage regulator
+        & Choosing a well documented linear voltage regulator
         that provides two times more current than required.
-
-        & The PCB has headers for the \SI{3.3}{\volt} power rail, If needed an
+        & The PCB has headers for the \SI{3.3}{\volt} power rail, if needed, an
         external 3.3 V source can be soldered to these pins. \\
 
         \hline
         FPGA Failure
-
-        & Using an FPGA breakout board rather than doing a full from scratch
-        design. This breakout board is not soldered in but instead connects
-        through a pin header.
-
-        & Recover by purchasing a new module and replacing the broken one in the
+        & Using an FPGA breakout board rather than doing a full design from
+        scratch.
+        & Purchase a new module and replacing the broken one in the
         pin header.
         % PCB Total BOM Procurement & Bittele & \$126.67\\
         % PCB Assembly & Bittele & \$289.76\\
@@ -398,74 +371,18 @@ possibility or recover from them.
 \section{Strategies to address the wider impact of the project}
 % John 0.5 pages max also just some BS (maybe how it can change labs for the
 % better as a business proposition)
+Given that TeachEE aims to be cost effective, it risks being considered disposable.
+Disposed devices can fill up landfills, which yields an environmental strain. This
+can be mitigated by encouraging sharing among students and designing the device to
+be durable.
 
-\subsection{Environmental Impact}
-
-Given that TeachEE aims to provide an incredibly cheap and prolific device, it
-runs the risk of being considered disposable. In the current setting,
-oscilloscopes are not owned by students; they are expensive devices that are the
-property of universities. They are stationary, used on university property, in a
-lab within full view of peers, TAs, and professors. Hence, they are less likely
-to be abused, and can be reused over many classes. This can be recognized as an
-efficient sharing-economy system.
-
-These properties are in contrast with TeachEE's device, which will be used in
-private. They are made out of cheaper components, not only being more
-susceptible to damage, people will be less careful with its use due to perceived
-lack of value. And, although the business model for these devices is yet to be
-decided, one can imagine a situation in which the students are required to
-purchase a device for a class, similar to how one would purchase a textbook.
-This gives an inefficient system since many students will purchase a device,
-with a risk that the device is not reused between students and classes. The
-disposed devices will fill up landfills, which yields an environmental strain.
-
-Before discussing mitigation techniques, its note worthy that an inefficient
-circulation of these devices leads to more devices begin purchased. This
-business strategy is commonly called planned obsolescence. This discussion
-should be deferred out of scope the capstone project. For now, it can be assumed
-that the wider impact of the project is mitigated in a benevolent way:
-
-\begin{itemize}
-    \item Perception of Quality. Everything from a fancy box to glossy materials
-    will allow the device to have the perception of quality, and as such is more
-    likely.
-    \item Shared Economy. Somehow, the sharing of devices between students and
-    between classes should be encourage. For example, a sharing forum can be
-    linked on the box itself.
-    \item Robust components. The device can be design in a robust manner, such
-    that it is difficult to break.
-\end{itemize}
-
-\subsection{Educational Impact}
-
-Universities are typically institutions that have existed for a very long time.
-This contrasts to the digital age, which is recent. Universities developed with
-certain assumptions; as an example: for students to partake in university
-activities, they must be at the university's physical location. Otherwise, there
-might be untenable competitions between education sources. One
-can see this in the widespread dissemination of educational content via the
-internet.
-
-This can give rise to growing pains which a university must react to. One could
-argue that physical attendance at a university is still required due to its
-facilities, but TeachEE challenges this by allowing facilities to be
-decentralized.
-
-It can be said that TeachEE positively impacts society. Poor quality of
-service is prevalent in areas where the service is monopolized. The devices help
-to break-up the control of education, which opens the door for positive
-competition, and a healthier society overall.
-
-\subsection{Health and safety, and legal ramifications}
-
-As with any device, there is a risk of spontaneous catastrophic failure. For
-TeachEE, there is the possibility that the device will short circuit, and cause
-damage to a user's computer, or even worse, could cause a fire. In a worst case
+There exists the possibility that TeachEE will short circuit and cause
+damage to a user's computer or start a fire. In the worst case
 scenario, lawsuits for wrongful death can occur.
 
-The way to prevent these situations is to develop the device with proof of due
+These situations can be prevented by developing the device with proof of due
 diligence. A rigorous test log can be produced in the event of an accusation of
-negligence. As additional protection, the device can be signed off by a
+negligence. As an additional protection, the device can be signed off by a
 professional engineer.
 
 \section{Conclusion}
@@ -478,6 +395,14 @@ professional engineer.
 \pagestyle{empty}
 
     \begin{appendices}
+        \section{PCB System Block Diagram}
+        \label{appendix:block-diagram}
+        \begin{figure}[H]
+            \centering
+            \includegraphics[width=16cm]{../../misc/TeachEE-System-Diagram.drawio.png}
+            \caption{TeachEE PCB System Block Diagram}
+            \label{fig:pcb-block-diagram}
+        \end{figure}
         \begin{landscape}
         \section{Schematics}
         \label{appendix:schematic}
