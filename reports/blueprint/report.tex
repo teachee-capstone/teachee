@@ -15,6 +15,7 @@
 \usepackage[none]{hyphenat}
 \usepackage{pdfpages}
 \usepackage{longtable}
+\usepackage{tikz}
 
 \DeclareSIUnit{\samplepersec}{SPS}
 
@@ -253,6 +254,32 @@ addition to a dedicated driver for the differential inputs on the chip. The
 driver amplifier protects the ADC against out of bound voltages.
 
 \subsection{Software Design}
+
+At the time of writing, the skeleton for the TeachEE desktop app is complete.
+Currently the app has three main components: \emph{USB Manager}; \emph{Storage};
+and \emph{Frontend}.  The \emph{USB Manager} and \emph{Storage} components are
+written in Rust and operate as separate threads in the same process; the
+\emph{USB Manger} reads and writes from data in \emph{Storage} through
+thread-safe getter/setter methods. The \emph{Frontend} component is written in
+Javascript and operates in it's own process; it communicates with the Storage
+component through message passing. JavaScript and Rust interoperability is
+enabled by serializing all messages into \emph{JavaScript Object Notation}
+(JSON) strings. The relationship between the above-mentioned components is
+summarized in Figure~\ref{sw:architecture}.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\textwidth]{schematics/sw-architecture.png}
+    \caption{TeachEE Desktop App Architecture}
+    \label{sw:architecture}
+\end{figure}
+
+The performance of this architecture has been validated by displaying artificial
+data generated at the same sample rate as the real hardware. At present the app
+is able to display waveforms at a frame rate of 60 Hz while consuming an
+insignificant amount of system resources on a 2022 M2 MacBook Air. Screenshots
+of the app can be found in Appendix~\ref{appendix:screenshot}.
+
 \subsection{Milestones and Division of Labour}
 % Table of major and intermediate milestones (ERIC)
 % Each table cell should include due date and assigned member
@@ -462,7 +489,7 @@ likely to be successful within the capstone project's scope.
 
         \section{PCB Bill of Materials}
         \label{appendix:bom}
-    \begin{table}[h!]
+    \begin{table}[H]
     \begin{tabular}{p{1.7in}|p{0.3in}|p{0.8in}|p{0.7in}|p{0.7in}|p{1in}}
         \textbf{Designator} & \textbf{QTY} & \textbf{Description} & \textbf{Comment} & \textbf{Footprint} & \textbf{Part Number} \\ \hline 
         C1, C2, C37, C48 & 4 & CAP CER 10UF 10V X5R 0402 & 10 µF & CAP 0402\_1005 & CL05A106MP8NUB8 \\ \hline
@@ -478,7 +505,7 @@ likely to be successful within the capstone project's scope.
 
     \newpage
 
-    \begin{table}[h!]
+    \begin{table}[H]
     \begin{tabular}{p{1.7in}|p{0.3in}|p{0.8in}|p{0.7in}|p{0.7in}|p{1in}}
         \textbf{Designator} & \textbf{QTY} & \textbf{Description} & \textbf{Comment} & \textbf{Footprint} & \textbf{Part Number} \\ \hline 
         C10 & 1 & CAP MLCC 0.01UF 100V X7R 0402 & 10000 pF & CAP 0402\_1005 & HMK105B7103KVHFE \\ \hline
@@ -494,7 +521,7 @@ likely to be successful within the capstone project's scope.
     \end{tabular}
     \end{table}
     \newpage
-    \begin{table}[h!]
+    \begin{table}[H]
         \begin{tabular}{p{1.7in}|p{0.3in}|p{0.8in}|p{0.7in}|p{0.7in}|p{1in}}
         \textbf{Designator} & \textbf{QTY} & \textbf{Description} & \textbf{Comment} & \textbf{Footprint} & \textbf{Part Number} \\ \hline 
         R1, R2 & 2 & RES SMD 10 OHM 0.1\% 1/10W 0603 & 10 Ohms & RES 0603\_1608 & CRT0603-BY-10R0ELF \\ \hline
@@ -511,7 +538,7 @@ likely to be successful within the capstone project's scope.
         \end{tabular}
     \end{table}
     \newpage
-    \begin{table}[h!]
+    \begin{table}[H]
         \begin{tabular}{p{1.7in}|p{0.3in}|p{0.8in}|p{0.7in}|p{0.7in}|p{1in}}
         \textbf{Designator} & \textbf{QTY} & \textbf{Description} & \textbf{Comment} & \textbf{Footprint} & \textbf{Part Number} \\ \hline 
         R27, R28, R29 & 3 & RES 1M OHM 1\% 1/16W 0402 & 1 MOhms & RES 0402\_1005 & RMCF0402FT1M00 \\ \hline
@@ -527,7 +554,7 @@ likely to be successful within the capstone project's scope.
         \end{tabular}
     \end{table}
     \newpage
-    \begin{table}[h!]
+    \begin{table}[H]
         \begin{tabular}{p{1.7in}|p{0.3in}|p{0.8in}|p{0.7in}|p{0.7in}|p{1in}}
         \textbf{Designator} & \textbf{QTY} & \textbf{Description} & \textbf{Comment} & \textbf{Footprint} & \textbf{Part Number} \\ \hline 
         U2 & 1 & Dual 8-Bit AD Converter with Parallel Interface, 40MSPS, -40 to +85 degC, ST-48, Pb-Free, Tray &  & ST-48M & AD9288BSTZ-40 \\ \hline
@@ -538,5 +565,14 @@ likely to be successful within the capstone project's scope.
         Y1 & 1 & CRYSTAL 12.0000MHZ 20PF SMD & 12 MHz & ABLS & ABLS-12.000MHZ-20-B-3-H-T \\ \hline
         \end{tabular}
     \end{table}
+
+        \section{TeachEE Desktop App Screenshots}
+        \label{appendix:screenshot}
+            \begin{figure}[H]
+                \centering
+                \includegraphics[width=\textwidth]{./schematics/sw-screenshot.png}
+                \caption{TeachEE Desktop App Displaying a Triangle Wave}
+            \end{figure}
+        \end{landscape}
     \end{appendices}
 \end{document}
