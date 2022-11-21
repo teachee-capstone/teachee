@@ -50,7 +50,8 @@
 
     \end{center}
 \end{titlepage}
-\section{Executive Summary}
+\setstretch{1.5}
+\section*{Executive Summary}
 
 This report outlines TeachEE, a device which facilitates online learning for
 electrical engineering labs. It describes the project's scope: a minimum viable
@@ -60,7 +61,7 @@ of an oscilloscope, desktop app, and communication between a computer and the
 device via USB. A complete list of specifications for the MVP are provided in
 Table \ref{hw:specs-table} and Table \ref{sw:specs-table}.
 
-It also outlines a road-map for this project; most hardware related tasks have
+This blueprint also outlines a road map for this project; most hardware related tasks have
 been completed, with the software related tasks scheduled for completion later
 in the term. Although the PCB shipment from the manufacturer was delayed, the
 project is still on schedule. Additionally, for the upcoming tasks, there is a
@@ -68,7 +69,9 @@ clear and equal division of responsibility between group members, as shown in
 Table \ref{hw:milestones-table}. The project is scheduled to be completed by
 week 20, two weeks before the Open House, to allow for extra time in case of
 emergencies.
+\newpage
 
+\setstretch{1}
 \tableofcontents
 \listoffigures
 \listoftables
@@ -76,7 +79,7 @@ emergencies.
 \setstretch{1.5}
 \section{Introduction} \label{sec:intro} % Ethan
 This blueprint outlines Group 18's capstone project TeachEE,
-originally proposed in ELEC390 \cite{prop_390}, and provides the baseline
+originally proposed in ELEC 390 \cite{prop_390}, and provides the baseline
 specifications for TeachEE. These specifications should be treated as guidelines
 for the minimum project performance required at the Open House in March. This
 report is intended for the ELEC 498 instructors and Group 18's supervisors. It
@@ -104,7 +107,7 @@ voltage and current samples at a rate that is useful to undergraduate students.
 Moreover, the PCB must contain custom circuitry to relay the sample data over
 USB, which requires controlled impedance transmission
 lines. Additionally, the PCB will need multiple high speed clocks for
-the USB PHY and Analog to Digital Converter (ADC). Further challenges include
+the USB PHY (PHYsical layer chip) and Analog to Digital Converter (ADC). Further challenges include
 analog signaling and sufficiently filtering and protecting the inputs.
 
 The second key technical challenge in this project is the device driver for the
@@ -112,7 +115,9 @@ oscilloscope. The USB 2.0 link between the device and laptop has a throughput of
 up to 480 Mbps. This requires performant driver software that can quickly process
 the sample data and relay it to the GUI frontend. The software will also require
 a packet framing technique that can efficiently separate current and voltage
-samples. With respect to changes from the ELEC390 proposal, the voltage power
+samples.
+
+In terms of design changes, the voltage power
 sources have been removed and the microcontroller has been changed to an FPGA,
 which has been discussed with the team's hardware supervisor.
 % Ethan
@@ -154,13 +159,14 @@ this project.
     \begin{tabularx}{\textwidth}{l|l}
         \textbf{1} & \textbf{Functional Requirements}\\
         \hline
-        1.1 & The software shall be able to modulate the sample rate. \\
+        1.1 & The software shall be able to modify the horizontal and vertical scales of the plot. \\
         1.2 & The software shall be able to modify the trigger voltage. \\
+        1.3 & The application shall be deployable to Windows, macOS, and Linux. \\
         \hline
         \textbf{2} & \textbf{Interface Requirements} \\
         \hline
-        2.1 & Something about driver interface to GUI Idk (write in the formal format I showed above plz) \\
-        2.2 & Also try to write some stuff about how FTDI driver interfaces with backend which in turn interfaces with frontend. What are the interface signatures and tools used? \\
+        2.1 & The software shall be able to capture voltage samples and export them to a CSV file. \\
+        2.2 & The software shall receive samples via the FTDI 232 in synchronous mode. \\
         \hline
         \textbf{3} & \textbf{Performance Requirements} \\
         \hline
@@ -181,18 +187,18 @@ this project.
 The software aspect of TeachEE will be a desktop application
 with a web-based user interface. This reduces costs as the display and
 processing power of the user's machine can be used instead of additional
-hardware. Exporting voltage and current samples to a CSV file can be done
-by saving the stored sample data to a file. The application will be built using
+hardware. Exporting voltage and current samples can be done
+by saving to a CSV file. The application will be built using
 Tauri, a framework that utilizes a Rust binary as a backend and JavaScript,
 HTML, and CSS as the frontend.
 
 % Hardware
 The TeachEE hardware design will be a standalone PCB and FPGA module with
 access to a USB controller and an Analog to Digital Converter (ADC). This FPGA
-module will be connected to a socket on the PCB rather than soldered on. As
-FPGAs are highly complex, this approach will reduce development time and allow
+module will be connected to a socket on the PCB rather than soldered on; since
+they are highly complex, this approach will reduce development time and allow
 the FPGA to be replaced in the event of a hardware failure. A full hardware
-system block diagram is given in Figure \ref{fig:pcb-block-diagram} below.
+system block diagram is given in Appendix \ref{appendix:block-diagram} below.
 
 \subsection{Design Tools, Hardware, Instrumentation}
 Tauri was chosen as the application framework because of its high performance
@@ -223,10 +229,9 @@ applications into native binaries on Windows, macOS, and Linux
 to the project and ensure correctness on all targeted platforms. Additionally, unit
 tests can be written for signal processing functions such as Fast Fourier Transform.
 
-A waveform generator can be used as a test dummy to generate a waveform that
-can be compared with the output by measuring it with TeachEE.
-This output can also be compared with measurements obtained from a commercial
-oscilloscope. Test success will be indicated by voltage and current differences
+The accuracy of TeachEE can be determined by measuring the same signal with both a
+commercial oscilloscope and TeachEE.
+The degree of accuracy will be indicated by voltage and current differences
 given by the target percentages in Table \ref{hw:specs-table} above.
 
 \section{Progress to Date} % Ethan / Tim for HW/SW respectively
@@ -247,7 +252,7 @@ found in Appendix \ref{appendix:bom}. The two critical blocks of the diagram are
 the USB FIFO and ADC. Voltage samples are fed into TeachEE via the BNC connectors
 on the PCB. Two additional voltage channels are added for redundancy purposes,
 but the minimum requirement is one channel. Adding additional functionality to
-the hardware allows for extensibility for software features in the future. The
+the hardware allows for future software extensibility. The
 ADC input going directly to the FPGA is filtered by a Low Pass Filter (LPF) to
 prevent aliasing in the frequency domain. The discrete ADC also has an LPF in
 addition to a dedicated driver for the differential inputs on the chip. The
@@ -256,23 +261,16 @@ driver amplifier protects the ADC against out of bound voltages.
 \subsection{Software Design}
 
 At the time of writing, the skeleton for the TeachEE desktop app is complete.
-Currently the app has three main components: \emph{USB Manager}; \emph{Storage};
-and \emph{Frontend}.  The \emph{USB Manager} and \emph{Storage} components are
+Currently, the app has three main components: USB Manager; Storage;
+and Frontend.  The USB Manager and Storage components are
 written in Rust and operate as separate threads in the same process; the
-\emph{USB Manger} reads and writes from data in \emph{Storage} through
-thread-safe getter/setter methods. The \emph{Frontend} component is written in
-Javascript and operates in it's own process; it communicates with the Storage
+USB Manager reads and writes from data in Storage through
+thread-safe getter/setter methods. The Frontend component is written in
+Javascript and operates in its own process; it communicates with the Storage
 component through message passing. JavaScript and Rust interoperability is
-enabled by serializing all messages into \emph{JavaScript Object Notation}
+enabled by serializing all messages into JavaScript Object Notation
 (JSON) strings. The relationship between the above-mentioned components is
-summarized in Figure~\ref{sw:architecture}.
-
-\begin{figure}[h]
-    \centering
-    \includegraphics[width=\textwidth]{schematics/sw-architecture.png}
-    \caption{TeachEE Desktop App Architecture}
-    \label{sw:architecture}
-\end{figure}
+summarized in Appendix~\ref{appendix:architecture}.
 
 The performance of this architecture has been validated by displaying artificial
 data generated at the same sample rate as the real hardware. At present the app
@@ -316,13 +314,13 @@ team member(s) responsible for each.
 The budget of 600 dollars provided by the department is sufficient for this
 project assuming only one unit of the device is manufactured, nonetheless,
 three units have been ordered. However, the team will only submit a reimbursement
-request for one unit. The two extra units will be personally expensed and will
-be for personal use only. Additional electrical instruments, such as oscilloscopes
+request for one unit. The two remaining units will be for personal use only.
+Additional electrical instruments, such as oscilloscopes
 and signal generators for debugging, are not included in the budget as they will be
 accessible on campus.
 
 \subsection{Materials and Supplies}
-Table \ref{tab:abbreviated-bom} below breaks down the cost of the PCB
+Table \ref{tab:abbreviated-bom} breaks down the cost of the PCB
 fabrication and assembly as quoted by the supplier. The supplier contracted for
 TeachEE is Bittele (7PCB). Bittele takes care of both the fabrication and
 soldering of the PCBs. Moreover, Bittele takes the generated output from the EDA
@@ -373,9 +371,9 @@ project. Issues are likely to come in the PCB design and in the FPGA Real Time
 Logic (RTL) code. Software remains less of a concern as compile times are
 instantaneous when compared to FPGA synthesis or lead time of a new hardware
 revision. Software can still be a source of potential problems, however,
-hardware or FPGA failure are of greater severity. Given below is a table
-summarizing possible issues in the PCB and FPGA along with ways to reduce their
-possibility or recover from them.
+hardware or FPGA failure are of greater severity. Table \ref{tab:issue-mitigation}
+summarizes possible issues in the PCB and FPGA along with ways to reduce their
+probability or recover from them.
 
 \begin{table}[H]
     \caption{Potential Problems and Mitigation}
@@ -393,7 +391,7 @@ possibility or recover from them.
         Discrete ADC does not work.
         & Following the reference design given in the datasheet and
         installing differential ADC drivers for input protection.
-        & Use the built in ADC on the FPGA module. This built-in ADC satisfies our
+        & Use the built in ADC on the FPGA module. This built-in ADC satisfies the
         \SI{1}{\mega\samplepersec} and \SI{100}{\kilo\hertz} bandwidth
         requirements. \\
 
@@ -408,7 +406,7 @@ possibility or recover from them.
         FPGA Failure
         & Using an FPGA breakout board rather than doing a full design from
         scratch.
-        & Purchase a new module and replacing the broken one in the
+        & Purchase a new module and replace the broken one in the
         pin header.
         % PCB Total BOM Procurement & Bittele & \$126.67\\
         % PCB Assembly & Bittele & \$289.76\\
@@ -439,22 +437,21 @@ professional engineer.
 
 \section{Conclusion}
 
-As stated in the Executive Summary, the project is in a healthy state. Future
+In conclusion, the project is on schedule. Future
 work is delegated appropriately and clearly, and there are no forecasted
 blockages or serious issues.
 
-This report clearly articulates the design decisions involved in development and
-deployment. The blueprint provides certain requirements (cross platform,
-reliable, etc.) and how the design is derived from these requirements. For
+This report articulates the design decisions involved in development and
+deployment. It provides certain requirements (cross platform support,
+reliability, etc.) and how the design is derived from these requirements. For
 example, one requirement is high performance due to the desired sample rate for
-the device. From this requirement, design decision can be justified, in this
-case the choice of Tauri, since it utilizes Rust, a high performance systems
-language. The report consistently demonstrates this design process and explains
-the reasoning along the way.
+the device. From this requirement, design decision can be justified for Rust, a high performance systems
+language. The report explains this design process and the reasoning throughout
+and provides further elaboration in the appendices.
 
 The report also demonstrates wider awareness to the circumstance in which this
-project comes to fruition, with concern over impacts to society, the
-environment, and the general well being of people. Overall, TeachEE will be is
+project comes to fruition, with concerns over impacts to society, the
+environment, and the general well being of people. Overall, TeachEE is
 likely to be successful within the capstone project's scope.
 
 \newpage
@@ -566,13 +563,21 @@ likely to be successful within the capstone project's scope.
         \end{tabular}
     \end{table}
 
+        \section{TeachEE Desktop App Block Diagram}
+        \label{appendix:architecture}
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=\textwidth]{schematics/sw-architecture.png}
+        \caption{TeachEE Desktop App Architecture}
+    \end{figure}
+
         \section{TeachEE Desktop App Screenshots}
         \label{appendix:screenshot}
-            \begin{figure}[H]
-                \centering
-                \includegraphics[width=\textwidth]{./schematics/sw-screenshot.png}
-                \caption{TeachEE Desktop App Displaying a Triangle Wave}
-            \end{figure}
-        \end{landscape}
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=\textwidth]{./schematics/sw-screenshot.png}
+        \caption{TeachEE Desktop App Displaying a Triangle Wave}
+    \end{figure}
+        
     \end{appendices}
 \end{document}
