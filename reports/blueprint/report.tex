@@ -51,6 +51,7 @@
     \end{center}
 \end{titlepage}
 \setstretch{1.5}
+\pagenumbering{gobble}
 \section*{Executive Summary}
 
 This report outlines TeachEE, a device which facilitates online learning for
@@ -77,6 +78,7 @@ emergencies.
 \listoftables
 \newpage
 \setstretch{1.5}
+\pagenumbering{arabic}
 \section{Introduction} \label{sec:intro} % Ethan
 This blueprint outlines Group 18's capstone project TeachEE,
 originally proposed in ELEC 390 \cite{prop_390}, and provides the baseline
@@ -270,7 +272,14 @@ Javascript and operates in its own process; it communicates with the Storage
 component through message passing. JavaScript and Rust interoperability is
 enabled by serializing all messages into JavaScript Object Notation
 (JSON) strings. The relationship between the above-mentioned components is
-summarized in Appendix~\ref{appendix:architecture}.
+summarized in Figure~\ref{sw:architecture}.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\textwidth]{schematics/sw-architecture.png}
+    \caption{TeachEE Desktop App Architecture}
+    \label{sw:architecture}
+\end{figure}
 
 The performance of this architecture has been validated by displaying artificial
 data generated at the same sample rate as the real hardware. At present the app
@@ -562,14 +571,6 @@ likely to be successful within the capstone project's scope.
         Y1 & 1 & CRYSTAL 12.0000MHZ 20PF SMD & 12 MHz & ABLS & ABLS-12.000MHZ-20-B-3-H-T \\ \hline
         \end{tabular}
     \end{table}
-
-        \section{TeachEE Desktop App Block Diagram}
-        \label{appendix:architecture}
-    \begin{figure}[H]
-        \centering
-        \includegraphics[width=\textwidth]{schematics/sw-architecture.png}
-        \caption{TeachEE Desktop App Architecture}
-    \end{figure}
 
         \section{TeachEE Desktop App Screenshots}
         \label{appendix:screenshot}
