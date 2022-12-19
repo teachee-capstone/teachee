@@ -21,9 +21,31 @@ module ftdi_sync (
     output[1:0] led,
 
     // TeachEE IO Declarations
-    output[1:0] teachee_led
+    output reg[1:0] teachee_led
 );
 
+    assign ftdi_siwu_n = 1;
+    assign ftdi_rd_n = 1;
+    assign ftdi_wr_n = 1;
+    assign ftdi_oe_n = 1;
 
+    assign ftdi_data = 8'bZZZZ_ZZZZ;
 
+    reg[31:0] sys_counter = 0;
+    reg[31:0] ftdi_counter = 0;
+    always @(posedge sysclk) begin
+        sys_counter <= sys_counter + 1;
+        if (sys_counter == 6000000) begin
+            teachee_led[0] <= ~teachee_led[0];
+            sys_counter <= 0;
+        end
+    end
+
+    always @(posedge ftdiclk) begin
+        ftdi_counter <= ftdi_counter + 1;
+        if (ftdi_counter == 6000000) begin
+            teachee_led[1] <= ~teachee_led[1];
+            ftdi_counter <= 0;
+        end
+    end
 endmodule

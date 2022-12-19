@@ -9,7 +9,9 @@ create_clock -add -name sys_clk_pin -period 83.33 -waveform {0 41.66} [get_ports
 
 ## FTDI232Hq Clock Output
 set_property -dict { PACKAGE_PIN W4    IOSTANDARD LVCMOS33 } [get_ports { ftdiclk }]; #IO_L12N_T1_MRCC_34 Sch=pio[40]
+set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets {ftdiclk_IBUF}]
 create_clock -add -name ftdi_clk_pin -period 16.67 -waveform {0 8.33} [get_ports {ftdiclk}];
+
 
 
 ## LEDs
@@ -75,7 +77,7 @@ set_property -dict { PACKAGE_PIN J1    IOSTANDARD LVCMOS33 } [get_ports { ftdi_r
 #set_property -dict { PACKAGE_PIN V2    IOSTANDARD LVCMOS33 } [get_ports { pio33 }]; #IO_L5P_T0_34 Sch=pio[33]
 #set_property -dict { PACKAGE_PIN W3    IOSTANDARD LVCMOS33 } [get_ports { pio34 }]; #IO_L6N_T0_VREF_34 Sch=pio[34]
 #set_property -dict { PACKAGE_PIN V3    IOSTANDARD LVCMOS33 } [get_ports { pio35 }]; #IO_L6P_T0_34 Sch=pio[35]
-#set_property -dict { PACKAGE_PIN W5    IOSTANDARD LVCMOS33 } [get_ports { pio36 }]; #IO_L12P_T1_MRCC_34 Sch=pio[36]
+# set_property -dict { PACKAGE_PIN W5    IOSTANDARD LVCMOS33 } [get_ports { pio36 }]; #IO_L12P_T1_MRCC_34 Sch=pio[36]
 #set_property -dict { PACKAGE_PIN V4    IOSTANDARD LVCMOS33 } [get_ports { pio37 }]; #IO_L11N_T1_SRCC_34 Sch=pio[37]
 #set_property -dict { PACKAGE_PIN U4    IOSTANDARD LVCMOS33 } [get_ports { pio38 }]; #IO_L11P_T1_SRCC_34 Sch=pio[38]
 set_property -dict { PACKAGE_PIN V5    IOSTANDARD LVCMOS33 } [get_ports { ftdi_txe_n }]; #IO_L16N_T2_34 Sch=pio[39]
