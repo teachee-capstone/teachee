@@ -10,10 +10,10 @@ module ftdi_sync (
     input wire ftdi_rxf_n,
     input wire ftdi_txe_n,
 
-    output wire ftdi_rd_n,
-    output wire ftdi_wr_n,
-    output wire ftdi_siwu_n,
-    output wire ftdi_oe_n,
+    output reg ftdi_rd_n = 1,
+    output reg ftdi_wr_n = 1,
+    output reg ftdi_siwu_n = 1,
+    output reg ftdi_oe_n = 1,
 
     inout[7:0] ftdi_data,
 
@@ -23,29 +23,32 @@ module ftdi_sync (
     // TeachEE IO Declarations
     output reg[1:0] teachee_led
 );
-
-    assign ftdi_siwu_n = 1;
-    assign ftdi_rd_n = 1;
-    assign ftdi_wr_n = 1;
-    assign ftdi_oe_n = 1;
-
-    assign ftdi_data = 8'bZZZZ_ZZZZ;
-
-    reg[31:0] sys_counter = 0;
-    reg[31:0] ftdi_counter = 0;
-    always @(posedge sysclk) begin
-        sys_counter <= sys_counter + 1;
-        if (sys_counter == 6000000) begin
-            teachee_led[0] <= ~teachee_led[0];
-            sys_counter <= 0;
-        end
-    end
+    localparam
+        WAITING = 4'b0001,
+        WRITE = 4'b0010;
+    
+    reg[7:0] counter = 69;
+    reg[3:0] state = WAITING;
 
     always @(posedge ftdiclk) begin
-        ftdi_counter <= ftdi_counter + 1;
-        if (ftdi_counter == 6000000) begin
-            teachee_led[1] <= ~teachee_led[1];
-            ftdi_counter <= 0;
+        //counter <= counter + 1;
+        if (~ftdi_txe_n) begin
+            state <= WRITE;
+        end else begin
+            state <= WAITING;
         end
+        case (state)
+            WAITING: begin
+                teachee_led[0] <= 1;
+                ftdi_wr_n <= 1;    
+            end
+            WRITE: begin
+                teachee_led[0] <= 0;
+                ftdi_wr_n <= 0;
+            end
+        endcase
     end
+
+    // Bidirectional data logic
+    assign ftdi_data = (state == WRITE && ~ftdi_txe_n) ? counter : 8'bZZZZ_ZZZZ;
 endmodule
