@@ -36,7 +36,7 @@ module ftdi_sync (
 
     logic reset;
     reset_sync rst_sync (
-        .reset_in(~btn[0]),
+        .reset_in(btn[0]),
         .destination_clk(ftdi_clk),
         .reset_out(reset)
     );
@@ -66,7 +66,21 @@ module ftdi_sync (
             endcase
         end
     end
+    
+    ila_0 ethan_ila (
+        .clk(ftdiclk), // input wire clk
+
+
+        .probe0(btn), // input wire [31:0]  probe0  
+        .probe1(reset), // input wire [31:0]  probe1 
+        .probe2(state), // input wire [31:0]  probe2 
+        .probe3(ftdi_txe_n), // input wire [31:0]  probe3 
+        .probe4(counter), // input wire [31:0]  probe4 
+        .probe5(ftdi_wr_n), // input wire [31:0]  probe5 
+        .probe6(ftdi_rd_n), // input wire [31:0]  probe6 
+        .probe7(ftdi_oe_n) // input wire [31:0]  probe7
+    );
 
     // Bidirectional data logic
-    assign ftdi_data = (state == WRITE && ~ftdi_txe_n) ? counter : 8'bZZZZ_ZZZZ;
+    assign ftdi_data = ~ftdi_txe_n ? counter : 8'bZZZZ_ZZZZ;
 endmodule
