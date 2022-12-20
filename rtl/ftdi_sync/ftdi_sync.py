@@ -1,4 +1,9 @@
-from pylibftdi import Device
+from pylibftdi import Device, Driver
+
+print(Driver().list_devices())
+user_in = input("exit now or start polling? y/n")
+if user_in == 'y':
+    exit()
 
 with Device() as dev:
     # takes us from async to sync mode within ft245.
