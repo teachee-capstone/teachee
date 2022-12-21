@@ -1,6 +1,12 @@
-use std::f64::consts::TAU;
+use std::{
+    f64::consts::TAU,
+    sync::{Arc, Mutex},
+    thread,
+};
 
 use eframe::egui::*;
+
+use crate::{storage::Storage, usb_manager};
 
 #[derive(Debug, Clone, Copy, Default, PartialEq)]
 enum Channel {
@@ -12,7 +18,7 @@ enum Channel {
 
 #[derive(Debug, Default)]
 pub struct App {
-    flag: bool,
+    storage: Arc<Mutex<Storage>>,
     channel1: Channel,
     channel1_offset: f64,
     channel2: Channel,
@@ -20,8 +26,14 @@ pub struct App {
 }
 
 impl App {
-    pub fn flip_flag(&mut self) {
-        self.flag = !self.flag
+    pub fn new(_cc: &eframe::CreationContext<'_>) -> Self {
+        let storage = Arc::new(Mutex::new(Storage::default()));
+        let usb_storage = Arc::clone(&storage);
+        thread::spawn(move || usb_manager::usb_manager(usb_storage));
+        Self {
+            storage,
+            ..Self::default()
+        }
     }
 }
 
@@ -77,7 +89,7 @@ impl eframe::App for App {
         ctx.request_repaint();
 
         let Self {
-            flag,
+            storage,
             channel1,
             channel1_offset,
             channel2,
@@ -101,7 +113,11 @@ impl eframe::App for App {
                 ui.visuals_mut().button_frame = false;
                 widgets::global_dark_light_mode_switch(ui);
                 ui.separator();
-                ui.label(if *flag { "Flag: 1" } else { "Flag: 0" });
+                ui.label(if storage.lock().unwrap().read_flag() {
+                    "Flag: 1"
+                } else {
+                    "Flag: 0"
+                });
             })
         });
 

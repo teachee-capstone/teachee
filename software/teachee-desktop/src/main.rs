@@ -3,7 +3,7 @@
 
 use eframe::{self, epaint::Vec2, NativeOptions, Theme};
 
-use teachee_desktop::storage::Storage;
+use teachee_desktop::app::App;
 
 fn main() {
     tracing_subscriber::fmt::init();
@@ -14,13 +14,5 @@ fn main() {
         ..NativeOptions::default()
     };
 
-    eframe::run_native(
-        "TeachEE",
-        options,
-        Box::new(|_cc| {
-            let storage = Storage::default();
-            storage.clone().spawn_usb_manager_thread();
-            Box::new(storage)
-        }),
-    );
+    eframe::run_native("TeachEE", options, Box::new(|_cc| Box::new(App::new(_cc))));
 }
