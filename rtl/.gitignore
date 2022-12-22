@@ -76,3 +76,7 @@ xvlog.*
 *.ip_user_files
 *.srcs
 
+# For ModelSim
+work/
+*.wlf
+

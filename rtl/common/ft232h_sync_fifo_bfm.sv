@@ -1,4 +1,3 @@
-`timescale 1ns/1ps
 
 // Input into FT232H from FPGA
 // Output from FT232H to FPGA

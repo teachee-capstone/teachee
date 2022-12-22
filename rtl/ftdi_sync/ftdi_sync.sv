@@ -32,7 +32,6 @@ module ftdi_sync (
         WRITE
     } state_t;
     
-    logic[7:0] counter = 69; // Character code is E
     state_t state;
 
     var logic reset;
@@ -45,42 +44,10 @@ module ftdi_sync (
     always_ff @(posedge ftdiclk) begin
         if (reset) begin
             state <= WAITING;
-            ftdi_rd_n <= 1;
-            ftdi_wr_n <= 1;
-            ftdi_siwu_n <= 1;
-            ftdi_oe_n <= 1;
         end else begin
-            if (~ftdi_txe_n) begin
-                state <= WRITE;
-            end else begin
-                state <= WAITING;
-            end
-            case (state)
-                WAITING: begin
-                    teachee_led[0] <= 1;
-                    ftdi_wr_n <= 1;    
-                end
-                WRITE: begin
-                    teachee_led[0] <= 0;
-                    ftdi_wr_n <= 0;
-                end
-            endcase
+            // non-reset behaviour here.
         end
     end
-    
-    // ila_0 ethan_ila (
-    //     .clk(ftdiclk), // input wire clk
-
-
-    //     .probe0(btn), // input wire [31:0]  probe0  
-    //     .probe1(reset), // input wire [31:0]  probe1 
-    //     .probe2(state), // input wire [31:0]  probe2 
-    //     .probe3(ftdi_txe_n), // input wire [31:0]  probe3 
-    //     .probe4(counter), // input wire [31:0]  probe4 
-    //     .probe5(ftdi_wr_n), // input wire [31:0]  probe5 
-    //     .probe6(ftdi_rd_n), // input wire [31:0]  probe6 
-    //     .probe7(ftdi_oe_n) // input wire [31:0]  probe7
-    // );
 
     // Bidirectional data logic
     assign ftdi_data = ~ftdi_txe_n ? counter : 8'bZZZZ_ZZZZ;
