@@ -4,8 +4,10 @@ set WildcardFilter [lsearch -not -all -inline $WildcardFilter Memory]
 
 proc timed_tb {tb_name mod_name waves} {
     global name
-    vlog ../common/*.sv
-    vlog $tb_name.sv $mod_name.sv
+    vlog ../common/ft232h_bfm.sv
+    vlog ../common/ft232h_bfm_tb.sv
+    vlog ../common/verilog-axis/rtl/axis_fifo.v
+    # vlog $tb_name.sv $mod_name.sv
 
     vsim $tb_name
 
@@ -15,5 +17,5 @@ proc timed_tb {tb_name mod_name waves} {
         add wave $tb_name.$wave
     }
 
-    run 1000ns
+    run -all
 }

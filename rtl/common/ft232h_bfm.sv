@@ -1,3 +1,5 @@
+`default_nettype none
+`timescale 1ns / 1ps
 // Tx only BFM for FT232H in FT245 Synchronous mode.
 // Bit mode 0x40
 module ft232h_bfm (
@@ -12,13 +14,16 @@ module ft232h_bfm (
     input wire oe_n,
     input wire rst_n,
 
-    inout tri logic[7:0] data
+    // Set to input for simplicity
+    // Since this is a write only BFM
+    input wire[7:0] data,
 
     // PC Side fake output
-    output wire tdata,
+    output wire[7:0] tdata,
     output wire tvalid,
     input wire tready
 );
+
     initial begin
         clk = 0;
     end
@@ -28,8 +33,9 @@ module ft232h_bfm (
         clk = ~clk;
     end
 
+    wire s_axis_tready;
     axis_fifo #(
-        .DEPTH(0)
+        .DEPTH(2)
     ) tx_fifo (
         // Clock and reset
         .clk(clk),
@@ -38,12 +44,16 @@ module ft232h_bfm (
         // Input Side of FIFO
         .s_axis_tdata(data),
         .s_axis_tvalid(~wr_n),
-        .s_axis_tready(~txe_n),
+        .s_axis_tready(s_axis_tready),
 
         // Output Side of FIFO
         .m_axis_tdata(tdata),
         .m_axis_tvalid(tvalid),
         .m_axis_tready(tready)
     );
+    // handle inversion of ready signal to reflect ftdi chip
+    assign txe_n = ~s_axis_tready;
 
 endmodule
+
+`default_nettype wire
