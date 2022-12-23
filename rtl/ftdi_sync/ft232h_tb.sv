@@ -1,6 +1,6 @@
 `default_nettype none
 `timescale 1ns / 1ps
-
+// timed_tb ft232h_tb ft232h {sys_clk ftdi_clk state txe_n wr_n io_adbus tvalid tready write_data pc_tvalid pc_tready pc_tdata}
 module ft232h_tb;
 
 typedef enum int {
@@ -101,8 +101,8 @@ always @(posedge sys_clk) begin
     case(state)
         IDLE: begin
             // Set everything to initial values
-            write_data = 69;
-            tvalid = 0;
+            write_data <= 69;
+            tvalid <= 0;
             state <= WRITE_AWAIT;
         end
         WRITE_AWAIT: begin
@@ -112,7 +112,7 @@ always @(posedge sys_clk) begin
             end
         end
         WRITING: begin
-            if (tready) begin
+            if (tready && tvalid) begin
                 // keep going as long as FIFO is asking for more data
                 write_data <= write_data + 1;
             end else begin

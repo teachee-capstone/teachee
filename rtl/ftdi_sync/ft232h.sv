@@ -73,20 +73,25 @@ always_ff @(posedge ftdi_clk) begin
         end
         WRITE_AWAIT: begin
             // State to await the conditions to write to the FTDI
-            if (fifo_out_valid & ~txe_n) begin
+            if (fifo_out_valid && !txe_n) begin
                 wr_n <= 0;
                 data <= write_data;
                 state <= WRITING;
             end
         end
         WRITING: begin
+            // TEST: Write only one byte a time
+
+            wr_n <= 1;
+            state <= IDLE;
+
             // Keep writing as long as FTDI or async FIFO allows
-            if (~(fifo_out_valid & ~txe_n)) begin
-                wr_n <= 1;
-                state <= IDLE;
-            end else begin
-                data <= write_data;
-            end
+            // if (!(fifo_out_valid && !txe_n)) begin
+            //     wr_n <= 1;
+            //     state <= IDLE;
+            // end else begin
+            //     data <= write_data;
+            // end
         end 
         IDLE: begin
             if (fifo_out_valid) begin

@@ -73,17 +73,15 @@ always_ff @(posedge sys_clk) begin
         IDLE: begin
             if (tready) begin
                 tvalid <= 1;
-                write_data <= write_data + 1;
                 state <= WRITING;
             end
         end
         WRITING: begin
-            // write as long as tready is asserted by the async fifo
-            if (~tready) begin
+            if (tready && tvalid) begin
+                write_data <= write_data + 1;
+            end else begin
                 tvalid <= 0;
                 state <= IDLE;
-            end else begin
-                // write_data <= write_data + 1;
             end
             // tvalid <= 0;
             // state <= IDLE;
