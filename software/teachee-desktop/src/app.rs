@@ -1,12 +1,11 @@
 use std::{
     f64::consts::TAU,
     sync::{Arc, Mutex},
-    thread,
 };
 
 use eframe::egui::*;
 
-use crate::{storage::Storage, usb_manager};
+use crate::{storage::Storage, usb_manager::USBManager};
 
 #[derive(Debug, Clone, Copy, Default, PartialEq)]
 enum Channel {
@@ -26,10 +25,9 @@ pub struct App {
 }
 
 impl App {
-    pub fn new(_cc: &eframe::CreationContext<'_>) -> Self {
+    pub fn new() -> Self {
         let storage = Arc::new(Mutex::new(Storage::default()));
-        let usb_storage = Arc::clone(&storage);
-        thread::spawn(move || usb_manager::usb_manager(usb_storage));
+        USBManager::new(Arc::clone(&storage)).start();
         Self {
             storage,
             ..Self::default()

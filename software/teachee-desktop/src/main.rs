@@ -14,5 +14,5 @@ fn main() {
         ..NativeOptions::default()
     };
 
-    eframe::run_native("TeachEE", options, Box::new(|_cc| Box::new(App::new(_cc))));
+    eframe::run_native("TeachEE", options, Box::new(|_cc| Box::new(App::new())));
 }
