@@ -38,11 +38,16 @@ var logic[7:0] write_data;
 var logic tvalid;
 wire tready;
 
+var logic second_write;
+
 // get variable logic into initial vals
 initial begin
     sys_clk = 0;
     write_data = 69;
     tvalid = 0;
+    pc_tready = 0;
+    second_write = 0;
+
     state = IDLE;
 end 
 // generate sys_clk
@@ -117,9 +122,7 @@ always @(posedge sys_clk) begin
             end
         end
         CHECK_ON_PC: begin
-            if (pc_tvalid) begin
-                state <= READ_OUT;
-            end
+            // impl in other clock domain
         end
         READ_OUT: begin
             // Let the data come out on pc_tdata until valid bit flips
@@ -132,12 +135,26 @@ always @(posedge sys_clk) begin
 end
 
 always @(posedge ftdi_clk) begin
+    if (state == CHECK_ON_PC) begin
+        if (pc_tvalid) begin
+            state <= READ_OUT;
+        end
+    end
     if (state == READ_OUT) begin
         if (pc_tvalid) begin
             pc_tready <= 1;
         end else begin
             pc_tready <= 0;
-            state <= DONE;
+            state <= WRITE_AWAIT;
+            if (second_write) begin
+                state <= DONE;
+            end
+            second_write <= 1;
+            // if (second_write) begin
+            //     state <= DONE;
+            // end else  begin
+            //     state <= WRITE_AWAIT;
+            // end
         end
     end
 end 

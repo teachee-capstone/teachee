@@ -1,11 +1,10 @@
 `default_nettype none
-// Blink led[0] with sysclk
-// Blink led[1] with ftdi clock as verification that the device is functioning in synchronous mode.
+`timescale 1ns / 1ps
 
 // TODO: Write about ftdi set bit mode prerequisites here.
 module ftdi_sync (
-    input var logic sysclk, // 12 MHz provided on the CMOD
-    input var logic ftdiclk, // 60 MHz provided by the FTDI
+    input var logic sys_clk, // 12 MHz provided on the CMOD
+    input var logic ftdi_clk, // 60 MHz provided by the FTDI
 
     // FTDI Control Interface
     input var logic ftdi_rxf_n,
@@ -16,7 +15,7 @@ module ftdi_sync (
     output var logic ftdi_siwu_n,
     output var logic ftdi_oe_n,
 
-    inout tri logic[7:0] ftdi_data,
+    output var logic[7:0] ftdi_data,
 
     // CMOD IO Declarations
     input var logic[1:0] btn,
@@ -26,31 +25,72 @@ module ftdi_sync (
     output var logic[1:0] teachee_led
 );
 
-    // Use this for states instead of localparams!
-    typedef enum int {
-        WAITING,
-        WRITE
-    } state_t;
-    
-    state_t state;
+typedef enum int {
+    INIT,
+    IDLE,
+    WRITING
+} state_t;
 
-    var logic reset;
-    reset_sync rst_sync (
-        .reset_in(btn[0]),
-        .destination_clk(ftdiclk),
-        .reset_out(reset)
-    );
+state_t state = IDLE;
 
-    always_ff @(posedge ftdiclk) begin
-        if (reset) begin
-            state <= WAITING;
-        end else begin
-            // non-reset behaviour here.
+// wire sys_clk;
+// assign sys_clk = ftdi_clk;
+
+// Programmer data input side wires
+var logic[7:0] write_data;
+var logic tvalid;
+wire tready;
+
+ft232h usb (
+    .ftdi_clk(ftdi_clk),
+
+    .rxf_n(ftdi_rxf_n),
+    .txe_n(ftdi_txe_n),
+
+    .rd_n(ftdi_rd_n),
+    .wr_n(ftdi_wr_n),
+    .siwu_n(ftdi_siwu_n),
+    .oe_n(ftdi_oe_n),
+
+    .data(ftdi_data),
+
+    // Programmer AXIS Interface
+    .sys_clk(sys_clk),
+    .internal_fifo_rst(0),
+    .tdata(write_data),
+    .tvalid(tvalid),
+    .tready(tready)
+);
+
+always_ff @(posedge sys_clk) begin
+    // Do write state machine here
+    case (state)
+        INIT: begin
+            write_data <= 0;
+            tvalid <= 0;
+            state <= IDLE;
         end
-    end
+        IDLE: begin
+            if (tready) begin
+                tvalid <= 1;
+                write_data <= write_data + 1;
+                state <= WRITING;
+            end
+        end
+        WRITING: begin
+            // write as long as tready is asserted by the async fifo
+            if (~tready) begin
+                tvalid <= 0;
+                state <= IDLE;
+            end else begin
+                // write_data <= write_data + 1;
+            end
+            // tvalid <= 0;
+            // state <= IDLE;
+        end
+    endcase
+end
 
-    // Bidirectional data logic
-    assign ftdi_data = ~ftdi_txe_n ? counter : 8'bZZZZ_ZZZZ;
 endmodule
 
 `default_nettype wire

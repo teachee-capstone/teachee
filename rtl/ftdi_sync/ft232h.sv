@@ -37,7 +37,6 @@ ftdi_state_t state;
 
 // AXIS FIFO input interface
 // Overall flow is AXIS async FIFO -> ftdi module -> PC
-
 wire[7:0] write_data;
 wire fifo_out_valid;
 axis_async_fifo #(
@@ -54,6 +53,7 @@ axis_async_fifo #(
     // AXI Stream Output
     .m_clk(ftdi_clk),
     .m_rst(internal_fifo_rst),
+    // .m_axis_tdata(data), // connect directly to the FTDI output
     .m_axis_tdata(write_data),
     .m_axis_tvalid(fifo_out_valid),
     .m_axis_tready(~wr_n)
@@ -75,16 +75,17 @@ always_ff @(posedge ftdi_clk) begin
             // State to await the conditions to write to the FTDI
             if (fifo_out_valid & ~txe_n) begin
                 wr_n <= 0;
+                data <= write_data;
                 state <= WRITING;
             end
         end
         WRITING: begin
             // Keep writing as long as FTDI or async FIFO allows
-            if (~txe_n & fifo_out_valid) begin
-                data <= write_data;
-            end else begin
+            if (~(fifo_out_valid & ~txe_n)) begin
                 wr_n <= 1;
                 state <= IDLE;
+            end else begin
+                data <= write_data;
             end
         end 
         IDLE: begin
