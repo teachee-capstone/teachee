@@ -1,112 +1,147 @@
 `default_nettype none
+`timescale 1ns / 1ps
 
 module ft232h_tb;
 
-    wire [9:0] io_acbus;
-    wire [7:0] io_adbus;
-
-    var logic ft232h_reset_n;
-    var logic [7:0] o_host_data;
-    var logic host_write_en;
-    var logic host_full;
-    var logic [7:0] host_data;
-    var logic host_read_en;
-    var logic host_empty;
-
-    ft232h_sync_fifo_bfm i_ft232h_sync_fifo_bfm (
-        .io_acbus        (io_acbus        ),
-        .io_adbus        (io_adbus        ),
-        .i_ft232h_reset_n(ft232h_reset_n),
-        .o_host_data     (o_host_data ),
-        .i_host_write_en (host_write_en ),
-        .o_host_full     (host_full     ),
-        .i_host_data     (host_data  ),
-        .i_host_read_en  (host_read_en  ),
-        .o_host_empty    (host_empty    )
-    );
-
-    var logic sys_clk;
-    initial begin
-        sys_clk = 0;
-    end
-    // init FTDI clock (assuming this is coming from)
-    always begin
-        #5
-        sys_clk = ~sys_clk;
-    end
-
-
-    // Initialize my module and test it against the BFM.
-    var logic[7:0] write_data;
-    var logic write_valid;
-
-    var logic read_en;
-    wire read_valid;
-    ft232h DUT (
-        .clk(sys_clk),
-
-        .rxf_n(io_acbus[0]),
-        .txe_n(io_acbus[1]),
-
-        .rd_n(io_acbus[2]),
-        .wr_n(io_acbus[3]),
-        .siwu_n(io_acbus[4]),
-        .oe_n(io_acbus[6]),
-
-        .data(io_adbus),
-
-        .write_data(write_data),
-        .write_valid(write_valid),
-
-        .read_en(read_en),
-        .read_valid(read_valid)
-    );
-
-
 typedef enum int {
-    RESET,
     IDLE,
-    WRITE_SETUP,
+    WRITE_AWAIT,
     WRITING,
-    READ_SETUP,
-    READING,
+    CHECK_ON_PC,
+    READ_OUT,
     DONE
-} tb_state_t;
+} ft232h_tb_state_t;
 
-tb_state_t tb_state = RESET;
+ft232h_tb_state_t state;
+
+wire ftdi_clk;
+var logic sys_clk;
+
+wire rxf_n;
+wire txe_n;
+
+wire rd_n;
+wire wr_n;
+wire siwu_n;
+wire oe_n;
+wire rst_n;
+
+wire[7:0] io_adbus;
+
+// PC Side wires (FIFO output)
+wire[7:0] pc_tdata;
+wire pc_tvalid;
+var logic pc_tready;
+
+// Programmer data input side wires
+var logic[7:0] write_data;
+var logic tvalid;
+wire tready;
+
+// get variable logic into initial vals
+initial begin
+    sys_clk = 0;
+    write_data = 69;
+    tvalid = 0;
+    state = IDLE;
+end 
+// generate sys_clk
+always begin
+    #100
+    sys_clk = ~sys_clk;
+end 
+
+ft232h controller (
+    .ftdi_clk(ftdi_clk),
+
+    .rxf_n(rxf_n),
+    .txe_n(txe_n),
+
+    .rd_n(rd_n),
+    .wr_n(wr_n),
+    .siwu_n(siwu_n),
+    .oe_n(oe_n),
+
+    .data(io_adbus),
+
+    // Programmer AXIS Interface
+    .sys_clk(sys_clk),
+    .internal_fifo_rst(0),
+    .tdata(write_data),
+    .tvalid(tvalid),
+    .tready(tready)
+);
+
+ft232h_bfm bfm (
+    .clk(ftdi_clk),
+
+    .rxf_n(rxf_n),
+    .txe_n(txe_n),
+
+    .rd_n(rd_n),
+    .wr_n(wr_n),
+    .siwu_n(siwu_n),
+    .oe_n(oe_n),
+    .rst_n(rst_n),
+
+    .data(io_adbus),
+
+    // PC Side Signals (FIFO output)
+    .tdata(pc_tdata),
+    .tvalid(pc_tvalid),
+    .tready(pc_tready)
+);
 
 always @(posedge sys_clk) begin
-    case (tb_state)
-        RESET: begin
-            host_write_en <= 0;
-            host_read_en <= 0;
-
-            ft232h_reset_n <= 0;
-            
-            tb_state <= IDLE;
-        end
+    case(state)
         IDLE: begin
-            ft232h_reset_n <= 1;
-
-            tb_state <= WRITE_SETUP;
+            // Set everything to initial values
+            write_data = 69;
+            tvalid = 0;
+            state <= WRITE_AWAIT;
         end
-        WRITE_SETUP: begin
-            write_data <= 69; // Write Character E
-            write_valid <= 1;
-            tb_state <= WRITING;
+        WRITE_AWAIT: begin
+            if (tready) begin
+                tvalid <= 1;
+                state <= WRITING;
+            end
         end
         WRITING: begin
-            write_valid <= 0;
-            host_read_en <= 1;
-            tb_state <= READING;
+            if (tready) begin
+                // keep going as long as FIFO is asking for more data
+                write_data <= write_data + 1;
+            end else begin
+                tvalid <= 0;
+                // after finishing, begin process of checking PC output
+                state <= CHECK_ON_PC;
+            end
         end
-        READING: begin
-            host_read_en <= 0;
-            tb_state <= RESET;
+        CHECK_ON_PC: begin
+            if (pc_tvalid) begin
+                state <= READ_OUT;
+            end
+        end
+        READ_OUT: begin
+            // Let the data come out on pc_tdata until valid bit flips
+            // state transition from this happens in the other clock domain
+        end
+        DONE: begin
             $stop;
         end
     endcase
 end
+
+always @(posedge ftdi_clk) begin
+    if (state == READ_OUT) begin
+        if (pc_tvalid) begin
+            pc_tready <= 1;
+        end else begin
+            pc_tready <= 0;
+            state <= DONE;
+        end
+    end
+end 
+
 endmodule
 
 `default_nettype wire

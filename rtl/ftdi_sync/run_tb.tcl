@@ -7,7 +7,8 @@ proc timed_tb {tb_name mod_name waves} {
     vlog ../common/ft232h_bfm.sv
     vlog ../common/ft232h_bfm_tb.sv
     vlog ../common/verilog-axis/rtl/axis_fifo.v
-    # vlog $tb_name.sv $mod_name.sv
+    vlog ../common/verilog-axis/rtl/axis_async_fifo.v
+    vlog $tb_name.sv $mod_name.sv
 
     vsim $tb_name
 

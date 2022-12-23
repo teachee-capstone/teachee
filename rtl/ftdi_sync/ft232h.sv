@@ -1,9 +1,8 @@
 `default_nettype none
+`timescale 1ns / 1ps
 
 module ft232h (
-    input var logic clk,
-
-    input var logic sys_reset, // FPGA level reset, not the chip reset.
+    input var logic ftdi_clk,
 
     // Control Inputs
     input var logic rxf_n,
@@ -16,84 +15,87 @@ module ft232h (
     output var logic oe_n,
 
     // Data Bus
-    inout tri logic[7:0] data,
+    output var logic[7:0] data,
 
-    // Programmer Interface
-    input var logic write_valid, // hold high if data on write_data input can be written
-    input var logic[7:0] write_data,
-
-    input var logic read_en, // input high when module user wants data from the FTDI
-    output var logic read_valid // asserted when a read byte is on read_data output.
+    // Programmer AXIS Interface
+    input wire sys_clk,
+    input wire internal_fifo_rst,
+    input wire[7:0] tdata,
+    input wire tvalid,
+    output wire tready
 );
 
 // Define states for the device
 typedef enum int {
-    IDLE,
+    INIT,
+    WRITE_AWAIT,
     WRITING,
-    READING,
-    SWAP_IO,
-    END_IO
+    IDLE
 } ftdi_state_t;
 
 ftdi_state_t state;
 
-// General Idea:
+// AXIS FIFO input interface
+// Overall flow is AXIS async FIFO -> ftdi module -> PC
 
-// ADC Samples (12 MHz clock domain)-> AXIS STREAM -> AXIS ASYNC FIFO -> FT232H
+wire[7:0] write_data;
+wire fifo_out_valid;
+axis_async_fifo #(
+    .DEPTH(2),
+    .DATA_WIDTH(8)
+) tx_fifo (
+    // AXI Stream Input
+    .s_clk(sys_clk),
+    .s_rst(internal_fifo_rst),
+    .s_axis_tdata(tdata),
+    .s_axis_tvalid(tvalid),
+    .s_axis_tready(tready),
 
-var logic[7:0] read_data;
+    // AXI Stream Output
+    .m_clk(ftdi_clk),
+    .m_rst(internal_fifo_rst),
+    .m_axis_tdata(write_data),
+    .m_axis_tvalid(fifo_out_valid),
+    .m_axis_tready(~wr_n)
+);
 
-always_ff @(posedge clk) begin
-    if (sys_reset) begin
-        rd_n <= 1;
-        wr_n <= 1;
-        siwu_n <= 1;
-        oe_n <= 1;
-    end else begin
-        // Logic goes here
-        case (state)
-            IDLE: begin
-                if (~txe_n & write_valid) begin
-                    state <= WRITING;
-                    // set wr_n to initiate the write
-                    wr_n <= 0;
-                end else if (~rxf_n & read_en) begin
-                    state <= SWAP_IO;
-                    // set output enable to prepare for read
-                    oe_n <= 0;
-                end
+always_ff @(posedge ftdi_clk) begin
+    // Run the control state machine here
+    case (state)
+        INIT: begin
+            // Init signals into disabled state
+            rd_n <= 1;
+            wr_n <= 1;
+            siwu_n <= 1;
+            oe_n <= 1;
+
+            state <= WRITE_AWAIT;
+        end
+        WRITE_AWAIT: begin
+            // State to await the conditions to write to the FTDI
+            if (fifo_out_valid & ~txe_n) begin
+                wr_n <= 0;
+                state <= WRITING;
             end
-            WRITING: begin
-                if (~(~txe_n & write_valid)) begin
-                    // FTDI can no longer accept additional data, return to to
-                    // IDLE state
-                    state <= END_IO; // effectively waiting for SW to consume the data
-                end
-            end
-            SWAP_IO: begin
-                // take a cycle to 
-                rd_n <= 0; // set rd_n low after enabling the output.
-                state <= READING;
-            end
-            READING: begin
-                read_valid <= 1; 
-                if (~(~rxf_n & read_en)) begin
-                    state <= END_IO;
-                    read_valid <= 0;
-                end
-            end
-            END_IO: begin
+        end
+        WRITING: begin
+            // Keep writing as long as FTDI or async FIFO allows
+            if (~txe_n & fifo_out_valid) begin
+                data <= write_data;
+            end else begin
                 wr_n <= 1;
-                oe_n <= 1;
-                rd_n <= 1;
                 state <= IDLE;
             end
-            default: state <= END_IO;
-        endcase
-    end
+        end 
+        IDLE: begin
+            if (fifo_out_valid) begin
+                // Start write process again when we have data in the fifo
+                state <= WRITE_AWAIT;
+            end
+        end
+        default: state <= IDLE;
+    endcase
 end
-
-assign data = state == WRITING ? write_data : 8'bZZZZ_ZZZZ;
 
 endmodule
 

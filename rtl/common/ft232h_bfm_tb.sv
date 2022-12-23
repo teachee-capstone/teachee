@@ -1,6 +1,7 @@
 `default_nettype none
 `timescale 1ns / 1ps
 // Test bench for the TX only BFM
+// timed_tb ft232h_bfm_tb ft232h_bfm {state clk rxf_n txe_n rd_n wr_n siwu_n oe_n rst_n write_data tdata tvalid tready pc_data}
 module ft232h_bfm_tb;
 
 typedef enum int {
@@ -11,7 +12,7 @@ typedef enum int {
     CHECK_ON_PC,
     READ_OUT,
     DONE
-} ft232h_tb_state_t;
+} ft232h_bfm_tb_state_t;
 
 wire clk;
 
@@ -31,7 +32,7 @@ wire[7:0] tdata;
 wire tvalid;
 var logic tready;
 
-ft232h_tb_state_t state;
+ft232h_bfm_tb_state_t state;
 initial begin
     rd_n = 1;
     wr_n = 1;
