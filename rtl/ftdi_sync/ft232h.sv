@@ -5,101 +5,73 @@ module ft232h (
     input var logic ftdi_clk,
 
     // Control Inputs
-    input var logic rxf_n,
-    input var logic txe_n,
+    input var logic ftdi_rxf_n,
+    input var logic ftdi_txe_n,
 
     // Control Outputs
-    output var logic rd_n,
-    output var logic wr_n,
-    output var logic siwu_n,
-    output var logic oe_n,
+    output var logic ftdi_rd_n,
+    output var logic ftdi_wr_n,
+    output var logic ftdi_siwu_n,
+    output var logic ftdi_oe_n,
 
     // Data Bus
-    output var logic[7:0] data,
+    output var logic[7:0] ftdi_adbus,
 
     // Programmer AXIS Interface
-    input wire sys_clk,
-    input wire internal_fifo_rst,
-    input wire[7:0] tdata,
-    input wire tvalid,
-    output wire tready
+    axis_input_io sys_axis
 );
 
 // Define states for the device
 typedef enum int {
     INIT,
-    WRITE_AWAIT,
-    WRITING,
-    IDLE
+    AWAIT_USB_HOST,
+    SEND_TO_USB_HOST
 } ftdi_state_t;
 
 ftdi_state_t state;
 
-// AXIS FIFO input interface
-// Overall flow is AXIS async FIFO -> ftdi module -> PC
-wire[7:0] write_data;
-wire fifo_out_valid;
-axis_async_fifo #(
+// AXIS stream we will write to the FT232H
+axis_output_io ftdi_axis;
+assign ftdi_axis.clk = ftdi_clk;
+assign ftdi_data = ftdi_axis.tdata;
+
+axis_async_fifo_wrapper #(
     .DEPTH(2),
     .DATA_WIDTH(8)
-) tx_fifo (
-    // AXI Stream Input
-    .s_clk(sys_clk),
-    .s_rst(internal_fifo_rst),
-    .s_axis_tdata(tdata),
-    .s_axis_tvalid(tvalid),
-    .s_axis_tready(tready),
-
-    // AXI Stream Output
-    .m_clk(ftdi_clk),
-    .m_rst(internal_fifo_rst),
-    // .m_axis_tdata(data), // connect directly to the FTDI output
-    .m_axis_tdata(write_data),
-    .m_axis_tvalid(fifo_out_valid),
-    .m_axis_tready(~wr_n)
+) fpga_to_host_fifo (
+    .axis_input(sys_axis),
+    .axis_output(ftdi_axis)
 );
 
-always_ff @(posedge ftdi_clk) begin
+// AXI Stream consumer state machine that sends data to FTDI
+always_ff @(posedge ftdi_axis.clk) begin
     // Run the control state machine here
     case (state)
         INIT: begin
             // Init signals into disabled state
-            rd_n <= 1;
-            wr_n <= 1;
-            siwu_n <= 1;
-            oe_n <= 1;
+            ftdi_rd_n <= 1;
+            ftdi_wr_n <= 1;
+            ftdi_siwu_n <= 1;
+            ftdi_oe_n <= 1;
 
             state <= WRITE_AWAIT;
         end
-        WRITE_AWAIT: begin
-            // State to await the conditions to write to the FTDI
-            if (fifo_out_valid && !txe_n) begin
-                wr_n <= 0;
-                data <= write_data;
-                state <= WRITING;
+        AWAIT_USB_HOST: begin
+            if (!ftdi_txe_n && ftdi_axis.tvalid) begin
+                ftdi_wr_n <= 0;
+                ftdi_axis.tready <= 1;
+                state <= SEND_TO_USB_HOST;
             end
         end
-        WRITING: begin
-            // TEST: Write only one byte a time
-
-            wr_n <= 1;
-            state <= IDLE;
-
-            // Keep writing as long as FTDI or async FIFO allows
-            // if (!(fifo_out_valid && !txe_n)) begin
-            //     wr_n <= 1;
-            //     state <= IDLE;
-            // end else begin
-            //     data <= write_data;
-            // end
+        SEND_TO_USB_HOST: begin
+            // If we fail the send condition. roll back to await state
+            if (!(!ftdi_txe_n && ftdi_axis.tvalid && ftdi_axis.tready)) begin
+                ftdi_wr_n <= 1;
+                ftdi_axis.tready <= 0;
+                state <= AWAIT_USB_HOST;
+            end
         end 
-        IDLE: begin
-            if (fifo_out_valid) begin
-                // Start write process again when we have data in the fifo
-                state <= WRITE_AWAIT;
-            end
-        end
-        default: state <= IDLE;
+        default: state <= INIT;
     endcase
 end
 
