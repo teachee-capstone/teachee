@@ -28,63 +28,55 @@ module ftdi_sync (
 typedef enum int {
     INIT,
     IDLE,
-    WRITING
+    SEND_TO_HOST
 } state_t;
 
 state_t state = IDLE;
 
-// wire sys_clk;
-// assign sys_clk = ftdi_clk;
-
 // Programmer data input side wires
-var logic[7:0] write_data;
-var logic tvalid;
-wire tready;
+axis_io sys_axis (
+    .clk(sys_clk),
+    .rst(0)
+);
 
-ft232h usb (
+
+ft232h usb_fifo (
     .ftdi_clk(ftdi_clk),
 
-    .rxf_n(ftdi_rxf_n),
-    .txe_n(ftdi_txe_n),
+    .ftdi_rxf_n(ftdi_rxf_n),
+    .ftdi_txe_n(ftdi_txe_n),
 
-    .rd_n(ftdi_rd_n),
-    .wr_n(ftdi_wr_n),
-    .siwu_n(ftdi_siwu_n),
-    .oe_n(ftdi_oe_n),
+    .ftdi_rd_n(ftdi_rd_n),
+    .ftdi_wr_n(ftdi_wr_n),
+    .ftdi_siwu_n(ftdi_siwu_n),
+    .ftdi_oe_n(ftdi_oe_n),
 
-    .data(ftdi_data),
+    .ftdi_adbus(ftdi_data),
 
     // Programmer AXIS Interface
-    .sys_clk(sys_clk),
-    .internal_fifo_rst(0),
-    .tdata(write_data),
-    .tvalid(tvalid),
-    .tready(tready)
+    .sys_axis(sys_axis.Sink)
 );
 
 always_ff @(posedge sys_clk) begin
     // Do write state machine here
     case (state)
         INIT: begin
-            write_data <= 0;
-            tvalid <= 0;
+            sys_axis.tdata <= 69;
+            sys_axis.tvalid <= 0;
             state <= IDLE;
         end
         IDLE: begin
-            if (tready) begin
-                tvalid <= 1;
-                state <= WRITING;
+            if (sys_axis.tready) begin
+                sys_axis.tvalid <= 1;
+                state <= SEND_TO_HOST;
             end
         end
-        WRITING: begin
-            if (tready && tvalid) begin
-                write_data <= write_data + 1;
-            end else begin
-                tvalid <= 0;
-                state <= IDLE;
+        SEND_TO_HOST: begin
+            if (sys_axis.tready && sys_axis.tvalid) begin
+                sys_axis.tdata <= sys_axis.tdata + 1;
             end
-            // tvalid <= 0;
-            // state <= IDLE;
+            sys_axis.tvalid <= 0;
+            state <= IDLE;
         end
     endcase
 end

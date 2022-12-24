@@ -18,7 +18,7 @@ module ft232h (
     output var logic[7:0] ftdi_adbus,
 
     // Programmer AXIS Interface
-    axis_input_io sys_axis
+    axis_io.Sink sys_axis
 );
 
 // Define states for the device
@@ -31,16 +31,18 @@ typedef enum int {
 ftdi_state_t state;
 
 // AXIS stream we will write to the FT232H
-axis_output_io ftdi_axis;
-assign ftdi_axis.clk = ftdi_clk;
-assign ftdi_data = ftdi_axis.tdata;
+axis_io ftdi_axis (
+    .clk(ftdi_clk),
+    .rst(0)
+);
+assign ftdi_adbus = ftdi_axis.tdata;
 
 axis_async_fifo_wrapper #(
     .DEPTH(2),
     .DATA_WIDTH(8)
 ) fpga_to_host_fifo (
-    .axis_input(sys_axis),
-    .axis_output(ftdi_axis)
+    .sink(sys_axis),
+    .source(ftdi_axis.Source)
 );
 
 // AXI Stream consumer state machine that sends data to FTDI
@@ -54,7 +56,7 @@ always_ff @(posedge ftdi_axis.clk) begin
             ftdi_siwu_n <= 1;
             ftdi_oe_n <= 1;
 
-            state <= WRITE_AWAIT;
+            state <= AWAIT_USB_HOST;
         end
         AWAIT_USB_HOST: begin
             if (!ftdi_txe_n && ftdi_axis.tvalid) begin
@@ -64,12 +66,15 @@ always_ff @(posedge ftdi_axis.clk) begin
             end
         end
         SEND_TO_USB_HOST: begin
+            ftdi_wr_n <= 1;
+            ftdi_axis.tready <= 0;
+            state <= AWAIT_USB_HOST;
             // If we fail the send condition. roll back to await state
-            if (!(!ftdi_txe_n && ftdi_axis.tvalid && ftdi_axis.tready)) begin
-                ftdi_wr_n <= 1;
-                ftdi_axis.tready <= 0;
-                state <= AWAIT_USB_HOST;
-            end
+            // if (!(!ftdi_txe_n && ftdi_axis.tvalid && ftdi_axis.tready)) begin
+            //     ftdi_wr_n <= 1;
+            //     ftdi_axis.tready <= 0;
+            //     state <= AWAIT_USB_HOST;
+            // end
         end 
         default: state <= INIT;
     endcase

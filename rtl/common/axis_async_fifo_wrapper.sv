@@ -2,8 +2,8 @@ module axis_async_fifo_wrapper #(
     parameter DEPTH = 2,
     parameter DATA_WIDTH = 8
 ) (
-    axis_input_io axis_input,
-    axis_output_io axis_output,
+    axis_io.Sink sink,
+    axis_io.Source source
 );
 
     axis_async_fifo #(
@@ -11,18 +11,18 @@ module axis_async_fifo_wrapper #(
         .DATA_WIDTH(DATA_WIDTH)
     ) tx_fifo (
         // AXI Stream Input
-        .s_clk(axis_input.clk),
-        .s_rst(axis_input.rst),
-        .s_axis_tdata(axis_input.tdata),
-        .s_axis_tvalid(axis_input.tvalid),
-        .s_axis_tready(axis_input.tready),
+        .s_clk(sink.clk),
+        .s_rst(sink.rst),
+        .s_axis_tdata(sink.tdata),
+        .s_axis_tvalid(sink.tvalid),
+        .s_axis_tready(sink.tready),
 
         // AXI Stream Output
-        .m_clk(axis_output.clk),
-        .m_rst(axis_output.rst),
-        .m_axis_tdata(axis_output.tdata),
-        .m_axis_tvalid(axis_output.tvalid),
-        .m_axis_tready(axis_output.tready)
+        .m_clk(source.clk),
+        .m_rst(source.rst),
+        .m_axis_tdata(source.tdata),
+        .m_axis_tvalid(source.tvalid),
+        .m_axis_tready(source.tready)
     );
 
 endmodule
