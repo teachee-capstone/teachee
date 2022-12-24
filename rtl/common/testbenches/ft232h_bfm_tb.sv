@@ -1,7 +1,8 @@
 `default_nettype none
 `timescale 1ns / 1ps
+
 // Test bench for the TX only BFM
-// timed_tb ft232h_bfm_tb ft232h_bfm {state clk rxf_n txe_n rd_n wr_n siwu_n oe_n rst_n write_data tdata tvalid tready pc_data}
+// timed_tb ftdi_sync ft232h_bfm_tb {state clk rxf_n txe_n rd_n wr_n siwu_n oe_n rst_n write_data tdata tvalid tready pc_data}
 module ft232h_bfm_tb;
 
 typedef enum int {
