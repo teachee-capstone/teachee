@@ -72,3 +72,11 @@ xvlog.*
 ## checkpoint files
 *.dcp
 
+*.gen
+*.ip_user_files
+*.srcs
+
+# For ModelSim
+work/
+*.wlf
+
