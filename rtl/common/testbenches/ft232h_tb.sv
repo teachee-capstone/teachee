@@ -1,7 +1,6 @@
 `default_nettype none
 `timescale 1ns / 1ps
-// timed_tb ft232h_tb ft232h {sys_clk ftdi_clk state ftdi_txe_n ftdi_wr_n ftdi_adbus sys_axis.tdata sys_axis.tready sys_axis.tvalid pc_tvalid pc_tready pc_tdata}
-
+// timed_tb ftdi_sync ft232h_tb {sys_clk ftdi_clk state ftdi_txe_n ftdi_wr_n ftdi_adbus sys_axis.tdata sys_axis.tready sys_axis.tvalid pc_tvalid pc_tready pc_tdata}
 module ft232h_tb;
 
 typedef enum int {
