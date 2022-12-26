@@ -8,15 +8,30 @@ enum Channel {
     Off,
     Sine,
     Cos,
+    FTDI,
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct App {
     flag: bool,
+    pub sample_buf: [u8; 100],
     channel1: Channel,
     channel1_offset: f64,
     channel2: Channel,
     channel2_offset: f64,
+}
+
+impl Default for App {
+    fn default() -> Self {
+        Self {
+            flag: Default::default(),
+            sample_buf: [0; 100],
+            channel1: Default::default(),
+            channel1_offset: Default::default(),
+            channel2: Default::default(),
+            channel2_offset: Default::default(),
+        }
+    }
 }
 
 impl App {
@@ -31,13 +46,24 @@ fn generate_points(
     step: f64,
     channel: &Channel,
     offset: &f64,
+    buf: &[u8]
 ) -> Vec<[f64; 2]> {
     if let Channel::Off = channel {
         Vec::new()
+    } else if let Channel::FTDI = channel {
+        let mut v = Vec::with_capacity(100);
+        for (i, sample) in buf.iter().enumerate() {
+            v.push([i as f64, *sample as f64]);
+        }
+        v
     } else {
         let f = match channel {
             Channel::Sine => f64::sin,
             Channel::Cos => f64::cos,
+            Channel::FTDI => {
+                println!("We fucked up");
+                unreachable!()
+            }
             Channel::Off => unreachable!(),
         };
 
@@ -60,6 +86,7 @@ fn channel_control(ui: &mut Ui, label: &str, channel: &mut Channel, offset: &mut
                     ui.selectable_value(channel, Channel::Off, "Off");
                     ui.selectable_value(channel, Channel::Sine, "Sin");
                     ui.selectable_value(channel, Channel::Cos, "Cos");
+                    ui.selectable_value(channel, Channel::FTDI, "FTDI Byte Stream");
                 });
 
             ui.add(
@@ -82,7 +109,7 @@ impl eframe::App for App {
             channel1_offset,
             channel2,
             channel2_offset,
-            ..
+            sample_buf,
         } = self;
 
         SidePanel::right("controls")
@@ -108,8 +135,8 @@ impl eframe::App for App {
         CentralPanel::default().show(ctx, |ui| {
             ScrollArea::vertical().show(ui, |ui| {
                 let lines = [
-                    generate_points(0, 1000, 0.01, channel1, channel1_offset),
-                    generate_points(0, 1000, 0.01, channel2, channel2_offset),
+                    generate_points(0, 1000, 0.01, channel1, channel1_offset, sample_buf),
+                    generate_points(0, 1000, 0.01, channel2, channel2_offset, sample_buf),
                 ]
                 .into_iter()
                 .map(plot::Line::new);
