@@ -10,7 +10,7 @@ pub fn ft_manger(storage: &mut Storage) -> Result<(), DeviceTypeError> {
     const LATENCY_TIMER: Duration = Duration::from_millis(16);
     const IN_TRANSFER_SIZE: u32 = 0x10000;
 
-    let mut ft = Ft232h::with_description("TeachEE")?;
+    let mut ft = Ft232h::with_description("TeachEE Ethan Peterson")?;
     ft.set_bit_mode(MASK, BitMode::Reset)?;
     thread::sleep(Duration::from_millis(10));
 
@@ -19,9 +19,20 @@ pub fn ft_manger(storage: &mut Storage) -> Result<(), DeviceTypeError> {
     ft.set_usb_parameters(IN_TRANSFER_SIZE)?;
     ft.set_flow_control_rts_cts()?;
 
+    let mut buf = vec![0u8; 100];
+
     loop {
         // read data here
-        storage.app.lock().unwrap().flip_flag();
+        let num_bytes: usize = dbg!(ft.read(&mut buf).unwrap());
+        // println!("{:?}", &array[0..num_bytes]);
+
+        {
+            let mut app = storage.app.lock().unwrap();
+            for (i, sample) in buf.iter().enumerate() {
+                app.sample_buf[i] = *sample;
+            }
+            app.flip_flag();
+        }
     }
 }
 
