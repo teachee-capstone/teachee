@@ -1,10 +1,11 @@
 `default_nettype none
 `timescale 1ns / 1ps
 
-// Read only BFM for the XADC in the CMOD A7 35T
-// This module mocks the DRP and status signals provided by the xilinx IP wizard.
-// It is assumed that the wizard was set to convert channels 4 and 12 continuously.
-
+// Read only BFM for the XADC in the CMOD A7 35T This module mocks the DRP and
+// status signals provided by the xilinx IP wizard. It is assumed that the
+// wizard was set to convert channels 4 and 12 continuously. NOTE: this BFM only
+// triggers the EOS signal, it will need to be revised if single conversions are
+// used.
 module xadc_bfm (
     // Clock and reset
     input wire dclk_in,

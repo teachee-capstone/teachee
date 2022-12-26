@@ -54,6 +54,7 @@ wire xadc_eoc;
 wire xadc_alarm;
 wire xadc_busy;
 wire[4:0] xadc_channel;
+// TODO: Make an XADC axis wrapper
 xadc_wiz_0 cmod_xadc_inst (
   // Clock and Reset
   .dclk_in(sys_clk),          // input wire dclk_in
