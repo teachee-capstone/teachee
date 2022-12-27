@@ -11,6 +11,9 @@
 // use '0 to expand to zero out a whole port / vec, should refactor accordingly for this
 // Up the sys_clk to 100 MHz with a PLL Critical since chip wasn't flashing properly due to ratio between sys_clk and JTAG clock. Had to manually lower JTAG clock
 // Get rid of incremental compiles on all projects
+// NOTE: consider git adding xci file since it holds the ila / IP config (double check this) also needs to be re synthed on the users machine
+// Indent everything in the module
+// Switch to KDE
 
 
 // Tutorial used to generate the ADC IP core from Xilinx: https://www.youtube.com/watch?v=2j4UHLYqBDI
@@ -171,35 +174,6 @@ always_ff @(posedge sys_clk) begin
         end
     endcase
 end
-    // if (xadc_dready) begin
-
-    //     sys_axis.tdata <= xadc_data[11:4];
-    //     sys_axis.tvalid <= 1;
-    //     // state transition here
-    //     // wait for tvalid and tready to be high
-    // end
-    // case (state)
-    //     INIT: begin
-    //         sys_axis.tdata <= 0;
-    //         sys_axis.tvalid <= 0;
-    //         state <= IDLE;
-    //     end
-    //     IDLE: begin
-    //         if (sys_axis.tready) begin
-    //             sys_axis.tvalid <= 1;
-    //             state <= SEND_TO_HOST;
-    //         end
-    //     end
-    //     SEND_TO_HOST: begin
-    //         if (sys_axis.tready && sys_axis.tvalid) begin
-    //             sys_axis.tdata <= sys_axis.tdata + 1;
-    //         end
-    //         sys_axis.tvalid <= 0;
-    //         state <= IDLE;
-    //     end
-    // endcase
-// end
-
 
 ila_0 xadc_fsm_ila (
 	.clk(sys_clk), // input wire clk
