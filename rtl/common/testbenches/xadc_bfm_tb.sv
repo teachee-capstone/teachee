@@ -1,6 +1,8 @@
 `default_nettype none
 `timescale 1ns / 1ps
 
+// timed_tb xadc xadc_bfm_tb {dclk_in reset_in state daddr_in den_in drdy_out do_out eos_out current_addr}
+
 // Runs a read cycle against the BFM to verify its function. In this tb, I will
 // read from both the current monitor and voltage channel addresses for teachee
 module xadc_bfm_tb;
