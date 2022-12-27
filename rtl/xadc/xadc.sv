@@ -1,9 +1,18 @@
 `default_nettype none
 `timescale 1ns / 1ps
 
-// DRP access addresses for the current / voltages values
-`define CURRENT_CHANNEL_ADDR 7'h14
-`define VOLTAGE_CHANNEL_ADDR 7'h1c
+// Notes from Chat with alex:
+// Transform constants to a package import
+// Use native FTDI packet size of 512 bytes for optimal performance
+// In sw, always read 512 bytes (this reads half the double 1k buf)
+// This project needs a refactor in all state names. Let's do an example
+// The FTDI init state for example would become FTDI_SLAVE_STATE_INIT
+// These prefixes make state machines easy to CTRL F and differentiate from other modules
+// use '0 to expand to zero out a whole port / vec, should refactor accordingly for this
+// Up the sys_clk to 100 MHz with a PLL Critical since chip wasn't flashing properly due to ratio between sys_clk and JTAG clock. Had to manually lower JTAG clock
+// Get rid of incremental compiles on all projects
+
+
 // Tutorial used to generate the ADC IP core from Xilinx: https://www.youtube.com/watch?v=2j4UHLYqBDI
 // My only change is using channels 4 and 12 to correspond to our board design
 // Also fed an input clock of 12 MHz for now. Will need 100MHz for full 1MSPS. Right now we make 230 KSPS
@@ -33,29 +42,30 @@ module xadc (
     output var logic[1:0] teachee_led
 );
 
+typedef enum logic[6:0] {
+    XADC_DRP_ADDR_CURRENT_CHANNEL = 7'h14,
+    XADC_DRP_ADDR_VOLTAGE_CHANNEL = 7'h1c
+} xadc_drp_addr_t;
+
+
 typedef enum int {
     INIT,
-    IDLE,
+    AWAIT_ADC_CONV,
+    START_DRP_VOLTAGE_READ,
+    AWAIT_DRP_DATA,
     SEND_TO_HOST
 } state_t;
 
-state_t state = IDLE;
+state_t state = INIT;
 
+xadc_drp_addr_t xadc_daddr;
+var logic xadc_den;
+var logic xadc_drdy;
+var logic[15:0] xadc_do;
+var logic xadc_eos;
 
-var logic[15:0] current_reading;
-var logic[15:0] voltage_reading;
-
-var logic[6:0] xadc_daddr;
-var logic xadc_read_en;
-wire xadc_dready;
-wire[15:0] xadc_data;
-wire xadc_eos;
-wire xadc_eoc;
-wire xadc_alarm;
-wire xadc_busy;
-wire[4:0] xadc_channel;
 // TODO: Make an XADC axis wrapper
-xadc_wiz_0 cmod_xadc_inst (
+xadc_wiz_0 xadc_wiz_cmod_inst (
   // Clock and Reset
   .dclk_in(sys_clk),          // input wire dclk_in
   .reset_in(0),        // input wire reset_in
@@ -63,10 +73,10 @@ xadc_wiz_0 cmod_xadc_inst (
   // DRP interface
   .di_in(0),              // input wire [15 : 0] di_in
   .daddr_in(xadc_daddr),        // input wire [6 : 0] daddr_in
-  .den_in(xadc_read_en),            // input wire den_in
+  .den_in(xadc_den),            // input wire den_in
   .dwe_in(0),            // input wire dwe_in
-  .drdy_out(xadc_dready),        // output wire drdy_out
-  .do_out(xadc_data),            // output wire [15 : 0] do_out
+  .drdy_out(xadc_drdy),        // output wire drdy_out
+  .do_out(xadc_do),            // output wire [15 : 0] do_out
 
   // Dedicated analog input channel (we do not use this)
   .vp_in(0),              // input wire vp_in
@@ -80,11 +90,11 @@ xadc_wiz_0 cmod_xadc_inst (
   .vauxn12(xa_n[1]),          // input wire vauxn12
 
   // conversion status signals
-  .channel_out(xadc_channel),  // output wire [4 : 0] channel_out
-  .eoc_out(xadc_eoc),          // output wire eoc_out
-  .alarm_out(xadc_alarm),      // output wire alarm_out
+  .channel_out(),  // output wire [4 : 0] channel_out
+  .eoc_out(),          // output wire eoc_out
+  .alarm_out(),      // output wire alarm_out
   .eos_out(xadc_eos),          // output wire eos_out
-  .busy_out(xadc_busy)        // output wire busy_out
+  .busy_out()        // output wire busy_out
 );
 // Basic idea is that xadc_eos should go high to indicate end of sequence.
 // Once end of sequence is detected, the FPGA will initiate a read from each channel. (Use the addresses defined at top of file)
@@ -116,28 +126,102 @@ ft232h usb_fifo (
     .sys_axis(sys_axis.Sink)
 );
 
+var logic[7:0] sample_data = 0;
+
 always_ff @(posedge sys_clk) begin
     case (state)
         INIT: begin
-            sys_axis.tdata <= 69;
+            // Axis Signal Init
+            sys_axis.tdata <= 0;
             sys_axis.tvalid <= 0;
-            state <= IDLE;
+
+            // DRP Controls
+            xadc_daddr <= XADC_DRP_ADDR_VOLTAGE_CHANNEL;
+            xadc_den <= 0;
+
+            state <= AWAIT_ADC_CONV;
         end
-        IDLE: begin
-            if (sys_axis.tready) begin
+        AWAIT_ADC_CONV: begin
+            if (xadc_eos) begin
+                // set the signals to start the DRP read
+                xadc_daddr <= XADC_DRP_ADDR_VOLTAGE_CHANNEL;
+                xadc_den <= 1;
+
+                state <= START_DRP_VOLTAGE_READ;
+            end
+        end
+        START_DRP_VOLTAGE_READ: begin
+            xadc_den <= 0;
+            state <= AWAIT_DRP_DATA;
+        end
+        AWAIT_DRP_DATA: begin
+            if (xadc_drdy) begin
+                // grab upper 8 bits of the conversion
+                sys_axis.tdata <= xadc_do[15:8];
                 sys_axis.tvalid <= 1;
+
                 state <= SEND_TO_HOST;
             end
         end
         SEND_TO_HOST: begin
             if (sys_axis.tready && sys_axis.tvalid) begin
-                sys_axis.tdata <= sys_axis.tdata + 1;
+                sys_axis.tvalid <= 0;
+                state <= AWAIT_ADC_CONV;
             end
-            sys_axis.tvalid <= 0;
-            state <= IDLE;
         end
     endcase
 end
+    // if (xadc_dready) begin
+
+    //     sys_axis.tdata <= xadc_data[11:4];
+    //     sys_axis.tvalid <= 1;
+    //     // state transition here
+    //     // wait for tvalid and tready to be high
+    // end
+    // case (state)
+    //     INIT: begin
+    //         sys_axis.tdata <= 0;
+    //         sys_axis.tvalid <= 0;
+    //         state <= IDLE;
+    //     end
+    //     IDLE: begin
+    //         if (sys_axis.tready) begin
+    //             sys_axis.tvalid <= 1;
+    //             state <= SEND_TO_HOST;
+    //         end
+    //     end
+    //     SEND_TO_HOST: begin
+    //         if (sys_axis.tready && sys_axis.tvalid) begin
+    //             sys_axis.tdata <= sys_axis.tdata + 1;
+    //         end
+    //         sys_axis.tvalid <= 0;
+    //         state <= IDLE;
+    //     end
+    // endcase
+// end
+
+
+ila_0 xadc_fsm_ila (
+	.clk(sys_clk), // input wire clk
+
+
+	.probe0(state), // input wire [31:0]  probe0  
+	.probe1({sys_axis.tready, sys_axis.tvalid}), // input wire [31:0]  probe1 
+	.probe2(xadc_do), // input wire [31:0]  probe2 
+	.probe3(xadc_drdy), // input wire [31:0]  probe3 
+	.probe4(xadc_den), // input wire [31:0]  probe4 
+	.probe5(xadc_daddr), // input wire [31:0]  probe5 
+	.probe6(xadc_eos), // input wire [31:0]  probe6 
+	.probe7('0), // input wire [31:0]  probe7 
+	.probe8('0), // input wire [31:0]  probe8 
+	.probe9('0), // input wire [31:0]  probe9 
+	.probe10('0), // input wire [31:0]  probe10 
+	.probe11('0), // input wire [31:0]  probe11 
+	.probe12('0), // input wire [31:0]  probe12 
+	.probe13('0), // input wire [31:0]  probe13 
+	.probe14('0), // input wire [31:0]  probe14 
+	.probe15('0) // input wire [31:0]  probe15
+);
 
 endmodule
 
