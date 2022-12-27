@@ -9,7 +9,8 @@ typedef enum int {
     INIT,
     AWAIT_CONVERSION_SEQ,
     START_DRP_READ,
-    WAIT_CYCLE,
+    WAIT_CYCLE0,
+    WAIT_CYCLE1,
     VIEW_RESULTS,
     DONE
 } xadc_bfm_tb_state_t;
@@ -26,7 +27,7 @@ wire[15:0] do_out;
 wire eos_out;
 
 // Set initial state and signal values
-intial begin
+initial begin
     dclk_in = 0;
     reset_in = 0;
     daddr_in = 0;
@@ -70,6 +71,7 @@ xadc_bfm DUT (
     .busy_out()
 );
 
+var logic[6:0] current_addr;
 // DRP Read FSM
 always @(posedge dclk_in) begin
     case (state)
@@ -80,6 +82,8 @@ always @(posedge dclk_in) begin
             daddr_in <= 0;
             den_in <= 0;
 
+            current_addr <= 7'h14; // start with current channel
+
             // AWAIT EOS SIGNAL
             state <= AWAIT_CONVERSION_SEQ;
         end
@@ -87,9 +91,30 @@ always @(posedge dclk_in) begin
             if (eos_out) begin
                 // If eos goes high, new samples have been written to regs.
                 // Read out the current and voltage sample
-
+                
+                // load up the address and pull the read enable
+                daddr_in <= current_addr;
+                den_in <= 1;
+                state <= START_DRP_READ;
             end
         end
+        START_DRP_READ: begin
+            // move current address to the voltage channel
+
+            daddr_in <= 0;
+            den_in <= 0;
+
+            state <= WAIT_CYCLE0;
+        end
+        WAIT_CYCLE0: state <= WAIT_CYCLE1;
+        WAIT_CYCLE1: state <= VIEW_RESULTS;
+        VIEW_RESULTS: begin
+            if (current_addr == 7'h14) begin
+                current_addr <= 7'h1c;
+                state <= AWAIT_CONVERSION_SEQ;
+            end else state <= DONE;
+        end
+        DONE: $stop;
     endcase
 end
 

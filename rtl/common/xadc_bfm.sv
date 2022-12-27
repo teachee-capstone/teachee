@@ -69,7 +69,7 @@ always_ff @(posedge dclk_in) begin
             INIT: begin
                 // Set initial states for outputs and then transition into
                 // operating mode
-                drdy_out <= 1;
+                drdy_out <= 0;
                 do_out <= 16'h00_00;
                 channel_out <= 5'b00000;
                 eoc_out <= 0;
@@ -79,7 +79,7 @@ always_ff @(posedge dclk_in) begin
 
                 // Set internal registers
                 vaux12_conv <= 255;
-                vaux4_conv <= 0;
+                vaux4_conv <= 127;
                 conv_value <= 0;
 
                 // Proceed to next state
