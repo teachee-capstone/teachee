@@ -21,64 +21,64 @@ module ft232h (
     axis_io.Sink sys_axis
 );
 
-// Define states for the device
-typedef enum int {
-    INIT,
-    AWAIT_USB_HOST,
-    SEND_TO_USB_HOST
-} ftdi_state_t;
+    // Define states for the device
+    typedef enum int {
+        INIT,
+        AWAIT_USB_HOST,
+        SEND_TO_USB_HOST
+    } ftdi_state_t;
 
-ftdi_state_t state;
+    ftdi_state_t state;
 
-// AXIS stream we will write to the FT232H
-axis_io ftdi_axis (
-    .clk(ftdi_clk),
-    .rst(0)
-);
-assign ftdi_adbus = ftdi_axis.tdata;
+    // AXIS stream we will write to the FT232H
+    axis_io ftdi_axis (
+        .clk(ftdi_clk),
+        .rst(0)
+    );
+    assign ftdi_adbus = ftdi_axis.tdata;
 
-axis_async_fifo_wrapper #(
-    .DEPTH(2),
-    .DATA_WIDTH(8)
-) fpga_to_host_fifo (
-    .sink(sys_axis),
-    .source(ftdi_axis.Source)
-);
+    axis_async_fifo_wrapper #(
+        .DEPTH(2),
+        .DATA_WIDTH(8)
+    ) fpga_to_host_fifo (
+        .sink(sys_axis),
+        .source(ftdi_axis.Source)
+    );
 
-// AXI Stream consumer state machine that sends data to FTDI
-always_ff @(posedge ftdi_axis.clk) begin
-    // Run the control state machine here
-    case (state)
-        INIT: begin
-            // Init signals into disabled state
-            ftdi_rd_n <= 1;
-            ftdi_wr_n <= 1;
-            ftdi_siwu_n <= 1;
-            ftdi_oe_n <= 1;
+    // AXI Stream consumer state machine that sends data to FTDI
+    always_ff @(posedge ftdi_axis.clk) begin
+        // Run the control state machine here
+        case (state)
+            INIT: begin
+                // Init signals into disabled state
+                ftdi_rd_n <= 1;
+                ftdi_wr_n <= 1;
+                ftdi_siwu_n <= 1;
+                ftdi_oe_n <= 1;
 
-            state <= AWAIT_USB_HOST;
-        end
-        AWAIT_USB_HOST: begin
-            if (!ftdi_txe_n && ftdi_axis.tvalid) begin
-                ftdi_wr_n <= 0;
-                ftdi_axis.tready <= 1;
-                state <= SEND_TO_USB_HOST;
+                state <= AWAIT_USB_HOST;
             end
-        end
-        SEND_TO_USB_HOST: begin
-            ftdi_wr_n <= 1;
-            ftdi_axis.tready <= 0;
-            state <= AWAIT_USB_HOST;
-            // If we fail the send condition. roll back to await state
-            // if (!(!ftdi_txe_n && ftdi_axis.tvalid && ftdi_axis.tready)) begin
-            //     ftdi_wr_n <= 1;
-            //     ftdi_axis.tready <= 0;
-            //     state <= AWAIT_USB_HOST;
-            // end
-        end 
-        default: state <= INIT;
-    endcase
-end
+            AWAIT_USB_HOST: begin
+                if (!ftdi_txe_n && ftdi_axis.tvalid) begin
+                    ftdi_wr_n <= 0;
+                    ftdi_axis.tready <= 1;
+                    state <= SEND_TO_USB_HOST;
+                end
+            end
+            SEND_TO_USB_HOST: begin
+                ftdi_wr_n <= 1;
+                ftdi_axis.tready <= 0;
+                state <= AWAIT_USB_HOST;
+                // If we fail the send condition. roll back to await state
+                // if (!(!ftdi_txe_n && ftdi_axis.tvalid && ftdi_axis.tready)) begin
+                //     ftdi_wr_n <= 1;
+                //     ftdi_axis.tready <= 0;
+                //     state <= AWAIT_USB_HOST;
+                // end
+            end 
+            default: state <= INIT;
+        endcase
+    end
 
 endmodule
 

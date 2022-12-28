@@ -25,62 +25,61 @@ module ftdi_sync (
     output var logic[1:0] teachee_led
 );
 
-typedef enum int {
-    INIT,
-    IDLE,
-    SEND_TO_HOST
-} state_t;
+    typedef enum int {
+        INIT,
+        IDLE,
+        SEND_TO_HOST
+    } state_t;
 
-state_t state = IDLE;
+    state_t state = IDLE;
 
-// Programmer data input side wires
-axis_io sys_axis (
-    .clk(sys_clk),
-    .rst(0)
-);
+    // Programmer data input side wires
+    axis_io sys_axis (
+        .clk(sys_clk),
+        .rst(0)
+    );
 
 
-ft232h usb_fifo (
-    .ftdi_clk(ftdi_clk),
+    ft232h usb_fifo (
+        .ftdi_clk(ftdi_clk),
 
-    .ftdi_rxf_n(ftdi_rxf_n),
-    .ftdi_txe_n(ftdi_txe_n),
+        .ftdi_rxf_n(ftdi_rxf_n),
+        .ftdi_txe_n(ftdi_txe_n),
 
-    .ftdi_rd_n(ftdi_rd_n),
-    .ftdi_wr_n(ftdi_wr_n),
-    .ftdi_siwu_n(ftdi_siwu_n),
-    .ftdi_oe_n(ftdi_oe_n),
+        .ftdi_rd_n(ftdi_rd_n),
+        .ftdi_wr_n(ftdi_wr_n),
+        .ftdi_siwu_n(ftdi_siwu_n),
+        .ftdi_oe_n(ftdi_oe_n),
 
-    .ftdi_adbus(ftdi_data),
+        .ftdi_adbus(ftdi_data),
 
-    // Programmer AXIS Interface
-    .sys_axis(sys_axis.Sink)
-);
+        // Programmer AXIS Interface
+        .sys_axis(sys_axis.Sink)
+    );
 
-always_ff @(posedge sys_clk) begin
-    // Do write state machine here
-    case (state)
-        INIT: begin
-            sys_axis.tdata <= 69;
-            sys_axis.tvalid <= 0;
-            state <= IDLE;
-        end
-        IDLE: begin
-            if (sys_axis.tready) begin
-                sys_axis.tvalid <= 1;
-                state <= SEND_TO_HOST;
+    always_ff @(posedge sys_clk) begin
+        // Do write state machine here
+        case (state)
+            INIT: begin
+                sys_axis.tdata <= 69;
+                sys_axis.tvalid <= 0;
+                state <= IDLE;
             end
-        end
-        SEND_TO_HOST: begin
-            if (sys_axis.tready && sys_axis.tvalid) begin
-                sys_axis.tdata <= sys_axis.tdata + 1;
+            IDLE: begin
+                if (sys_axis.tready) begin
+                    sys_axis.tvalid <= 1;
+                    state <= SEND_TO_HOST;
+                end
             end
-            sys_axis.tvalid <= 0;
-            state <= IDLE;
-        end
-    endcase
-end
-
+            SEND_TO_HOST: begin
+                if (sys_axis.tready && sys_axis.tvalid) begin
+                    sys_axis.tdata <= sys_axis.tdata + 1;
+                end
+                sys_axis.tvalid <= 0;
+                state <= IDLE;
+            end
+        endcase
+    end
 endmodule
 
 `default_nettype wire
