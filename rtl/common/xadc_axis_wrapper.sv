@@ -24,10 +24,44 @@ module xadc_axis_wrapper (
     axis_io.Source voltage_channel
 );
 
+    // XADC Conversion and DRP Control Signals
     xadc_drp_addr_t xadc_daddr;
     var logic xadc_den;
     wire logic xadc_drdy;
     wire logic[15:0] xadc_do;
     wire logic xadc_eos;
+
+    // Define AXI Stream Interfaces
+    // These interfaces will be tagged as sinks into the FIFO
+    axis_io #(
+        .DATA_WIDTH(16)
+    ) xadc_current_axis (
+        .clk(xadc_dclk),
+        .rst(xadc_reset)
+    );
+
+    axis_io #(
+        .DATA_WIDTH(16)
+    ) xadc_voltage_axis (
+        .clk(xadc_dclk),
+        .rst(xadc_reset)
+    );
+
+    // Create Async FIFOs
+    axis_async_fifo_wrapper #(
+        .DEPTH(128),
+        .DATA_WIDTH(16)
+    ) xadc_current_sample_fifo (
+        .sink(xadc_current_axis.Sink),
+        .source(current_monitor_channel)
+    );
+
+    axis_async_fifo_wrapper #(
+        .DEPTH(128),
+        .DATA_WIDTH(16)
+    ) xadc_voltage_sample_fifo (
+        .sink(xadc_voltage_axis.Sink),
+        .source(voltage_channel)
+    );
 endmodule
 `default_nettype wire
