@@ -12,7 +12,7 @@ module xadc_drp_axis_adapter (
     output xadc_drp_addr_t xadc_daddr,
     output var logic xadc_den,
     input var logic xadc_drdy,
-    input var logic xadc_do,
+    input var logic[15:0] xadc_do,
     input var logic xadc_eos,
 
     // ADC Channel AXI Streams
