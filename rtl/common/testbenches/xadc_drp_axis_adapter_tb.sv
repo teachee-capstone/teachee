@@ -1,6 +1,7 @@
 `default_nettype none
 `timescale 1ns / 1ps
 
+import teachee_defs::*;
 
 module xadc_drp_axis_adapter_tb;
     typedef enum int {
@@ -11,10 +12,6 @@ module xadc_drp_axis_adapter_tb;
         DONE
     } xadc_drp_axis_adapter_tb_state_t;    
 
-    typedef enum logic[6:0] {
-        XADC_DRP_ADDR_CURRENT_CHANNEL = 7'h14,
-        XADC_DRP_ADDR_VOLTAGE_CHANNEL = 7'h1c
-    } xadc_drp_addr_t;
     xadc_drp_axis_adapter_tb_state_t state;
 
     var logic xadc_dclk;
@@ -54,23 +51,20 @@ module xadc_drp_axis_adapter_tb;
         .rst(1'b0)
     );
 
-    // xadc_drp_fake fake_xadc_adapter (
-    //     .current_monitor_channel(current_monitor_channel.Source)
-    // );
     xadc_drp_axis_adapter adapter_dut (
-        // .xadc_dclk(xadc_dclk),
-        // .xadc_reset(0), 
+        .xadc_dclk(xadc_dclk),
+        .xadc_reset(0), 
 
-        // // DRP and Conversion Signals
-        // .xadc_daddr(xadc_daddr),
-        // .xadc_den(xadc_den),
-        // .xadc_drdy(xadc_drdy),
-        // .xadc_do(xadc_do),
+        // DRP and Conversion Signals
+        .xadc_daddr(xadc_daddr),
+        .xadc_den(xadc_den),
+        .xadc_drdy(xadc_drdy),
+        .xadc_do(xadc_do),
 
-        // .xadc_eos(xadc_eos),
+        .xadc_eos(xadc_eos),
 
-        .currrent_monitor_channel(current_monitor_channel.Source)
-        // .voltage_channel(voltage_channel.Source)
+        .current_monitor_channel(current_monitor_channel.Source),
+        .voltage_channel(voltage_channel.Source)
     );
 
     xadc_bfm xadc_bfm_inst (
@@ -104,29 +98,29 @@ module xadc_drp_axis_adapter_tb;
         .busy_out()
     );
 
-    // always @(posedge xadc_dclk) begin
-    //     case (state)
-    //         READ_VOLTAGE_SAMPLE: begin
-    //             if (voltage_channel.tready && voltage_channel.tvalid) begin
-    //                 state <= VIEW_VOLTAGE_SAMPLE;
-    //             end
-    //         end
-    //         VIEW_VOLTAGE_SAMPLE: begin
-    //             state <= READ_CURRENT_SAMPLE;
-    //         end
-    //         READ_CURRENT_SAMPLE: begin
-    //             if (current_monitor_channel.tready && current_monitor_channel.tvalid) begin
-    //                 state <= VIEW_CURRENT_SAMPLE;
-    //             end
-    //         end
-    //         VIEW_CURRENT_SAMPLE: begin
-    //             state <= DONE;
-    //         end
-    //         DONE: begin
-    //             $stop;
-    //         end
-    //     endcase
-    // end
+    always @(posedge xadc_dclk) begin
+        case (state)
+            READ_VOLTAGE_SAMPLE: begin
+                if (voltage_channel.tready && voltage_channel.tvalid) begin
+                    state <= VIEW_VOLTAGE_SAMPLE;
+                end
+            end
+            VIEW_VOLTAGE_SAMPLE: begin
+                state <= READ_CURRENT_SAMPLE;
+            end
+            READ_CURRENT_SAMPLE: begin
+                if (current_monitor_channel.tready && current_monitor_channel.tvalid) begin
+                    state <= VIEW_CURRENT_SAMPLE;
+                end
+            end
+            VIEW_CURRENT_SAMPLE: begin
+                state <= DONE;
+            end
+            DONE: begin
+                $stop;
+            end
+        endcase
+    end
 endmodule
 
 `default_nettype wire
