@@ -44,34 +44,34 @@ module xadc_drp_axis_adapter_tb;
         .DATA_WIDTH(16)
     ) voltage_channel (
         .clk(xadc_dclk),
-        .rst(0)
+        .rst(1'b0)
     );
 
     axis_io #(
         .DATA_WIDTH(16)
     ) current_monitor_channel (
         .clk(xadc_dclk),
-        .rst(0)
+        .rst(1'b0)
     );
 
-    xadc_drp_fake fake_xadc_adapter (
-        .current_monitor_channel(current_monitor_channel.Source)
-    );
-    // xadc_drp_axis_adapter adapter_dut (
-    //     // .xadc_dclk(xadc_dclk),
-    //     // .xadc_reset(0), 
-
-    //     // // DRP and Conversion Signals
-    //     // .xadc_daddr(xadc_daddr),
-    //     // .xadc_den(xadc_den),
-    //     // .xadc_drdy(xadc_drdy),
-    //     // .xadc_do(xadc_do),
-
-    //     // .xadc_eos(xadc_eos),
-
-    //     .currrent_monitor_channel(current_monitor_channel.Source)
-    //     // .voltage_channel(voltage_channel.Source)
+    // xadc_drp_fake fake_xadc_adapter (
+    //     .current_monitor_channel(current_monitor_channel.Source)
     // );
+    xadc_drp_axis_adapter adapter_dut (
+        // .xadc_dclk(xadc_dclk),
+        // .xadc_reset(0), 
+
+        // // DRP and Conversion Signals
+        // .xadc_daddr(xadc_daddr),
+        // .xadc_den(xadc_den),
+        // .xadc_drdy(xadc_drdy),
+        // .xadc_do(xadc_do),
+
+        // .xadc_eos(xadc_eos),
+
+        .currrent_monitor_channel(current_monitor_channel.Source)
+        // .voltage_channel(voltage_channel.Source)
+    );
 
     xadc_bfm xadc_bfm_inst (
         // Clock and reset
