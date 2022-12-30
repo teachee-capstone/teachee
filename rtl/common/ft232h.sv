@@ -38,7 +38,7 @@ module ft232h (
     assign ftdi_adbus = ftdi_axis.tdata;
 
     axis_async_fifo_wrapper #(
-        .DEPTH(2),
+        .DEPTH(16),
         .DATA_WIDTH(8)
     ) fpga_to_host_fifo (
         .sink(sys_axis),

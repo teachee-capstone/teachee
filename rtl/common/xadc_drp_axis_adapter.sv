@@ -83,6 +83,7 @@ module xadc_drp_axis_adapter (
             end
             XADC_AXIS_AWAIT_EOS: begin
                 if (xadc_eos) begin
+                    xadc_daddr <= XADC_DRP_ADDR_VOLTAGE_CHANNEL;
                     xadc_den <= 1;
 
                     state <= XADC_AXIS_START_DRP_VOLTAGE_READ;
@@ -114,6 +115,7 @@ module xadc_drp_axis_adapter (
                 state <= XADC_AXIS_AWAIT_CURRENT_DATA;
             end
             XADC_AXIS_AWAIT_CURRENT_DATA: begin
+                xadc_den <= 0;
                 if (xadc_drdy) begin
                     xadc_current_axis.tdata <= xadc_do;
                     xadc_current_axis.tvalid <= 1;
