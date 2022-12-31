@@ -1,5 +1,8 @@
 `default_nettype none
 `timescale 1ns / 1ps
+
+import ft232h_package::*;
+
 // Tx only BFM for FT232H in FT245 Synchronous mode.
 // Bit mode 0x40
 module ft232h_bfm (
@@ -35,7 +38,7 @@ module ft232h_bfm (
 
     wire s_axis_tready;
     axis_fifo #(
-        .DEPTH(2)
+        .DEPTH(FT232H_BFM_AXIS_FIFO_DEPTH)
     ) tx_fifo (
         // Clock and reset
         .clk(clk),

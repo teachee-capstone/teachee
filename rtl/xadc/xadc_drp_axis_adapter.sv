@@ -1,7 +1,7 @@
 `default_nettype none
 `timescale 1ns / 1ps
 
-import teachee_defs::*;
+import xadc_drp_package::*;
 
 module xadc_drp_axis_adapter (
     // Xilinx XADC IP Interface (Only putting through the required signals)
@@ -12,7 +12,7 @@ module xadc_drp_axis_adapter (
     output xadc_drp_addr_t xadc_daddr,
     output var logic xadc_den,
     input var logic xadc_drdy,
-    input var logic[15:0] xadc_do,
+    input var logic[XADC_DRP_DATA_WIDTH-1:0] xadc_do,
     input var logic xadc_eos,
 
     // ADC Channel AXI Streams
@@ -36,14 +36,14 @@ module xadc_drp_axis_adapter (
     // Define AXI Stream Interfaces
     // These interfaces will be tagged as sinks into the FIFO
     axis_io #(
-        .DATA_WIDTH(16)
+        .DATA_WIDTH(XADC_DRP_DATA_WIDTH)
     ) xadc_current_axis (
         .clk(xadc_dclk),
         .rst(xadc_reset)
     );
 
     axis_io #(
-        .DATA_WIDTH(16)
+        .DATA_WIDTH(XADC_DRP_DATA_WIDTH)
     ) xadc_voltage_axis (
         .clk(xadc_dclk),
         .rst(xadc_reset)
@@ -51,16 +51,16 @@ module xadc_drp_axis_adapter (
 
     // Create Async FIFOs
     axis_async_fifo_wrapper #(
-        .DEPTH(128),
-        .DATA_WIDTH(16)
+        .DEPTH(XADC_DRP_AXIS_FIFO_DEPTH),
+        .DATA_WIDTH(XADC_DRP_DATA_WIDTH)
     ) xadc_current_fifo (
         .sink(xadc_current_axis.Sink),
         .source(current_monitor_channel)
     );
 
     axis_async_fifo_wrapper #(
-        .DEPTH(128),
-        .DATA_WIDTH(16)
+        .DEPTH(XADC_DRP_AXIS_FIFO_DEPTH),
+        .DATA_WIDTH(XADC_DRP_DATA_WIDTH)
     ) xadc_voltage_fifo (
         .sink(xadc_voltage_axis.Sink),
         .source(voltage_channel)

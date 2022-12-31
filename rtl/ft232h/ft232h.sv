@@ -1,6 +1,8 @@
 `default_nettype none
 `timescale 1ns / 1ps
 
+import ft232h_package::*;
+
 module ft232h (
     input var logic ftdi_clk,
 
@@ -38,8 +40,8 @@ module ft232h (
     assign ftdi_adbus = ftdi_axis.tdata;
 
     axis_async_fifo_wrapper #(
-        .DEPTH(16),
-        .DATA_WIDTH(8)
+        .DEPTH(FT232H_AXIS_ASYNC_FIFO_DEPTH),
+        .DATA_WIDTH(FT232H_AXIS_ASYNC_FIFO_DATA_WIDTH)
     ) fpga_to_host_fifo (
         .sink(sys_axis),
         .source(ftdi_axis.Source)

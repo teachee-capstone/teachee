@@ -10,5 +10,5 @@ with Device('FT6TRZH9') as dev:
     # if you don't run this the clock does not come up
     dev.ftdi_fn.ftdi_set_bitmode(1, 0x40)
     while(True):
-        print(dev.read(1))
-        # print(int.from_bytes(dev.read(1), "big"))
+        # print(dev.read(1))
+        print(int.from_bytes(dev.read(1), "big"))

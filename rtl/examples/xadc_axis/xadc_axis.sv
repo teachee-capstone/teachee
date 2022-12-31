@@ -94,7 +94,7 @@ module xadc_axis (
     );
 
 
-    xadc_teachee xadc_teachee_inst (
+    xadc_axis_ip xadc_teachee_inst (
         // Clock and Reset
         .dclk_in(sys_clk),          // input wire dclk_in
         .reset_in(0),        // input wire reset_in
@@ -128,17 +128,17 @@ module xadc_axis (
 
     always_ff @(posedge sys_clk) begin
         // comment / uncomment blocks depending on whether you want to view voltage or current readings
-        voltage_channel.tready <= 1;
-        current_monitor_channel.tready <= sys_axis.tready;
-        sys_axis.tvalid <= current_monitor_channel.tvalid;
-        sys_axis.tdata <= current_monitor_channel.tdata[11:4];
+        // voltage_channel.tready <= 1;
+        // current_monitor_channel.tready <= sys_axis.tready;
+        // sys_axis.tvalid <= current_monitor_channel.tvalid;
+        // sys_axis.tdata <= current_monitor_channel.tdata[11:4];
 
         // The adapter stalls if both FIFOs aren't being consumed
         // set current channel to unload data even though we are not actually sending over USB yet
-        // current_monitor_channel.tready <= 1;
-        // voltage_channel.tready <= sys_axis.tready;
-        // sys_axis.tvalid <= voltage_channel.tvalid;
-        // sys_axis.tdata <= voltage_channel.tdata[11:4];
+        current_monitor_channel.tready <= 1;
+        voltage_channel.tready <= sys_axis.tready;
+        sys_axis.tvalid <= voltage_channel.tvalid;
+        sys_axis.tdata <= voltage_channel.tdata[11:4];
     end
 
 endmodule

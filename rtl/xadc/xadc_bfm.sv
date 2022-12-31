@@ -1,6 +1,8 @@
 `default_nettype none
 `timescale 1ns / 1ps
 
+import xadc_drp_package::*;
+
 // Read only BFM for the XADC in the CMOD A7 35T This module mocks the DRP and
 // status signals provided by the xilinx IP wizard. It is assumed that the
 // wizard was set to convert channels 4 and 12 continuously. NOTE: this BFM only
@@ -12,12 +14,12 @@ module xadc_bfm (
     input wire reset_in,
 
     // DRP Interface
-    input wire[15:0] di_in, // DRP Data In
-    input wire[6:0] daddr_in, // DRP reg address in
+    input wire[XADC_DRP_DATA_WIDTH-1:0] di_in, // DRP Data In
+    input wire[XADC_DRP_AXIS_ADDR_WIDTH-1:0] daddr_in, // DRP reg address in
     input wire den_in, // DRP read enable
     input wire dwe_in, // DRP write enable (not used in this bfm)
     output var logic drdy_out, // rising edge when data is on the output bus
-    output var logic[15:0] do_out,
+    output var logic[XADC_DRP_DATA_WIDTH-1:0] do_out,
 
     // Dedicated Analog Input channel (not used)
     input wire vp_in,
@@ -99,10 +101,10 @@ module xadc_bfm (
                     if (den_in) begin
                         // check the address provided and load the conversion reg
                         // TODO: These addresses should come from an include
-                        if (daddr_in == 7'h14) begin
+                        if (daddr_in == XADC_DRP_ADDR_CURRENT_CHANNEL) begin
                             // if we are reading the current sensor
                             conv_value <= vaux4_conv;
-                        end else if (daddr_in <= 7'h1c) begin
+                        end else if (daddr_in == XADC_DRP_ADDR_VOLTAGE_CHANNEL) begin
                             conv_value <= vaux12_conv;
                         end else begin
                             $display("Unknown Address provided");
