@@ -2,7 +2,7 @@ on:
   pull_request:
     branches: [ main ]
 
-name: Check Teachee Desktop App
+name: Lint SystemVerilog Code
 
 jobs:
   check:
