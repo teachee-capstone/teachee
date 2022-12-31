@@ -1,9 +1,20 @@
-uses: dalance/svlint-action@v1
-with:
-  files: |
-    axis/*.sv
-    ft232h/*.sv
-    xadc/*.sv
-    examples/*/*.sv
-env:
-  DIR: rtl
+on:
+  pull_request:
+    branches: [ main ]
+
+name: Check Teachee Desktop App
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: dalance/svlint-action@v1
+        with:
+          files: |
+            axis/*.sv
+            ft232h/*.sv
+            xadc/*.sv
+            examples/*/*.sv
+        env:
+          DIR: rtl
