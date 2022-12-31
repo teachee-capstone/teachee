@@ -1,0 +1,21 @@
+on:
+  pull_request:
+    branches: [ main ]
+
+name: RTL
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          components: rustfmt, clippy
+
+      - run: cargo install svlint
+      - run: SVLINT_CONFIG=rtl/.svlint.toml svlint rtl/axis/*.sv rtl/ft232h/*.sv rtl/xadc/*.sv rtl/examples/*/*.sv 
