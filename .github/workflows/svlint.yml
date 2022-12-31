@@ -5,12 +5,10 @@ on:
 name: Lint SystemVerilog Code
 
 jobs:
-  check:
+  svlint:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v1
       - uses: raftario/setup-rust-action@v1
-      - run: |
-        cargo install svlint
-        SVLINT_CONFIG=rtl/.svlint.toml svlint rtl/axis/*.sv rtl/ft232h/*.sv rtl/xadc/*.sv rtl/examples/*/*.sv 
+      - run: cargo install svlint && SVLINT_CONFIG=rtl/.svlint.toml svlint rtl/axis/*.sv rtl/ft232h/*.sv rtl/xadc/*.sv rtl/examples/*/*.sv 
