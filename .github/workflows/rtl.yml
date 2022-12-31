@@ -2,10 +2,10 @@ on:
   pull_request:
     branches: [ main ]
 
-name: Lint SystemVerilog Code
+name: RTL
 
 jobs:
-  check:
+  lint:
     runs-on: ubuntu-latest
 
     steps:
