@@ -9,6 +9,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - uses: actions/checkout@v2
+
       - uses: dalance/svlint-action@v1
         with:
           files: |
@@ -18,3 +20,4 @@ jobs:
             examples/*/*.sv
         env:
           DIR: rtl
+          SVLINT_CONFIG: rtl/.svlint.toml
