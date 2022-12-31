@@ -4,10 +4,10 @@ module blink(
     output TEACHEE_LED1,
     input btn,
     input sysclk
-    );
+);
     
-    reg led_state = 0;
-    reg[31:0] counter = 0;
+    logic led_state = 0;
+    logic[31:0] counter = 0;
     assign led = btn;
     
     always @(posedge sysclk) begin

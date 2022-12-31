@@ -8,23 +8,23 @@ import ft232h_package::*;
 module ft232h_bfm (
     output var logic clk,
 
-    output wire rxf_n,
-    output wire txe_n,
+    output var logic rxf_n,
+    output var logic txe_n,
 
-    input wire rd_n,
-    input wire wr_n,
-    input wire siwu_n,
-    input wire oe_n,
-    input wire rst_n,
+    input var logic rd_n,
+    input var logic wr_n,
+    input var logic siwu_n,
+    input var logic oe_n,
+    input var logic rst_n,
 
     // Set to input for simplicity
     // Since this is a write only BFM
-    input wire[7:0] data,
+    input var logic[7:0] data,
 
     // PC Side fake output
-    output wire[7:0] tdata,
-    output wire tvalid,
-    input wire tready
+    output var logic[7:0] tdata,
+    output var logic tvalid,
+    input var logic tready
 );
 
     initial begin
@@ -36,7 +36,7 @@ module ft232h_bfm (
         clk = ~clk;
     end
 
-    wire s_axis_tready;
+    logic s_axis_tready;
     axis_fifo #(
         .DEPTH(FT232H_BFM_AXIS_FIFO_DEPTH)
     ) tx_fifo (
