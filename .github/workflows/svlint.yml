@@ -18,5 +18,3 @@ jobs:
             rtl/ft232h/*.sv
             rtl/xadc/*.sv
             rtl/examples/*/*.sv
-        env:
-          SVLINT_CONFIG: rtl/.svlint.toml
