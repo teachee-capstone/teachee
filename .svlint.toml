@@ -4,4 +4,3 @@ prefix_label = ""
 
 [rules]
 non_ansi_module = true
-keyword_forbidden_wire_reg = true
