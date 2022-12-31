@@ -10,11 +10,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-
-      - uses: dalance/svlint-action@v1.0.2
-        with:
-          files: |
-            rtl/axis/*.sv
-            rtl/ft232h/*.sv
-            rtl/xadc/*.sv
-            rtl/examples/*/*.sv
+      - uses: raftario/setup-rust-action@v1
+      - run: |
+        cargo install svlint
+        SVLINT_CONFIG=rtl/.svlint.toml svlint rtl/axis/*.sv rtl/ft232h/*.sv rtl/xadc/*.sv rtl/examples/*/*.sv 
