@@ -37,14 +37,14 @@ module xadc_drp_axis_adapter_tb;
     end
     
     // Create AXI interfaces to connect up to adapter outputs
-    axis_io #(
+    axis_interface #(
         .DATA_WIDTH(16)
     ) voltage_channel (
         .clk(xadc_dclk),
         .rst(1'b0)
     );
 
-    axis_io #(
+    axis_interface #(
         .DATA_WIDTH(16)
     ) current_monitor_channel (
         .clk(xadc_dclk),

@@ -34,7 +34,7 @@ module ftdi_sync (
     state_t state = IDLE;
 
     // Programmer data input side wires
-    axis_io sys_axis (
+    axis_interface sys_axis (
         .clk(sys_clk),
         .rst(0)
     );
@@ -79,6 +79,15 @@ module ftdi_sync (
                 state <= IDLE;
             end
         endcase
+    end
+
+    // Set defaults for unused signals
+    always begin
+        sys_axis.tlast <= 1;
+        sys_axis.tkeep <= '1;
+        sys_axis.tid <= '0;
+        sys_axis.tuser <= '0;
+        sys_axis.tdest <= '0;
     end
 endmodule
 

@@ -20,7 +20,7 @@ module ft232h (
     output var logic[7:0] ftdi_adbus,
 
     // Programmer AXIS Interface
-    axis_io.Sink sys_axis
+    axis_interface.Sink sys_axis
 );
 
     // Define states for the device
@@ -33,7 +33,7 @@ module ft232h (
     ftdi_state_t state;
 
     // AXIS stream we will write to the FT232H
-    axis_io ftdi_axis (
+    axis_interface ftdi_axis (
         .clk(ftdi_clk),
         .rst(0)
     );
