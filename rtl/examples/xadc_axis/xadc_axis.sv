@@ -27,21 +27,21 @@ module xadc_axis (
     output var logic[1:0] teachee_led
 );
 
-    axis_io #(
+    axis_interface #(
         .DATA_WIDTH(16)
     ) voltage_channel (
         .clk(sys_clk),
         .rst(0)
     );
 
-    axis_io #(
+    axis_interface #(
         .DATA_WIDTH(16)
     ) current_monitor_channel (
         .clk(sys_clk),
         .rst(0)
     );
 
-    axis_io sys_axis (
+    axis_interface sys_axis (
         .clk(sys_clk),
         .rst(0)
     );
@@ -127,6 +127,13 @@ module xadc_axis (
     );
 
     always_ff @(posedge sys_clk) begin
+        // Set sys_axis source defaults here
+        sys_axis.tlast <= 1;
+        sys_axis.tkeep <= '1;
+        sys_axis.tid <= '0;
+        sys_axis.tuser <= '0;
+        sys_axis.tdest <= '0;
+
         // comment / uncomment blocks depending on whether you want to view voltage or current readings
         // voltage_channel.tready <= 1;
         // current_monitor_channel.tready <= sys_axis.tready;

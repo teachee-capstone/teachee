@@ -33,7 +33,7 @@ module ft232h_tb;
 
     var logic second_write;
 
-    axis_io sys_axis (
+    axis_interface sys_axis (
         .clk(sys_clk),
         .rst(0)
     );

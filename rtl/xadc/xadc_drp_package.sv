@@ -1,3 +1,5 @@
+`default_nettype none
+
 package xadc_drp_package;
     parameter XADC_DRP_DATA_WIDTH = 16;
     parameter XADC_DRP_AXIS_FIFO_DEPTH = 128;
@@ -8,3 +10,5 @@ package xadc_drp_package;
         XADC_DRP_ADDR_VOLTAGE_CHANNEL = 7'h1c
     } xadc_drp_addr_t;
 endpackage
+
+`default_nettype wire

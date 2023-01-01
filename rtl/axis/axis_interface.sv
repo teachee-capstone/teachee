@@ -2,14 +2,14 @@
 `timescale 1ns / 1ps
 
 interface axis_interface #(
-    DATA_WIDTH = 8,
-    USER_WIDTH = 1,
-    ID_WIDTH = 8,
-    DEST_WIDTH = 8,
-    KEEP_WIDTH = (DATA_WIDTH+7)/8
+    parameter DATA_WIDTH = 8,
+    parameter USER_WIDTH = 1,
+    parameter ID_WIDTH = 8,
+    parameter DEST_WIDTH = 8,
+    parameter KEEP_WIDTH = (DATA_WIDTH+7)/8
 ) (
-    input clk,
-    input rst
+    input var logic clk,
+    input var logic rst
 );
 
     logic[DATA_WIDTH-1:0] tdata;
@@ -34,7 +34,7 @@ interface axis_interface #(
     modport Source (
         input clk, rst,
         output tdata, tkeep, tvalid, tlast, tid, tdest, tuser,
-        input tready,
+        input tready
 
     );
 
