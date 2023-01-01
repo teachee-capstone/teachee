@@ -1,3 +1,6 @@
+`default_nettype none
+`timescale 1ns / 1ps
+
 interface axis_interface #(
     DATA_WIDTH = 8,
     USER_WIDTH = 1,
@@ -42,3 +45,5 @@ interface axis_interface #(
     );
 
 endinterface //axis_interface
+
+`default_nettype wire
