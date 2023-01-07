@@ -49,9 +49,9 @@ jobs:
           ls $HOME/intelFPGA/20.1/modelsim_ase
           sed -i 's/linux_rh60/linux/g' $HOME/intelFPGA/20.1/modelsim_ase/vco
 
-      # - name: Add ModelSim to PATH
-      #   run: echo "$HOME/intelFPGA/20.1/modelsim_ase/bin" >> $GITHUB_PATH
-      
-      # Place the test cases to run here
+      # Run all python files in the folder that end in _tb. As we add
+      # testbenches, they will automatically run in this job
       - name: Run VUnit Test cases
-        run: VUNIT_MODELSIM_PATH=$HOME/intelFPGA/20.1/modelsim_ase/bin python rtl/python/vunit_example_tb.py
+        run: |
+        export VUNIT_MODELSIM_PATH=$HOME/intelFPGA/20.1/modelsim_ase/bin
+        for f in rtl/python/*_tb.py; do python $f; done
