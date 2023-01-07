@@ -11,14 +11,16 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - uses: actions-rs/toolchain@v1
+      - uses: teachee-capstone/svlint-action@v1.03
         with:
-          profile: minimal
-          toolchain: stable
-          components: rustfmt, clippy
-
-      - run: cargo install svlint
-      - run: SVLINT_CONFIG=rtl/.svlint.toml svlint rtl/axis/*.sv rtl/ft232h/*.sv rtl/xadc/*.sv rtl/examples/*/*.sv 
+          files: |
+            rtl/axis/*.sv
+            rtl/ft232h/*.sv
+            rtl/xadc/*.sv
+            rtl/examples/*/*.sv
+        env:
+          SVLINT_CONFIG=rtl/.svlint.toml
+      # - run: SVLINT_CONFIG=rtl/.svlint.toml svlint rtl/axis/*.sv rtl/ft232h/*.sv rtl/xadc/*.sv rtl/examples/*/*.sv 
 
   # This job is a modified version of what is shown on this blog post: https://purisa.me/blog/testing-hdl-on-github/
   vunit:
