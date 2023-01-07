@@ -20,7 +20,6 @@ jobs:
             rtl/examples/*/*.sv
         env:
           SVLINT_CONFIG: rtl/.svlint.toml
-      # - run: SVLINT_CONFIG=rtl/.svlint.toml svlint rtl/axis/*.sv rtl/ft232h/*.sv rtl/xadc/*.sv rtl/examples/*/*.sv 
 
   # This job is a modified version of what is shown on this blog post: https://purisa.me/blog/testing-hdl-on-github/
   vunit:
