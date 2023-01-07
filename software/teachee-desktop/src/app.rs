@@ -28,25 +28,31 @@ const GROUP_SPACING: f32 = 3.0;
 const BUTTON_HEIGHT: f32 = 25.0;
 
 #[derive(Debug, Default)]
+struct UIControls {
+    h_offset: f64,
+    h_scale: f64,
+    v_offset: f64,
+    v_scale: f64,
+    // TODO: use unused fields
+    _saved_v_offset: f64,
+    _saved_v_scale: f64,
+    _channel1_v_offset: f64,
+    _channel1_v_scale: f64,
+    _channel2_v_offset: f64,
+    _channel2_v_scale: f64,
+    channel1_on: bool,
+    channel2_on: bool,
+    trigger_button_text: TriggerControl,
+}
+
+#[derive(Debug, Default)]
 pub struct App {
     flag: bool,
     channel1: Channel,
     channel1_offset: f64,
     channel2: Channel,
     channel2_offset: f64,
-    h_offset: f64,
-    h_scale: f64,
-    v_offset: f64,
-    v_scale: f64,
-    saved_v_offset: f64,
-    saved_v_scale: f64,
-    channel1_v_offset: f64,
-    channel1_v_scale: f64,
-    channel2_v_offset: f64,
-    channel2_v_scale: f64,
-    channel1_on: bool,
-    channel2_on: bool,
-    trigger_button_text: TriggerControl,
+    ui_controls: UIControls,
 }
 
 impl App {
@@ -112,19 +118,7 @@ impl eframe::App for App {
             channel1_offset,
             channel2,
             channel2_offset,
-            h_offset,
-            h_scale,
-            v_offset,
-            v_scale,
-            saved_v_offset,
-            saved_v_scale,
-            channel1_v_offset,
-            channel1_v_scale,
-            channel2_v_offset,
-            channel2_v_scale,
-            channel1_on,
-            channel2_on,
-            trigger_button_text,
+            ui_controls,
             ..
         } = self;
 
@@ -135,7 +129,7 @@ impl eframe::App for App {
                 ui.separator();
                 ui.menu_button("File", |ui| {
                     if ui.button("Export to CSV").clicked() {
-                        // TODO: Export to CSV
+                        todo!("Exporting to CSV");
                     }
                     if ui.button("Exit").clicked() {
                         frame.close();
@@ -162,9 +156,15 @@ impl eframe::App for App {
                         ui.label("Horizontal");
                         ui.columns(2, |uis| {
                             uis[0].label("Offset");
-                            uis[0].add(Slider::new(h_offset, 0.0..=100.0).show_value(false));
+                            uis[0].add(
+                                Slider::new(&mut ui_controls.h_offset, 0.0..=100.0)
+                                    .show_value(false),
+                            );
                             uis[1].label("Scale");
-                            uis[1].add(Slider::new(h_scale, 0.0..=100.0).show_value(false));
+                            uis[1].add(
+                                Slider::new(&mut ui_controls.h_scale, 0.0..=100.0)
+                                    .show_value(false),
+                            );
                         });
 
                         ui.add_space(GROUP_SPACING);
@@ -177,19 +177,25 @@ impl eframe::App for App {
                                 // TODO: save vertical offset/scale when checked and
                                 // update individual channel's vertical offset/scale
                                 // when unchecked
-                                ui.checkbox(channel1_on, "Channel 1");
+                                ui.checkbox(&mut ui_controls.channel1_on, "Channel 1");
                             });
                         });
                         ui.group(|ui| {
                             ui.vertical_centered_justified(|ui| {
-                                ui.checkbox(channel2_on, "Channel 2");
+                                ui.checkbox(&mut ui_controls.channel2_on, "Channel 2");
                             });
                         });
                         ui.columns(2, |uis| {
                             uis[0].label("Offset");
-                            uis[0].add(Slider::new(v_offset, 0.0..=100.0).show_value(false));
+                            uis[0].add(
+                                Slider::new(&mut ui_controls.v_offset, 0.0..=100.0)
+                                    .show_value(false),
+                            );
                             uis[1].label("Scale");
-                            uis[1].add(Slider::new(v_scale, 0.0..=100.0).show_value(false));
+                            uis[1].add(
+                                Slider::new(&mut ui_controls.v_scale, 0.0..=100.0)
+                                    .show_value(false),
+                            );
                         });
 
                         ui.add_space(GROUP_SPACING);
@@ -201,18 +207,7 @@ impl eframe::App for App {
                                 .add(Button::new("Reset").min_size((0.0, BUTTON_HEIGHT).into()))
                                 .clicked()
                             {
-                                *h_offset = 0.0;
-                                *h_scale = 0.0;
-                                *v_offset = 0.0;
-                                *v_scale = 0.0;
-                                *saved_v_offset = 0.0;
-                                *saved_v_scale = 0.0;
-                                *channel1_v_offset = 0.0;
-                                *channel1_v_scale = 0.0;
-                                *channel2_v_offset = 0.0;
-                                *channel2_v_scale = 0.0;
-                                *channel1_on = false;
-                                *channel2_on = false;
+                                *ui_controls = UIControls::default();
                             }
                         });
 
@@ -232,17 +227,18 @@ impl eframe::App for App {
                         ui.vertical_centered_justified(|ui| {
                             if ui
                                 .add(
-                                    Button::new(trigger_button_text.to_string())
+                                    Button::new(ui_controls.trigger_button_text.to_string())
                                         .min_size((0.0, BUTTON_HEIGHT).into()),
                                 )
                                 .clicked()
                             {
                                 use TriggerControl::*;
                                 // TODO: enable/disable triggering
-                                *trigger_button_text = match trigger_button_text {
-                                    Start => Stop,
-                                    Stop => Start,
-                                };
+                                ui_controls.trigger_button_text =
+                                    match ui_controls.trigger_button_text {
+                                        Start => Stop,
+                                        Stop => Start,
+                                    };
                             }
                         });
                     });
