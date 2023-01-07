@@ -19,14 +19,15 @@ jobs:
 
       - run: cargo install svlint
       - run: SVLINT_CONFIG=rtl/.svlint.toml svlint rtl/axis/*.sv rtl/ft232h/*.sv rtl/xadc/*.sv rtl/examples/*/*.sv 
-  
+
+  # This job is a modified version of what is shown on this blog post: https://purisa.me/blog/testing-hdl-on-github/
   vunit:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
-      # Required for vunit
+      # Grab a python env to use vunit
       - uses: actions/setup-python@v2
         with:
           python-version: '3.x'
