@@ -43,10 +43,10 @@ jobs:
 
       - name: Run Modelsim Installer
         run: |
-          wget -O ModelSimSetup.run https://download.altera.com/akdlm/software/acdsinst/20.1std.1/720/ib_installers/ModelSimSetup-20.1.1.720-linux.run
+          curl 'https://download.altera.com/akdlm/software/acdsinst/20.1std.1/720/ib_installers/ModelSimSetup-20.1.1.720-linux.run' -o ModelSimSetup.run
           chmod +x ModelSimSetup.run
           ./ModelSimSetup.run --mode unattended --accept_eula 1
-          ls $HOME
+          ls $HOME/intelFPGA
           # ls $HOME/intelFPGA/20.1/modelsim_ase
           # sed -i 's/linux_rh60/linux/g' $HOME/intelFPGA/20.1/modelsim_ase/vco
 
