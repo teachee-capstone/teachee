@@ -26,6 +26,7 @@ impl fmt::Display for TriggerControl {
 
 const GROUP_SPACING: f32 = 3.0;
 const BUTTON_HEIGHT: f32 = 25.0;
+const TEXTEDIT_WIDTH: f32 = 30.0;
 
 #[derive(Debug, Default)]
 struct UIControls {
@@ -40,6 +41,9 @@ struct UIControls {
     _channel1_v_scale: f64,
     _channel2_v_offset: f64,
     _channel2_v_scale: f64,
+    h_scale_str: String,
+    channel1_v_scale_str: String,
+    channel2_v_scale_str: String,
     channel1_on: bool,
     channel2_on: bool,
     trigger_button_text: TriggerControl,
@@ -241,6 +245,51 @@ impl eframe::App for App {
                                     };
                             }
                         });
+                    });
+                });
+            });
+
+        TopBottomPanel::bottom("labels")
+            .resizable(false)
+            .show(ctx, |ui| {
+                ui.columns(2, |ui| {
+                    ui[0].horizontal(|ui| {
+                        ui.label("Channel 1:");
+                        if ui
+                            .add(
+                                TextEdit::singleline(&mut ui_controls.channel1_v_scale_str)
+                                    .desired_width(TEXTEDIT_WIDTH),
+                            )
+                            .lost_focus()
+                        {
+                            // TODO: sync string with slider value
+                        }
+                        ui.label("V/div");
+                    });
+                    ui[0].horizontal(|ui| {
+                        ui.label("Channel 2:");
+                        if ui
+                            .add(
+                                TextEdit::singleline(&mut ui_controls.channel2_v_scale_str)
+                                    .desired_width(TEXTEDIT_WIDTH),
+                            )
+                            .lost_focus()
+                        {
+                            // TODO: sync string with slider value
+                        }
+                        ui.label("V/div");
+                    });
+                    ui[1].with_layout(Layout::right_to_left(Align::Center), |ui| {
+                        ui.label("ms/div");
+                        if ui
+                            .add(
+                                TextEdit::singleline(&mut ui_controls.h_scale_str)
+                                    .desired_width(TEXTEDIT_WIDTH),
+                            )
+                            .lost_focus()
+                        {
+                            // TODO: sync string with slider value
+                        }
                     });
                 });
             });
