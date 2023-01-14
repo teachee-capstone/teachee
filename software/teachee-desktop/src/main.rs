@@ -10,7 +10,7 @@ fn main() {
 
     let options = NativeOptions {
         default_theme: Theme::Light,
-        min_window_size: Some(Vec2 { x: 600.0, y: 400.0 }),
+        min_window_size: Some(Vec2 { x: 496.0, y: 518.0 }),
         ..NativeOptions::default()
     };
 

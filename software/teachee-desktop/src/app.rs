@@ -1,4 +1,4 @@
-use std::f64::consts::TAU;
+use std::{f64::consts::TAU, fmt};
 
 use eframe::egui::*;
 
@@ -11,12 +11,52 @@ enum Channel {
 }
 
 #[derive(Debug, Default)]
+enum TriggerControl {
+    #[default]
+    Start,
+    Stop,
+}
+
+// Allows enum to be formatted to string
+impl fmt::Display for TriggerControl {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        fmt::Debug::fmt(self, f)
+    }
+}
+
+const GROUP_SPACING: f32 = 3.0;
+const BUTTON_HEIGHT: f32 = 25.0;
+const TEXTEDIT_WIDTH: f32 = 30.0;
+
+#[derive(Debug, Default)]
+struct UIControls {
+    h_offset: f64,
+    h_scale: f64,
+    v_offset: f64,
+    v_scale: f64,
+    // TODO: use unused fields
+    _saved_v_offset: f64,
+    _saved_v_scale: f64,
+    _channel1_v_offset: f64,
+    _channel1_v_scale: f64,
+    _channel2_v_offset: f64,
+    _channel2_v_scale: f64,
+    h_scale_str: String,
+    channel1_v_scale_str: String,
+    channel2_v_scale_str: String,
+    channel1_on: bool,
+    channel2_on: bool,
+    trigger_button_text: TriggerControl,
+}
+
+#[derive(Debug, Default)]
 pub struct App {
     flag: bool,
     channel1: Channel,
     channel1_offset: f64,
     channel2: Channel,
     channel2_offset: f64,
+    ui_controls: UIControls,
 }
 
 impl App {
@@ -71,7 +111,7 @@ fn channel_control(ui: &mut Ui, label: &str, channel: &mut Channel, offset: &mut
 }
 
 impl eframe::App for App {
-    fn update(&mut self, ctx: &Context, _frame: &mut eframe::Frame) {
+    fn update(&mut self, ctx: &Context, frame: &mut eframe::Frame) {
         // Always redraw on the next frame. Ensures that state changes from
         // other threads are immediately reflected in the UI.
         ctx.request_repaint();
@@ -82,46 +122,198 @@ impl eframe::App for App {
             channel1_offset,
             channel2,
             channel2_offset,
+            ui_controls,
             ..
         } = self;
-
-        SidePanel::right("controls")
-            .resizable(false)
-            .show(ctx, |ui| {
-                ScrollArea::vertical()
-                    .auto_shrink([false, false])
-                    .show(ui, |ui| {
-                        channel_control(ui, "Channel 1", channel1, channel1_offset);
-                        channel_control(ui, "Channel 2", channel2, channel2_offset);
-                    });
-            });
 
         TopBottomPanel::top("top").show(ctx, |ui| {
             ui.horizontal_wrapped(|ui| {
                 ui.visuals_mut().button_frame = false;
                 widgets::global_dark_light_mode_switch(ui);
                 ui.separator();
-                ui.label(if *flag { "Flag: 1" } else { "Flag: 0" });
+                ui.menu_button("File", |ui| {
+                    if ui.button("Export to CSV").clicked() {
+                        todo!("Exporting to CSV");
+                    }
+                    if ui.button("Exit").clicked() {
+                        frame.close();
+                    }
+                });
+                ui.separator();
+                ui.label(format!("Flag: {}", *flag as i32));
             })
         });
 
-        CentralPanel::default().show(ctx, |ui| {
-            ScrollArea::vertical().show(ui, |ui| {
-                let lines = [
-                    generate_points(0, 1000, 0.01, channel1, channel1_offset),
-                    generate_points(0, 1000, 0.01, channel2, channel2_offset),
-                ]
-                .into_iter()
-                .map(plot::Line::new);
+        SidePanel::right("controls")
+            .resizable(false)
+            .show(ctx, |ui| {
+                ui.vertical_centered(|ui| {
+                    ui.add_space(GROUP_SPACING);
 
-                plot::Plot::new("plot")
-                    .data_aspect(1.0)
-                    .allow_drag(false)
-                    .allow_scroll(false)
-                    .allow_zoom(false)
-                    .allow_boxed_zoom(false)
-                    .show(ui, |ui| lines.for_each(|l| ui.line(l)));
+                    ui.group(|ui| {
+                        ui.label("Channel scaling");
+
+                        ui.add_space(GROUP_SPACING);
+                        ui.separator();
+                        ui.add_space(GROUP_SPACING);
+
+                        ui.label("Horizontal");
+                        ui.columns(2, |uis| {
+                            uis[0].label("Offset");
+                            uis[0].add(
+                                Slider::new(&mut ui_controls.h_offset, 0.0..=100.0)
+                                    .show_value(false),
+                            );
+                            uis[1].label("Scale");
+                            uis[1].add(
+                                Slider::new(&mut ui_controls.h_scale, 0.0..=100.0)
+                                    .show_value(false),
+                            );
+                        });
+
+                        ui.add_space(GROUP_SPACING);
+                        ui.separator();
+                        ui.add_space(GROUP_SPACING);
+
+                        ui.label("Vertical");
+                        ui.group(|ui| {
+                            ui.vertical_centered_justified(|ui| {
+                                // TODO: save vertical offset/scale when checked and
+                                // update individual channel's vertical offset/scale
+                                // when unchecked
+                                ui.checkbox(&mut ui_controls.channel1_on, "Channel 1");
+                            });
+                        });
+                        ui.group(|ui| {
+                            ui.vertical_centered_justified(|ui| {
+                                ui.checkbox(&mut ui_controls.channel2_on, "Channel 2");
+                            });
+                        });
+                        ui.columns(2, |uis| {
+                            uis[0].label("Offset");
+                            uis[0].add(
+                                Slider::new(&mut ui_controls.v_offset, 0.0..=100.0)
+                                    .show_value(false),
+                            );
+                            uis[1].label("Scale");
+                            uis[1].add(
+                                Slider::new(&mut ui_controls.v_scale, 0.0..=100.0)
+                                    .show_value(false),
+                            );
+                        });
+
+                        ui.add_space(GROUP_SPACING);
+                        ui.separator();
+                        ui.add_space(GROUP_SPACING);
+
+                        ui.vertical_centered_justified(|ui| {
+                            if ui
+                                .add(Button::new("Reset").min_size((0.0, BUTTON_HEIGHT).into()))
+                                .clicked()
+                            {
+                                *ui_controls = UIControls::default();
+                            }
+                        });
+
+                        ui.add_space(GROUP_SPACING);
+                        // TODO: replace with new controls
+                        channel_control(ui, "Channel 1", channel1, channel1_offset);
+                        channel_control(ui, "Channel 2", channel2, channel2_offset);
+                    });
+
+                    ui.add_space(GROUP_SPACING);
+
+                    ui.group(|ui| {
+                        ui.label("Triggers");
+                        ui.add_space(GROUP_SPACING);
+                        ui.separator();
+                        ui.add_space(GROUP_SPACING);
+                        ui.vertical_centered_justified(|ui| {
+                            if ui
+                                .add(
+                                    Button::new(ui_controls.trigger_button_text.to_string())
+                                        .min_size((0.0, BUTTON_HEIGHT).into()),
+                                )
+                                .clicked()
+                            {
+                                use TriggerControl::*;
+                                // TODO: enable/disable triggering
+                                ui_controls.trigger_button_text =
+                                    match ui_controls.trigger_button_text {
+                                        Start => Stop,
+                                        Stop => Start,
+                                    };
+                            }
+                        });
+                    });
+                });
             });
+
+        TopBottomPanel::bottom("labels")
+            .resizable(false)
+            .show(ctx, |ui| {
+                ui.horizontal(|ui| {
+                    ui.vertical(|ui| {
+                        ui.horizontal(|ui| {
+                            ui.label("Channel 1:");
+                            if ui
+                                .add(
+                                    TextEdit::singleline(&mut ui_controls.channel1_v_scale_str)
+                                        .desired_width(TEXTEDIT_WIDTH),
+                                )
+                                .lost_focus()
+                            {
+                                // TODO: sync string with slider value
+                            }
+                            ui.label("V/div");
+                        });
+                        ui.horizontal(|ui| {
+                            ui.label("Channel 2:");
+                            if ui
+                                .add(
+                                    TextEdit::singleline(&mut ui_controls.channel2_v_scale_str)
+                                        .desired_width(TEXTEDIT_WIDTH),
+                                )
+                                .lost_focus()
+                            {
+                                // TODO: sync string with slider value
+                            }
+                            ui.label("V/div");
+                        });
+                    });
+
+                    ui.separator();
+
+                    ui.with_layout(Layout::left_to_right(Align::Center), |ui| {
+                        if ui
+                            .add(
+                                TextEdit::singleline(&mut ui_controls.h_scale_str)
+                                    .desired_width(TEXTEDIT_WIDTH),
+                            )
+                            .lost_focus()
+                        {
+                            // TODO: sync string with slider value
+                        }
+                        ui.label("ms/div");
+                    });
+                });
+            });
+
+        CentralPanel::default().show(ctx, |ui| {
+            let lines = [
+                generate_points(0, 1000, 0.01, channel1, channel1_offset),
+                generate_points(0, 1000, 0.01, channel2, channel2_offset),
+            ]
+            .into_iter()
+            .map(plot::Line::new);
+
+            plot::Plot::new("plot")
+                .data_aspect(1.0)
+                .allow_drag(false)
+                .allow_scroll(false)
+                .allow_zoom(false)
+                .allow_boxed_zoom(false)
+                .show(ui, |ui| lines.for_each(|l| ui.line(l)));
         });
     }
 }
