@@ -252,35 +252,39 @@ impl eframe::App for App {
         TopBottomPanel::bottom("labels")
             .resizable(false)
             .show(ctx, |ui| {
-                ui.columns(2, |ui| {
-                    ui[0].horizontal(|ui| {
-                        ui.label("Channel 1:");
-                        if ui
-                            .add(
-                                TextEdit::singleline(&mut ui_controls.channel1_v_scale_str)
-                                    .desired_width(TEXTEDIT_WIDTH),
-                            )
-                            .lost_focus()
-                        {
-                            // TODO: sync string with slider value
-                        }
-                        ui.label("V/div");
+                ui.horizontal(|ui| {
+                    ui.vertical(|ui| {
+                        ui.horizontal(|ui| {
+                            ui.label("Channel 1:");
+                            if ui
+                                .add(
+                                    TextEdit::singleline(&mut ui_controls.channel1_v_scale_str)
+                                        .desired_width(TEXTEDIT_WIDTH),
+                                )
+                                .lost_focus()
+                            {
+                                // TODO: sync string with slider value
+                            }
+                            ui.label("V/div");
+                        });
+                        ui.horizontal(|ui| {
+                            ui.label("Channel 2:");
+                            if ui
+                                .add(
+                                    TextEdit::singleline(&mut ui_controls.channel2_v_scale_str)
+                                        .desired_width(TEXTEDIT_WIDTH),
+                                )
+                                .lost_focus()
+                            {
+                                // TODO: sync string with slider value
+                            }
+                            ui.label("V/div");
+                        });
                     });
-                    ui[0].horizontal(|ui| {
-                        ui.label("Channel 2:");
-                        if ui
-                            .add(
-                                TextEdit::singleline(&mut ui_controls.channel2_v_scale_str)
-                                    .desired_width(TEXTEDIT_WIDTH),
-                            )
-                            .lost_focus()
-                        {
-                            // TODO: sync string with slider value
-                        }
-                        ui.label("V/div");
-                    });
-                    ui[1].with_layout(Layout::right_to_left(Align::Center), |ui| {
-                        ui.label("ms/div");
+
+                    ui.separator();
+
+                    ui.with_layout(Layout::left_to_right(Align::Center), |ui| {
                         if ui
                             .add(
                                 TextEdit::singleline(&mut ui_controls.h_scale_str)
@@ -290,27 +294,26 @@ impl eframe::App for App {
                         {
                             // TODO: sync string with slider value
                         }
+                        ui.label("ms/div");
                     });
                 });
             });
 
         CentralPanel::default().show(ctx, |ui| {
-            ScrollArea::vertical().show(ui, |ui| {
-                let lines = [
-                    generate_points(0, 1000, 0.01, channel1, channel1_offset),
-                    generate_points(0, 1000, 0.01, channel2, channel2_offset),
-                ]
-                .into_iter()
-                .map(plot::Line::new);
+            let lines = [
+                generate_points(0, 1000, 0.01, channel1, channel1_offset),
+                generate_points(0, 1000, 0.01, channel2, channel2_offset),
+            ]
+            .into_iter()
+            .map(plot::Line::new);
 
-                plot::Plot::new("plot")
-                    .data_aspect(1.0)
-                    .allow_drag(false)
-                    .allow_scroll(false)
-                    .allow_zoom(false)
-                    .allow_boxed_zoom(false)
-                    .show(ui, |ui| lines.for_each(|l| ui.line(l)));
-            });
+            plot::Plot::new("plot")
+                .data_aspect(1.0)
+                .allow_drag(false)
+                .allow_scroll(false)
+                .allow_zoom(false)
+                .allow_boxed_zoom(false)
+                .show(ui, |ui| lines.for_each(|l| ui.line(l)));
         });
     }
 }
