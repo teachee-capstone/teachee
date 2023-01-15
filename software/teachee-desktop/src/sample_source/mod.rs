@@ -14,8 +14,8 @@ pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 pub enum Channel {
     VoltageA,
     VoltageB,
-    CurrentA,
-    CurrentB,
+    VoltageC,
+    Current,
 }
 
 /// A trait which represents a source of samples. Could be a real TeachEE or a mock data.
@@ -67,7 +67,8 @@ where
     fn read_samples_loop(&mut self, mut reader: T) {
         // TODO: set connection status flag on self.storage = true
 
-        let mut sample_buf = vec![0.0; 100_000];
+        const SAMPLE_BUF_SIZE: usize = 100_000;
+        let mut sample_buf = vec![0.0; SAMPLE_BUF_SIZE];
 
         loop {
             match reader.read_samples(&mut sample_buf) {
