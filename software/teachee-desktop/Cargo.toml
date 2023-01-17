@@ -8,6 +8,17 @@ eframe = "0.20.1"
 libftd2xx = "0.32.1"
 structopt = "0.3.26"
 
+[target.'cfg(any(windows,linux))'.dependencies.libftd2xx]
+version = "0.32.1"
+features = ["static"]
+
+[target.'cfg(macos)'.dependencies.libftd2xx]
+version = "0.32.1"
+
+[features]
+default = []
+static = ["libftd2xx/static"]
+
 [workspace]
 members = [
     ".",
