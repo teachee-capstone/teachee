@@ -3,6 +3,10 @@ name = "teachee-desktop"
 version = "0.1.0"
 edition = "2021"
 
+[features]
+default = []
+static = ["libftd2xx/static"]
+
 [dependencies]
 eframe = "0.20.1"
 libftd2xx = "0.32.1"
