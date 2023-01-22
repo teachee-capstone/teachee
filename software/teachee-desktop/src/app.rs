@@ -60,10 +60,12 @@ impl ChannelState {
     fn store_samples(&mut self, samples: &[f64]) {
         // frontmost sample is the most recent
         for &sample in samples {
-            self.sample_buf.push_front(sample);
+            self.sample_buf.push_back(sample);
         }
-
-        self.sample_buf.truncate(self.capacity);
+        while self.sample_buf.len() > self.capacity {
+            self.sample_buf.pop_front();
+        }
+        //self.sample_buf.truncate(self.capacity);
         dbg!(self.sample_buf.len());
     }
 }
