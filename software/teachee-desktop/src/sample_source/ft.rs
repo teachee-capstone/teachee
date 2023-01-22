@@ -1,4 +1,4 @@
-use std::{thread, time::Duration};
+use std::{iter::zip, thread, time::Duration};
 
 use libftd2xx::{BitMode, Ft232h, FtdiCommon};
 
@@ -27,17 +27,24 @@ impl SampleSource for FtSampleSource {
         ft.set_usb_parameters(IN_TRANSFER_SIZE)?;
         ft.set_flow_control_rts_cts()?;
 
+        // ignore any data sent before we started listening
+        ft.purge_rx()?;
+
         Ok(Self {
             ft,
             rx_buf: vec![0; RX_BUF_SIZE],
         })
     }
 
-    fn read_samples(&mut self, _samples: &mut [f64]) -> Result<(usize, Channel)> {
+    fn read_samples(&mut self, samples: &mut [f64]) -> Result<(usize, Channel)> {
         let num_bytes = self.read_bytes()?;
-        let _rx_bytes = &self.rx_buf[0..num_bytes];
-        // TODO: decode rx_bytes as samples
-        Ok((0, Channel::VoltageA))
+        let rx_bytes = &self.rx_buf[0..num_bytes];
+
+        for (sample, byte) in zip(samples, rx_bytes) {
+            *sample = map(*byte as f64, 0.0, 255.0, 0.7, 3.3)
+        }
+
+        Ok((num_bytes, Channel::VoltageA))
     }
 }
 
@@ -47,4 +54,8 @@ impl FtSampleSource {
         self.ft.read_all(&mut self.rx_buf[0..num_bytes])?;
         Ok(num_bytes)
     }
+}
+
+fn map(x: f64, in_min: f64, in_max: f64, out_min: f64, out_max: f64) -> f64 {
+    (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
 }

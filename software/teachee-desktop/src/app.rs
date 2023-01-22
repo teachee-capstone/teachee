@@ -1,113 +1,140 @@
-use std::{f64::consts::TAU, fmt};
+use eframe::egui::{
+    plot::{Line, PlotPoints},
+    *,
+};
 
-use eframe::egui::*;
+use std::{
+    collections::VecDeque,
+    ops::{Index, IndexMut},
+};
 
-#[derive(Debug, Clone, Copy, Default, PartialEq)]
-enum Channel {
-    #[default]
-    Off,
-    Sine,
-    Cos,
+const GROUP_SPACING: f32 = 3.0;
+const TEXTEDIT_WIDTH: f32 = 30.0;
+
+const CHANNEL_INDICIES: [Channel; 1] = [
+    Channel::VoltageA,
+    // Channel::VoltageB,
+    // Channel::VoltageC,
+    // Channel::Current,
+];
+
+pub enum Channel {
+    VoltageA,
+    VoltageB,
+    VoltageC,
+    Current,
 }
 
-#[derive(Debug, Default)]
-enum TriggerControl {
-    #[default]
-    Start,
-    Stop,
+#[derive(Debug)]
+struct ChannelState {
+    label: &'static str,
+    _unit: &'static str,
+    capacity: usize,
+
+    sample_buf: VecDeque<f64>,
+
+    is_on: bool,
+    h_offset: f64,
+    v_offset: f64,
+    h_scale: f64,
+    v_scale: f64,
 }
 
-// Allows enum to be formatted to string
-impl fmt::Display for TriggerControl {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        fmt::Debug::fmt(self, f)
+impl ChannelState {
+    fn new(label: &'static str, unit: &'static str, capacity: usize) -> Self {
+        Self {
+            label,
+            _unit: unit,
+            capacity,
+
+            sample_buf: VecDeque::with_capacity(capacity),
+
+            is_on: false,
+            h_offset: 0.0,
+            v_offset: 0.0,
+            h_scale: 1.0,
+            v_scale: 1.0,
+        }
+    }
+
+    fn store_samples(&mut self, samples: &[f64]) {
+        // frontmost sample is the most recent
+        for &sample in samples {
+            self.sample_buf.push_front(sample);
+        }
+
+        self.sample_buf.truncate(self.capacity);
+        dbg!(self.sample_buf.len());
     }
 }
 
-const GROUP_SPACING: f32 = 3.0;
-const BUTTON_HEIGHT: f32 = 25.0;
-const TEXTEDIT_WIDTH: f32 = 30.0;
+#[derive(Debug)]
+struct ChannelStateArray {
+    voltage_a: ChannelState,
+    voltage_b: ChannelState,
+    voltage_c: ChannelState,
+    current: ChannelState,
+}
+
+impl Default for ChannelStateArray {
+    fn default() -> Self {
+        const CAPACITY: usize = 1000;
+
+        Self {
+            voltage_a: ChannelState::new("Voltage A", "V", CAPACITY),
+            voltage_b: ChannelState::new("Voltage B", "V", CAPACITY),
+            voltage_c: ChannelState::new("Voltage C", "V", CAPACITY),
+            current: ChannelState::new("Current", "A", CAPACITY),
+        }
+    }
+}
+
+impl Index<Channel> for ChannelStateArray {
+    type Output = ChannelState;
+
+    fn index(&self, index: Channel) -> &Self::Output {
+        match index {
+            Channel::VoltageA => &self.voltage_a,
+            Channel::VoltageB => &self.voltage_b,
+            Channel::VoltageC => &self.voltage_c,
+            Channel::Current => &self.current,
+        }
+    }
+}
+
+impl IndexMut<Channel> for ChannelStateArray {
+    fn index_mut(&mut self, index: Channel) -> &mut Self::Output {
+        match index {
+            Channel::VoltageA => &mut self.voltage_a,
+            Channel::VoltageB => &mut self.voltage_b,
+            Channel::VoltageC => &mut self.voltage_c,
+            Channel::Current => &mut self.current,
+        }
+    }
+}
 
 #[derive(Debug, Default)]
-struct UIControls {
-    h_offset: f64,
-    h_scale: f64,
-    v_offset: f64,
-    v_scale: f64,
-    // TODO: use unused fields
-    _saved_v_offset: f64,
-    _saved_v_scale: f64,
-    _channel1_v_offset: f64,
-    _channel1_v_scale: f64,
-    _channel2_v_offset: f64,
-    _channel2_v_scale: f64,
+struct ScopeControls {
+    channel_state_array: ChannelStateArray,
     h_scale_str: String,
     channel1_v_scale_str: String,
     channel2_v_scale_str: String,
-    channel1_on: bool,
-    channel2_on: bool,
-    trigger_button_text: TriggerControl,
 }
 
 #[derive(Debug, Default)]
 pub struct App {
-    flag: bool,
-    channel1: Channel,
-    channel1_offset: f64,
-    channel2: Channel,
-    channel2_offset: f64,
-    ui_controls: UIControls,
+    is_connected: bool,
+    scope_controls: ScopeControls,
 }
 
 impl App {
-    pub fn flip_flag(&mut self) {
-        self.flag = !self.flag
+    pub fn set_is_connected(&mut self, is_connected: bool) {
+        self.is_connected = is_connected;
     }
-}
 
-fn generate_points(
-    start: i64,
-    stop: i64,
-    step: f64,
-    channel: &Channel,
-    offset: &f64,
-) -> Vec<[f64; 2]> {
-    if let Channel::Off = channel {
-        Vec::new()
-    } else {
-        let f = match channel {
-            Channel::Sine => f64::sin,
-            Channel::Cos => f64::cos,
-            Channel::Off => unreachable!(),
-        };
-
-        (start..stop)
-            .map(|i| {
-                let x = i as f64 * step;
-                [x, f(x + offset)]
-            })
-            .collect()
+    pub fn store_samples(&mut self, channel: Channel, samples: &[f64]) {
+        self.scope_controls.channel_state_array[channel].store_samples(samples)
     }
-}
-
-fn channel_control(ui: &mut Ui, label: &str, channel: &mut Channel, offset: &mut f64) {
-    CollapsingHeader::new(label)
-        .default_open(true)
-        .show(ui, |ui| {
-            ComboBox::from_label("Input")
-                .selected_text(format!("{:?}", channel))
-                .show_ui(ui, |ui| {
-                    ui.selectable_value(channel, Channel::Off, "Off");
-                    ui.selectable_value(channel, Channel::Sine, "Sin");
-                    ui.selectable_value(channel, Channel::Cos, "Cos");
-                });
-
-            ui.add(
-                Slider::new(offset, 0.0..=TAU)
-                    .show_value(false)
-                    .text("Offset"),
-            );
-        });
 }
 
 impl eframe::App for App {
@@ -117,203 +144,162 @@ impl eframe::App for App {
         ctx.request_repaint();
 
         let Self {
-            flag,
-            channel1,
-            channel1_offset,
-            channel2,
-            channel2_offset,
-            ui_controls,
-            ..
+            is_connected,
+            scope_controls,
         } = self;
 
-        TopBottomPanel::top("top").show(ctx, |ui| {
-            ui.horizontal_wrapped(|ui| {
-                ui.visuals_mut().button_frame = false;
-                widgets::global_dark_light_mode_switch(ui);
-                ui.separator();
-                ui.menu_button("File", |ui| {
-                    if ui.button("Export to CSV").clicked() {
-                        todo!("Exporting to CSV");
-                    }
-                    if ui.button("Exit").clicked() {
-                        frame.close();
-                    }
-                });
-                ui.separator();
-                ui.label(format!("Flag: {}", *flag as i32));
-            })
-        });
+        TopBottomPanel::top("top").show(ctx, |ui| draw_menu_bar(ui, frame, is_connected));
 
         SidePanel::right("controls")
             .resizable(false)
-            .show(ctx, |ui| {
-                ui.vertical_centered(|ui| {
-                    ui.add_space(GROUP_SPACING);
-
-                    ui.group(|ui| {
-                        ui.label("Channel scaling");
-
-                        ui.add_space(GROUP_SPACING);
-                        ui.separator();
-                        ui.add_space(GROUP_SPACING);
-
-                        ui.label("Horizontal");
-                        ui.columns(2, |uis| {
-                            uis[0].label("Offset");
-                            uis[0].add(
-                                Slider::new(&mut ui_controls.h_offset, 0.0..=100.0)
-                                    .show_value(false),
-                            );
-                            uis[1].label("Scale");
-                            uis[1].add(
-                                Slider::new(&mut ui_controls.h_scale, 0.0..=100.0)
-                                    .show_value(false),
-                            );
-                        });
-
-                        ui.add_space(GROUP_SPACING);
-                        ui.separator();
-                        ui.add_space(GROUP_SPACING);
-
-                        ui.label("Vertical");
-                        ui.group(|ui| {
-                            ui.vertical_centered_justified(|ui| {
-                                // TODO: save vertical offset/scale when checked and
-                                // update individual channel's vertical offset/scale
-                                // when unchecked
-                                ui.checkbox(&mut ui_controls.channel1_on, "Channel 1");
-                            });
-                        });
-                        ui.group(|ui| {
-                            ui.vertical_centered_justified(|ui| {
-                                ui.checkbox(&mut ui_controls.channel2_on, "Channel 2");
-                            });
-                        });
-                        ui.columns(2, |uis| {
-                            uis[0].label("Offset");
-                            uis[0].add(
-                                Slider::new(&mut ui_controls.v_offset, 0.0..=100.0)
-                                    .show_value(false),
-                            );
-                            uis[1].label("Scale");
-                            uis[1].add(
-                                Slider::new(&mut ui_controls.v_scale, 0.0..=100.0)
-                                    .show_value(false),
-                            );
-                        });
-
-                        ui.add_space(GROUP_SPACING);
-                        ui.separator();
-                        ui.add_space(GROUP_SPACING);
-
-                        ui.vertical_centered_justified(|ui| {
-                            if ui
-                                .add(Button::new("Reset").min_size((0.0, BUTTON_HEIGHT).into()))
-                                .clicked()
-                            {
-                                *ui_controls = UIControls::default();
-                            }
-                        });
-
-                        ui.add_space(GROUP_SPACING);
-                        // TODO: replace with new controls
-                        channel_control(ui, "Channel 1", channel1, channel1_offset);
-                        channel_control(ui, "Channel 2", channel2, channel2_offset);
-                    });
-
-                    ui.add_space(GROUP_SPACING);
-
-                    ui.group(|ui| {
-                        ui.label("Triggers");
-                        ui.add_space(GROUP_SPACING);
-                        ui.separator();
-                        ui.add_space(GROUP_SPACING);
-                        ui.vertical_centered_justified(|ui| {
-                            if ui
-                                .add(
-                                    Button::new(ui_controls.trigger_button_text.to_string())
-                                        .min_size((0.0, BUTTON_HEIGHT).into()),
-                                )
-                                .clicked()
-                            {
-                                use TriggerControl::*;
-                                // TODO: enable/disable triggering
-                                ui_controls.trigger_button_text =
-                                    match ui_controls.trigger_button_text {
-                                        Start => Stop,
-                                        Stop => Start,
-                                    };
-                            }
-                        });
-                    });
-                });
-            });
+            .show(ctx, |ui| draw_scope_controls(ui, scope_controls));
 
         TopBottomPanel::bottom("labels")
             .resizable(false)
-            .show(ctx, |ui| {
-                ui.horizontal(|ui| {
-                    ui.vertical(|ui| {
-                        ui.horizontal(|ui| {
-                            ui.label("Channel 1:");
-                            if ui
-                                .add(
-                                    TextEdit::singleline(&mut ui_controls.channel1_v_scale_str)
-                                        .desired_width(TEXTEDIT_WIDTH),
-                                )
-                                .lost_focus()
-                            {
-                                // TODO: sync string with slider value
-                            }
-                            ui.label("V/div");
-                        });
-                        ui.horizontal(|ui| {
-                            ui.label("Channel 2:");
-                            if ui
-                                .add(
-                                    TextEdit::singleline(&mut ui_controls.channel2_v_scale_str)
-                                        .desired_width(TEXTEDIT_WIDTH),
-                                )
-                                .lost_focus()
-                            {
-                                // TODO: sync string with slider value
-                            }
-                            ui.label("V/div");
-                        });
-                    });
-
-                    ui.separator();
-
-                    ui.with_layout(Layout::left_to_right(Align::Center), |ui| {
-                        if ui
-                            .add(
-                                TextEdit::singleline(&mut ui_controls.h_scale_str)
-                                    .desired_width(TEXTEDIT_WIDTH),
-                            )
-                            .lost_focus()
-                        {
-                            // TODO: sync string with slider value
-                        }
-                        ui.label("ms/div");
-                    });
-                });
-            });
+            .show(ctx, |ui| draw_plot_labels(ui, scope_controls));
 
         CentralPanel::default().show(ctx, |ui| {
-            let lines = [
-                generate_points(0, 1000, 0.01, channel1, channel1_offset),
-                generate_points(0, 1000, 0.01, channel2, channel2_offset),
-            ]
-            .into_iter()
-            .map(plot::Line::new);
-
-            plot::Plot::new("plot")
-                .data_aspect(1.0)
-                .allow_drag(false)
-                .allow_scroll(false)
-                .allow_zoom(false)
-                .allow_boxed_zoom(false)
-                .show(ui, |ui| lines.for_each(|l| ui.line(l)));
+            draw_plot(ui, &mut scope_controls.channel_state_array)
         });
     }
+}
+
+fn draw_menu_bar(ui: &mut Ui, frame: &mut eframe::Frame, _is_connected: &bool) {
+    ui.horizontal_wrapped(|ui| {
+        ui.visuals_mut().button_frame = false;
+        widgets::global_dark_light_mode_switch(ui);
+        ui.separator();
+        ui.menu_button("File", |ui| {
+            if ui.button("Export to CSV").clicked() {
+                todo!("Exporting to CSV");
+            }
+            if ui.button("Exit").clicked() {
+                frame.close();
+            }
+        });
+        ui.separator();
+    });
+}
+
+fn draw_scope_controls(ui: &mut Ui, scope_controls: &mut ScopeControls) {
+    let ScopeControls {
+        channel_state_array,
+        ..
+    } = scope_controls;
+
+    ScrollArea::vertical().show(ui, |ui| {
+        for channel in CHANNEL_INDICIES {
+            ui.add_space(GROUP_SPACING);
+            ui.group(|ui| draw_channel_controls(ui, &mut channel_state_array[channel]));
+        }
+    });
+}
+
+fn draw_channel_controls(ui: &mut Ui, state: &mut ChannelState) {
+    let ChannelState {
+        label,
+        is_on,
+        h_offset,
+        v_offset,
+        h_scale,
+        v_scale,
+        ..
+    } = state;
+
+    ui.label(*label);
+    ui.separator();
+
+    ComboBox::new(format!("{}_state_combo_box", label), "State")
+        .selected_text(if *is_on { "On" } else { "Off" })
+        .show_ui(ui, |ui| {
+            ui.selectable_value(is_on, true, "On");
+            ui.selectable_value(is_on, false, "Off");
+        });
+
+    ui.add_space(GROUP_SPACING);
+
+    ui.group(|ui| {
+        ui.label("Horizontal");
+        ui.separator();
+        ui.columns(2, |uis| {
+            uis[0].label("Offset");
+            uis[0].add(Slider::new(h_offset, 0.0..=100.0).show_value(false));
+            uis[1].label("Scale");
+            uis[1].add(Slider::new(h_scale, 0.0..=100.0).show_value(false));
+        });
+    });
+
+    ui.add_space(GROUP_SPACING);
+
+    ui.group(|ui| {
+        ui.label("Vertical");
+        ui.separator();
+        ui.columns(2, |uis| {
+            uis[0].label("Offset");
+            uis[0].add(Slider::new(v_offset, 0.0..=100.0).show_value(false));
+            uis[1].label("Scale");
+            uis[1].add(Slider::new(v_scale, 0.0..=100.0).show_value(false));
+        })
+    });
+}
+
+fn draw_plot_labels(ui: &mut Ui, scope_controls: &mut ScopeControls) {
+    ui.horizontal(|ui| {
+        ui.vertical(|ui| {
+            ui.horizontal(|ui| {
+                ui.label("Channel 1:");
+                if ui
+                    .add(
+                        TextEdit::singleline(&mut scope_controls.channel1_v_scale_str)
+                            .desired_width(TEXTEDIT_WIDTH),
+                    )
+                    .lost_focus()
+                {
+                    // TODO: sync string with slider value
+                }
+                ui.label("V/div");
+            });
+            ui.horizontal(|ui| {
+                ui.label("Channel 2:");
+                if ui
+                    .add(
+                        TextEdit::singleline(&mut scope_controls.channel2_v_scale_str)
+                            .desired_width(TEXTEDIT_WIDTH),
+                    )
+                    .lost_focus()
+                {
+                    // TODO: sync string with slider value
+                }
+                ui.label("V/div");
+            });
+        });
+
+        ui.separator();
+
+        ui.with_layout(Layout::left_to_right(Align::Center), |ui| {
+            if ui
+                .add(
+                    TextEdit::singleline(&mut scope_controls.h_scale_str)
+                        .desired_width(TEXTEDIT_WIDTH),
+                )
+                .lost_focus()
+            {
+                // TODO: sync string with slider value
+            }
+            ui.label("ms/div");
+        });
+    });
+}
+
+fn draw_plot(ui: &mut Ui, channels: &mut ChannelStateArray) {
+    plot::Plot::new("plot").show(ui, |ui| {
+        for channel_idx in CHANNEL_INDICIES {
+            let channel = &channels[channel_idx];
+            if channel.is_on {
+                ui.line(Line::new(PlotPoints::from_ys_f64(
+                    channel.sample_buf.as_slices().0,
+                )))
+            }
+        }
+    });
 }

@@ -36,9 +36,9 @@ fn main() {
 
             thread::spawn(move || {
                 if opt.sine {
-                    Manager::<SineSampleSource>::manager_loop(manager_storage)
+                    Manager::<SineSampleSource>::manager_loop(&manager_storage)
                 } else {
-                    Manager::<FtSampleSource>::manager_loop(manager_storage)
+                    Manager::<FtSampleSource>::manager_loop(&manager_storage)
                 }
             });
 

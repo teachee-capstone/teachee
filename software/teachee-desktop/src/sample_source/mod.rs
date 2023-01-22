@@ -1,6 +1,6 @@
 use std::{marker::PhantomData, thread, time::Duration};
 
-use crate::storage::Storage;
+use crate::{app::Channel, storage::Storage};
 
 mod ft;
 mod sine;
@@ -10,13 +10,6 @@ pub use ft::FtSampleSource;
 pub use sine::SineSampleSource;
 
 pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
-
-pub enum Channel {
-    VoltageA,
-    VoltageB,
-    VoltageC,
-    Current,
-}
 
 /// A trait which represents a source of samples. Could be a real TeachEE or a mock data.
 pub trait SampleSource {
@@ -45,9 +38,9 @@ where
     T: SampleSource,
 {
     /// Infinite loop which continually attempts to initialize the `SampleSource`.
-    pub fn manager_loop(storage: Storage) {
+    pub fn manager_loop(storage: &Storage) {
         let mut manager = Self {
-            storage,
+            storage: storage.clone(),
             phantom: PhantomData,
         };
 
@@ -65,7 +58,7 @@ where
 
     /// Inner loop which continually reads the `SampleSource` until an error occurs.
     fn read_samples_loop(&mut self, mut reader: T) {
-        // TODO: set connection status flag on self.storage = true
+        self.storage.app.lock().unwrap().set_is_connected(true);
 
         const SAMPLE_BUF_SIZE: usize = 100_000;
         let mut sample_buf = vec![0.0; SAMPLE_BUF_SIZE];
@@ -73,20 +66,18 @@ where
         loop {
             match reader.read_samples(&mut sample_buf) {
                 Ok((num_samples, channel)) => {
-                    self.handle_samples(channel, &sample_buf[0..num_samples])
+                    self.storage
+                        .app
+                        .lock()
+                        .unwrap()
+                        .store_samples(channel, &sample_buf[0..num_samples]);
                 }
                 Err(error) => {
                     eprintln!("{:?}", error);
-                    // TODO: set connection status flag on self.storage = false
+                    self.storage.app.lock().unwrap().set_is_connected(false);
                     break;
                 }
             }
         }
-    }
-
-    fn handle_samples(&mut self, _channel: Channel, samples: &[f64]) {
-        self.storage.app.lock().unwrap().flip_flag();
-        dbg!(samples);
-        todo!("Do something with samples")
     }
 }
