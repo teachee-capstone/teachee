@@ -5,7 +5,7 @@ use std::{
 
 use super::{Channel, Result, SampleSource};
 
-const SAMPLE_DELAY_SEC: f64 = 1.0 / 10_00.0;
+const SAMPLE_DELAY_SEC: f64 = 1.0 / 1000.0;
 const CHUNK_DELAY_SEC: f64 = 1.0 / 100.0;
 
 const SINE_PERIOD_SEC: f64 = 1.0 / 60.0;

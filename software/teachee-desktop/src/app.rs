@@ -25,13 +25,14 @@ pub enum Channel {
     Current,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct ChannelState {
     label: &'static str,
     _unit: &'static str,
     capacity: usize,
 
     sample_buf: VecDeque<f64>,
+    sample_period: f64,
 
     is_on: bool,
     h_offset: f64,
@@ -41,13 +42,14 @@ struct ChannelState {
 }
 
 impl ChannelState {
-    fn new(label: &'static str, unit: &'static str, capacity: usize) -> Self {
+    fn new(label: &'static str, unit: &'static str, capacity: usize, sample_rate: f64) -> Self {
         Self {
             label,
             _unit: unit,
             capacity,
 
             sample_buf: VecDeque::with_capacity(capacity),
+            sample_period: 1.0 / sample_rate,
 
             is_on: false,
             h_offset: 0.0,
@@ -60,11 +62,29 @@ impl ChannelState {
     fn store_samples(&mut self, samples: &[f64]) {
         // frontmost sample is the most recent
         for &sample in samples {
-            self.sample_buf.push_front(sample);
+            self.sample_buf.push_back(sample);
         }
 
-        self.sample_buf.truncate(self.capacity);
-        dbg!(self.sample_buf.len());
+        while (self.sample_buf.len()) > self.capacity {
+            self.sample_buf.pop_front();
+        }
+    }
+
+    /// https://en.wikipedia.org/wiki/Whittaker%E2%80%93Shannon_interpolation_formula
+    fn interpolate(&self, t: f64) -> f64 {
+        fn sinc(x: f64) -> f64 {
+            x.sin() / x
+        }
+
+        let t = t * self.h_scale + self.h_offset;
+
+        let mut sum = 0.0;
+        for (n, x) in self.sample_buf.iter().enumerate() {
+            let n = n as f64;
+            sum += x + sinc(t - n * self.sample_period) / self.sample_period;
+        }
+
+        sum * self.v_scale + self.v_offset
     }
 }
 
@@ -81,10 +101,10 @@ impl Default for ChannelStateArray {
         const CAPACITY: usize = 1000;
 
         Self {
-            voltage_a: ChannelState::new("Voltage A", "V", CAPACITY),
-            voltage_b: ChannelState::new("Voltage B", "V", CAPACITY),
-            voltage_c: ChannelState::new("Voltage C", "V", CAPACITY),
-            current: ChannelState::new("Current", "A", CAPACITY),
+            voltage_a: ChannelState::new("Voltage A", "V", CAPACITY, 1_000.0),
+            voltage_b: ChannelState::new("Voltage B", "V", CAPACITY, 1_000_000.0),
+            voltage_c: ChannelState::new("Voltage C", "V", CAPACITY, 1_000_000.0),
+            current: ChannelState::new("Current", "A", CAPACITY, 1_000_000.0),
         }
     }
 }
@@ -296,9 +316,8 @@ fn draw_plot(ui: &mut Ui, channels: &mut ChannelStateArray) {
         for channel_idx in CHANNEL_INDICIES {
             let channel = &channels[channel_idx];
             if channel.is_on {
-                ui.line(Line::new(PlotPoints::from_ys_f64(
-                    channel.sample_buf.as_slices().0,
-                )))
+                let channel = channel.clone();
+                ui.line(Line::new(PlotPoints::from_explicit_callback(move |t| channel.interpolate(t), .., 200)));
             }
         }
     });
