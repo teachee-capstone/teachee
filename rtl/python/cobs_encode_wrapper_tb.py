@@ -12,7 +12,9 @@ RTL_ROOT = Path(__file__).parent / ".."
 # Create source list
 sources = [
     RTL_ROOT / "testbenches" / "cobs_encode_wrapper_tb.sv",
-    # RTL_ROOT / "cobs" / "cobs_encode_wrapper.sv",
+    RTL_ROOT / "cobs" / "cobs_encode_wrapper.sv",
+    RTL_ROOT / "verilog-axis" / "rtl" / "axis_cobs_encode.v",
+    RTL_ROOT / "verilog-axis" / "rtl" / "axis_fifo.v",
     RTL_ROOT / "axis" / "axis_interface.sv"
 ]
 

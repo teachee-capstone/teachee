@@ -19,8 +19,8 @@ module cobs_encode_wrapper (
         .m_axis_tvalid(encoded_stream.tvalid),
         .m_axis_tready(encoded_stream.tready),
         .m_axis_tlast(encoded_stream.tlast),
-        .m_axis_tuser(encoded_stream.tuser),
-    )
+        .m_axis_tuser(encoded_stream.tuser)
+    );
 endmodule
 
 `default_nettype none
