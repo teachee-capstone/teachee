@@ -58,7 +58,11 @@ module cobs_encode_wrapper_tb;
         end
 
         `TEST_CASE("CHECK_COBS_OUTPUT_FROM_16BIT_SAMPLE") begin
-            @(posedge clk) `CHECK_EQUAL(0, 0);
+            @(posedge clk) begin
+                if (state == LOAD_FIRST_BYTE) begin
+                    `CHECK_EQUAL(0, 0);
+                end 
+            end
         end
     end
 
