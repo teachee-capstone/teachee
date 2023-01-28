@@ -42,7 +42,7 @@ module cobs_encode_wrapper_tb;
         .rst(reset)
     );
 
-    cobs_encode_wrapper cobs_wrapper (
+    cobs_encode_wrapper DUT (
         .raw_stream(raw_stream),
         .encoded_stream(encoded_stream)
     );
@@ -64,56 +64,59 @@ module cobs_encode_wrapper_tb;
 
             // initialize state
             state = LOAD_FIRST_BYTE;
+            encoded_packet = 0;
+
+            // wait to load the first byte
+            while (!raw_stream.tready);
+            raw_stream.tdata = raw_stream.tdata + 1;
         end
 
         `TEST_CASE("CHECK_COBS_OUTPUT") begin
-            @(posedge clk) begin
-                case (state)
-                    LOAD_FIRST_BYTE: begin
-                        if (raw_stream.tready) begin
-                            raw_stream.tdata <= raw_stream.tdata + 1;
-                            state <= LOAD_SECOND_BYTE;
-                        end
-                    end
-                    LOAD_SECOND_BYTE: begin
-                        if (raw_stream.tready) begin
-                            raw_stream.tvalid <= 0;
-                            // Mark that this is the last one with tlast
-                            raw_stream.tlast <= 1;
-                            state <= CONSUME_FIRST_BYTE;
-                        end
-                    end
-                    CONSUME_FIRST_BYTE: begin
-                        raw_stream.tlast <= 0;
-                        // Wait for the encoded byte to become available on the other side of the module
-                        if (encoded_stream.tvalid && encoded_stream.tready) begin
-                            encoded_packet[31:24] <= encoded_stream.tdata;
-                            state <= CONSUME_SECOND_BYTE;
-                        end
-                    end
-                    CONSUME_SECOND_BYTE: begin
-                        if (encoded_stream.tvalid && encoded_stream.tready) begin
-                            encoded_packet[23:16] <= encoded_stream.tdata;
-                            state <= CONSUME_THIRD_BYTE;
-                        end
-                    end
-                    CONSUME_THIRD_BYTE: begin
-                        if (encoded_stream.tvalid && encoded_stream.tready) begin
-                            encoded_packet[15:8] <= encoded_stream.tdata;
-                            state <= CONSUME_FOURTH_BYTE;
-                        end
-                    end
-                    CONSUME_FOURTH_BYTE: begin
-                        if (encoded_stream.tvalid && encoded_stream.tready) begin
-                            encoded_packet[7:0] <= encoded_stream.tdata;
-                            state <= RUN_CHECK;
-                        end
-                    end
-                    // Now comapre the four encoded bytes against the expected value
-                    RUN_CHECK: begin
-                        `CHECK_EQUAL(encoded_packet, 32'h03_69_70_00);
-                    end
-                endcase
+            // @(posedge clk) begin
+            //     case (state)
+            //         LOAD_FIRST_BYTE: begin
+            //             if (raw_stream.tready) begin
+            //                 raw_stream.tdata <= raw_stream.tdata + 1;
+            //                 state <= LOAD_SECOND_BYTE;
+            //             end
+            //         end
+            //         LOAD_SECOND_BYTE: begin
+            //             if (raw_stream.tready) begin
+            //                 raw_stream.tvalid <= 0;
+            //                 // Mark that this is the last one with tlast
+            //                 raw_stream.tlast <= 1;
+            //                 state <= CONSUME_FIRST_BYTE;
+            //             end
+            //         end
+            //         CONSUME_FIRST_BYTE: begin
+            //             raw_stream.tlast <= 0;
+            //             // Wait for the encoded byte to become available on the other side of the module
+            //             if (encoded_stream.tvalid && encoded_stream.tready) begin
+            //                 encoded_packet[31:24] <= encoded_stream.tdata;
+            //                 state <= CONSUME_SECOND_BYTE;
+            //             end
+            //         end
+            //         CONSUME_SECOND_BYTE: begin
+            //             if (encoded_stream.tvalid && encoded_stream.tready) begin
+            //                 encoded_packet[23:16] <= encoded_stream.tdata;
+            //                 state <= CONSUME_THIRD_BYTE;
+            //             end
+            //         end
+            //         CONSUME_THIRD_BYTE: begin
+            //             if (encoded_stream.tvalid && encoded_stream.tready) begin
+            //                 encoded_packet[15:8] <= encoded_stream.tdata;
+            //                 state <= CONSUME_FOURTH_BYTE;
+            //             end
+            //         end
+            //         CONSUME_FOURTH_BYTE: begin
+            //             if (encoded_stream.tvalid && encoded_stream.tready) begin
+            //                 encoded_packet[7:0] <= encoded_stream.tdata;
+            //                 state <= RUN_CHECK;
+            //             end
+            //         end
+            //     endcase
+                // Now comapre the four encoded bytes against the expected value
+                `CHECK_EQUAL(encoded_packet, 32'h03_69_70_00);
             end
         end
     end
