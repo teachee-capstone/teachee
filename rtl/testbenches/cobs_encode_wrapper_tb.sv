@@ -66,7 +66,7 @@ module cobs_encode_wrapper_tb;
             state = LOAD_FIRST_BYTE;
         end
 
-        `TEST_CASE("CHECK_COBS_OUTPUT_FROM_16BIT_SAMPLE") begin
+        `TEST_CASE("CHECK_COBS_OUTPUT") begin
             @(posedge clk) begin
                 case (state)
                     LOAD_FIRST_BYTE: begin
