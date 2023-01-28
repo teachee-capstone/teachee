@@ -7,6 +7,9 @@ module cobs_encode_wrapper (
     axis_interface.Source encoded_stream // Cobs encoded bytes
 );
     axis_cobs_encode cobs_encoder (
+        .clk(raw_stream.clk),
+        .rst(raw_stream.rst),
+
         // AXI input
         .s_axis_tdata(raw_stream.tdata),
         .s_axis_tvalid(raw_stream.tvalid),

@@ -69,6 +69,7 @@ module cobs_encode_wrapper_tb;
         `TEST_CASE("CHECK_COBS_OUTPUT") begin
             automatic int bytes_loaded = 0;
             automatic int bytes_consumed = 0;
+            // load in the bytes into the input FIFO
             while (bytes_loaded < 2) begin
                 @(posedge clk) begin
                     if (raw_stream.tvalid && raw_stream.tready) begin
@@ -80,19 +81,37 @@ module cobs_encode_wrapper_tb;
                     end
                 end
             end
+            @(posedge clk) begin
+                raw_stream.tlast = 0;
+            end
             
             // now consume the output
             encoded_stream.tready = 1;
-            while (bytes_consumed < 4) begin
+            while (bytes_consumed < 5) begin
                 @(posedge clk) begin
                     if (encoded_stream.tvalid && encoded_stream.tready) begin
-                        // do stuff here 
+                        bytes_consumed = bytes_consumed + 1;
+                        // now check each byte for equality with the expected packet data
+                        case (bytes_consumed)
+                            1: begin
+                                `CHECK_EQUAL(encoded_stream.tdata, 'h04);
+                            end
+                            2: begin
+                                `CHECK_EQUAL(encoded_stream.tdata, 'h69);
+                            end
+                            3: begin
+                                `CHECK_EQUAL(encoded_stream.tdata, 'h6a);
+                            end
+                            4: begin
+                                `CHECK_EQUAL(encoded_stream.tdata, 'h6b);
+                            end
+                            5: begin
+                                `CHECK_EQUAL(encoded_stream.tdata, 'h00);
+                            end
+                        endcase
                     end
-                    bytes_consumed = bytes_consumed + 1;
                 end
             end
-            // wait (bytes_loaded == 2) `CHECK_EQUAL(encoded_packet, 32'h03_69_70_00);
-            wait (bytes_consumed == 4) `CHECK_EQUAL(encoded_packet, 32'h03_69_70_00);
         end
     end
 
