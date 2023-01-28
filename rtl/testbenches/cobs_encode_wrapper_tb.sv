@@ -60,64 +60,39 @@ module cobs_encode_wrapper_tb;
             raw_stream.tuser = 0;
 
             // configure the encoded output
-            encoded_stream.tready = 1;
+            encoded_stream.tready = 0;
 
             // initialize state
-            state = LOAD_FIRST_BYTE;
             encoded_packet = 0;
-
-            // wait to load the first byte
-            while (!raw_stream.tready);
-            raw_stream.tdata = raw_stream.tdata + 1;
         end
 
         `TEST_CASE("CHECK_COBS_OUTPUT") begin
-            // @(posedge clk) begin
-            //     case (state)
-            //         LOAD_FIRST_BYTE: begin
-            //             if (raw_stream.tready) begin
-            //                 raw_stream.tdata <= raw_stream.tdata + 1;
-            //                 state <= LOAD_SECOND_BYTE;
-            //             end
-            //         end
-            //         LOAD_SECOND_BYTE: begin
-            //             if (raw_stream.tready) begin
-            //                 raw_stream.tvalid <= 0;
-            //                 // Mark that this is the last one with tlast
-            //                 raw_stream.tlast <= 1;
-            //                 state <= CONSUME_FIRST_BYTE;
-            //             end
-            //         end
-            //         CONSUME_FIRST_BYTE: begin
-            //             raw_stream.tlast <= 0;
-            //             // Wait for the encoded byte to become available on the other side of the module
-            //             if (encoded_stream.tvalid && encoded_stream.tready) begin
-            //                 encoded_packet[31:24] <= encoded_stream.tdata;
-            //                 state <= CONSUME_SECOND_BYTE;
-            //             end
-            //         end
-            //         CONSUME_SECOND_BYTE: begin
-            //             if (encoded_stream.tvalid && encoded_stream.tready) begin
-            //                 encoded_packet[23:16] <= encoded_stream.tdata;
-            //                 state <= CONSUME_THIRD_BYTE;
-            //             end
-            //         end
-            //         CONSUME_THIRD_BYTE: begin
-            //             if (encoded_stream.tvalid && encoded_stream.tready) begin
-            //                 encoded_packet[15:8] <= encoded_stream.tdata;
-            //                 state <= CONSUME_FOURTH_BYTE;
-            //             end
-            //         end
-            //         CONSUME_FOURTH_BYTE: begin
-            //             if (encoded_stream.tvalid && encoded_stream.tready) begin
-            //                 encoded_packet[7:0] <= encoded_stream.tdata;
-            //                 state <= RUN_CHECK;
-            //             end
-            //         end
-            //     endcase
-                // Now comapre the four encoded bytes against the expected value
-                `CHECK_EQUAL(encoded_packet, 32'h03_69_70_00);
+            automatic int bytes_loaded = 0;
+            automatic int bytes_consumed = 0;
+            while (bytes_loaded < 2) begin
+                @(posedge clk) begin
+                    if (raw_stream.tvalid && raw_stream.tready) begin
+                        raw_stream.tdata = raw_stream.tdata + 1;
+                        bytes_loaded = bytes_loaded + 1;
+                        if (bytes_loaded == 2) begin
+                            raw_stream.tlast = 1;
+                        end
+                    end
+                end
             end
+            
+            // now consume the output
+            encoded_stream.tready = 1;
+            while (bytes_consumed < 4) begin
+                @(posedge clk) begin
+                    if (encoded_stream.tvalid && encoded_stream.tready) begin
+                        // do stuff here 
+                    end
+                    bytes_consumed = bytes_consumed + 1;
+                end
+            end
+            // wait (bytes_loaded == 2) `CHECK_EQUAL(encoded_packet, 32'h03_69_70_00);
+            wait (bytes_consumed == 4) `CHECK_EQUAL(encoded_packet, 32'h03_69_70_00);
         end
     end
 
