@@ -13,13 +13,12 @@ RTL_ROOT = Path(__file__).parent / ".."
 # Create source list
 sources = [
     RTL_ROOT / "testbenches" / "xadc_packetizer_tb.sv",
-    RTL_ROOT / "xadc" / "xadc_packet_package.sv",
-    RTL_ROOT / "xadc" / "xadc_drp_package.sv",
-    RTL_ROOT / "xadc" / "xadc_packetizer.sv",
+    RTL_ROOT / "xadc" / "*.sv",
     RTL_ROOT / "cobs" / "cobs_encode_wrapper.sv",
     RTL_ROOT / "verilog-axis" / "rtl" / "axis_cobs_encode.v",
     RTL_ROOT / "verilog-axis" / "rtl" / "axis_fifo.v",
-    RTL_ROOT / "axis" / "axis_interface.sv"
+    RTL_ROOT / "verilog-axis" / "rtl" / "axis_async_fifo.v",
+    RTL_ROOT / "axis" / "*.sv"
 ]
 
 # Create VUnit instance and add sources to library
