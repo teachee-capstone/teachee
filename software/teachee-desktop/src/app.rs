@@ -95,7 +95,7 @@ fn channel_control(ui: &mut Ui, label: &str, channel: &mut Channel, offset: &mut
         .default_open(true)
         .show(ui, |ui| {
             ComboBox::from_label("Input")
-                .selected_text(format!("{:?}", channel))
+                .selected_text(format!("{channel:?}"))
                 .show_ui(ui, |ui| {
                     ui.selectable_value(channel, Channel::Off, "Off");
                     ui.selectable_value(channel, Channel::Sine, "Sin");
