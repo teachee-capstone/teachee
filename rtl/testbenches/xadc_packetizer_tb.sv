@@ -50,20 +50,20 @@ module xadc_packetizer_tb;
         .reset_in(reset),
 
         // DRP
-        .di_in(),
+        .di_in(0),
         .daddr_in(xadc_daddr),
         .den_in(xadc_den),
-        .dwe_in(),
+        .dwe_in(0),
         .drdy_out(xadc_drdy),
         .do_out(xadc_do),
 
-        .vp_in(),
-        .vn_in(),
+        .vp_in(0),
+        .vn_in(0),
 
-        .vauxp4(),
-        .vauxn4(),
-        .vauxp12(),
-        .vauxn12(),
+        .vauxp4(0),
+        .vauxn4(0),
+        .vauxp12(0),
+        .vauxn12(0),
 
         .channel_out(),
         .eoc_out(),

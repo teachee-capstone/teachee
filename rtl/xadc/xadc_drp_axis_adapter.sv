@@ -134,7 +134,7 @@ module xadc_drp_axis_adapter (
     end
 
     // Set default values for the unused AXIS signals
-    always begin
+    always_comb begin
         xadc_current_axis.tlast <= 1;
         xadc_current_axis.tkeep <= '1;
         xadc_current_axis.tid <= '0;
