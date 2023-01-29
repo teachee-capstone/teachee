@@ -29,6 +29,10 @@ module xadc_packetizer (
     typedef enum int {
         XADC_PACKETIZER_INIT,
         XADC_PACKETIZER_LOAD_NEW_SAMPLES,
+        XADC_PACKETIZER_SEND_VOLTAGE_UPPER,
+        XADC_PACKETIZER_SEND_VOLTAGE_LOWER,
+        XADC_PACKETIZER_SEND_CURRENT_UPPER,
+        XADC_PACKETIZER_SEND_CURRENT_LOWER,
         XADC_PACKETIZER_AWAIT_SAMPLES
     } xadc_packetizer_state_t;
 
@@ -42,7 +46,7 @@ module xadc_packetizer (
     );
 
     cobs_encode_wrapper cobs_encoder (
-        .raw_stream(raw_stream),
+        .raw_stream(raw_stream.Sink),
         .encoded_stream(packet_stream)
     );
 
@@ -76,7 +80,41 @@ module xadc_packetizer (
                     // The samples are only 12 bits so we are going to abuse the
                     // upper 4 bits to serve as packet header
 
-                    // TODO: Load the packet header into voltage_upper and then unload them into the packet stream
+                    // load the packet header into voltager_upper
+                    voltage_upper[15:12] <= XADC_PACKET_HEADER_LOW_SPEED_SAMPLE;
+
+                    // Disable the tready signal and proceed to the next state
+                    voltage_channel.tready <= 0;
+                    current_monitor_channel.tready <= 0;
+
+                    // enable tvalid to stream the data into raw_stream
+                    raw_stream.tvalid <= 1;
+                    raw_stream.tdata <= voltage_upper; // Note this includes the header
+                    
+                    state <= XADC_PACKETIZER_SEND_TO_ENCODER;
+                end
+            end
+            XADC_PACKETIZER_SEND_VOLTAGE_UPPER: begin
+                if (raw_stream.tvalid && raw_stream.tready) begin
+                    // await tready to ensure the voltage upper is written and proceed to the next state
+                    
+                    raw_stream.tdata <= voltage_lower;
+                    state <= XADC_PACKETIZER_SEND_VOLTAGE_LOWER;
+                end
+            end
+            XADC_PACKETIZER_SEND_VOLTAGE_LOWER: begin
+                if (raw_stream.tvalid && raw_stream.tready) begin
+                    // after sending lower voltage, transition and send current data
+                    raw_stream.tdata <= current_upper;
+                    state <= XADC_PACKETIZER_SEND_CURRENT_UPPER;
+                end
+            end
+            XADC_PACKETIZER_SEND_CURRENT_LOWER: begin
+                if (raw_stream.tvalid && raw_stream.tready) begin
+                    // This is a special case since it is the last packet, This
+                    // is where we raise tlast to get the encoder to do the
+                    // encoding
+                    raw_stream.tdata <= current_lower;
                 end
             end
         endcase
