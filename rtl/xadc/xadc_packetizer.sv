@@ -22,25 +22,62 @@ module xadc_packetizer (
     axis_interface.Source packet_stream
 );
 
+    // shared clock abbreviated for simplicity
+    var logic clk;
+    assign clk = voltage_channel.clk;
+
     typedef enum int {
         XADC_PACKETIZER_INIT,
-        XADC_PACKETIZER_LOAD_UPPER_VOLTAGE_BYTE,
-        XADC_PACKETIZER_LOAD_LOWER_VOLTAGE_BYTE,
-        XADC_PACKETIZER_LOAD_UPPER_CURRENT_BYTE,
-        XADC_PACKETIZER_LOAD_LOWER_CURRENT_BYTE,
+        XADC_PACKETIZER_LOAD_NEW_SAMPLES,
         XADC_PACKETIZER_AWAIT_SAMPLES
     } xadc_packetizer_state_t;
 
     xadc_packetizer_state_t state = XADC_PACKETIZER_INIT;
 
-    // Note: we are assuming that the voltage and current channel clocks are identical. Not an async module
-    // Also, the XADC axis is already FIFO'd on one side so we will not repeat FIFO instances here
+    axis_interface #(
+        .DATA_WIDTH(8)
+    ) raw_stream (
+        .clk(clk),
+        .rst(voltage.channel.rst || current_monitor_channel.rst)
+    );
 
-    always_ff @(posedge voltage_channel.clk) begin
+    cobs_encode_wrapper cobs_encoder (
+        .raw_stream(raw_stream),
+        .encoded_stream(packet_stream)
+    );
+
+    // Declare upper and lower byte for voltage / current
+    var logic[7:0] voltage_upper;
+    var logic[7:0] voltage_lower;
+
+    var logic[7:0] current_upper;
+    var logic[7:0] current_lower;
+
+    always_ff @(posedge clk) begin
         case (state)
             XADC_PACKETIZER_INIT: begin
-                // Select who has data available and transition into the loading state.
-                // if neither stream has data, await data instead
+                // Tell the input streams we are ready to intake bytes
+                voltage_channel.tready <= 1;
+                current_monitor_channel.tready <= 1;
+                
+                state <= XADC_PACKETIZER_LOAD_NEW_SAMPLES;
+            end
+            XADC_PACKETIZER_LOAD_NEW_SAMPLES: begin
+                // Wait until there is both voltage and current data available
+                // Then build a packet
+                if (voltage_channel.tready && voltage_channel.tvalid && current_monitor_channel.tready && current_monitor_channel.tvalid) begin
+                    // load the registers with the sample data
+                    voltage_upper <= voltage_channel.tdata[15:8];
+                    voltage_lower <= voltage_channel.tdata[7:0];
+
+                    current_upper <= current_monitor_channel.tdata[15:8];
+                    current_lower <= current_monitor_channel.tdata[7:0];
+
+                    // The samples are only 12 bits so we are going to abuse the
+                    // upper 4 bits to serve as packet header
+
+                    // TODO: Load the packet header into voltage_upper and then unload them into the packet stream
+                end
             end
         endcase
     end
