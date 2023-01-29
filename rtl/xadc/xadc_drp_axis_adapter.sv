@@ -135,17 +135,17 @@ module xadc_drp_axis_adapter (
 
     // Set default values for the unused AXIS signals
     always_comb begin
-        xadc_current_axis.tlast <= 1;
-        xadc_current_axis.tkeep <= '1;
-        xadc_current_axis.tid <= '0;
-        xadc_current_axis.tuser <= '0;
-        xadc_current_axis.tdest <= '0;
+        xadc_current_axis.tlast = 1;
+        xadc_current_axis.tkeep = '1;
+        xadc_current_axis.tid = '0;
+        xadc_current_axis.tuser = '0;
+        xadc_current_axis.tdest = '0;
 
-        xadc_voltage_axis.tlast <= 1;
-        xadc_voltage_axis.tkeep <= '1;
-        xadc_voltage_axis.tid <= '0;
-        xadc_voltage_axis.tuser <= '0;
-        xadc_voltage_axis.tdest <= '0;
+        xadc_voltage_axis.tlast = 1;
+        xadc_voltage_axis.tkeep = '1;
+        xadc_voltage_axis.tid = '0;
+        xadc_voltage_axis.tuser = '0;
+        xadc_voltage_axis.tdest = '0;
     end
 endmodule
 
