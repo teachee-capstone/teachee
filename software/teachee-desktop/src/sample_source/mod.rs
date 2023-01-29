@@ -58,7 +58,7 @@ where
 
             match T::try_init() {
                 Ok(reader) => manager.read_samples_loop(reader),
-                Err(error) => eprintln!("{:?}", error),
+                Err(error) => eprintln!("{error:?}"),
             }
         }
     }
@@ -76,7 +76,7 @@ where
                     self.handle_samples(channel, &sample_buf[0..num_samples])
                 }
                 Err(error) => {
-                    eprintln!("{:?}", error);
+                    eprintln!("{error:?}");
                     // TODO: set connection status flag on self.storage = false
                     break;
                 }
