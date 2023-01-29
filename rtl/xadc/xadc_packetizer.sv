@@ -42,7 +42,7 @@ module xadc_packetizer (
         .DATA_WIDTH(8)
     ) raw_stream (
         .clk(clk),
-        .rst(voltage.channel.rst || current_monitor_channel.rst)
+        .rst(voltage_channel.rst || current_monitor_channel.rst)
     );
 
     cobs_encode_wrapper cobs_encoder (
@@ -98,7 +98,7 @@ module xadc_packetizer (
                     raw_stream.tvalid <= 1;
                     raw_stream.tdata <= voltage_upper; // Note this includes the header
                     
-                    state <= XADC_PACKETIZER_SEND_TO_ENCODER;
+                    state <= XADC_PACKETIZER_SEND_VOLTAGE_UPPER;
                 end
             end
             XADC_PACKETIZER_SEND_VOLTAGE_UPPER: begin
@@ -124,7 +124,7 @@ module xadc_packetizer (
                     raw_stream.tdata <= current_lower;
                     raw_stream.tlast <= 1;
                     raw_stream.tvalid <= 0;
-                    state <= XADC_PACKETIZER_AWAIT_SAMPLES;
+                    state <= XADC_PACKETIZER_FINISH_PACKET;
                 end
             end
             XADC_PACKETIZER_FINISH_PACKET: begin
