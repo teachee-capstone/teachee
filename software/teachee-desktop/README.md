@@ -5,7 +5,9 @@
 $ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 # run app
 $ cargo run
-# test app
+# run app with fake sine wave
+$ cargo run -- --sine
+# run tests
 $ cargo test
 # format code
 $ cargo fmt
@@ -26,7 +28,7 @@ set -e
 
 git stash push --include-untracked --keep-index --quiet --message='Backed up state for the pre-commit hook (if you can see it, something went wrong)'
 
-(cd software/teachee-desktop/ && cargo xtask)
+(cd software/teachee-desktop/ && cargo xtask ci)
 status=$?
 
 git reset --hard --quiet
