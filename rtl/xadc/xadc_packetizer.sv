@@ -33,7 +33,7 @@ module xadc_packetizer (
         XADC_PACKETIZER_SEND_VOLTAGE_LOWER,
         XADC_PACKETIZER_SEND_CURRENT_UPPER,
         XADC_PACKETIZER_SEND_CURRENT_LOWER,
-        XADC_PACKETIZER_AWAIT_SAMPLES
+        XADC_PACKETIZER_FINISH_PACKET
     } xadc_packetizer_state_t;
 
     xadc_packetizer_state_t state = XADC_PACKETIZER_INIT;
@@ -60,6 +60,13 @@ module xadc_packetizer (
     always_ff @(posedge clk) begin
         case (state)
             XADC_PACKETIZER_INIT: begin
+                // init raw_stream signals to default states
+                raw_stream.tlast <= 0;
+                raw_stream.tkeep <= 1;
+                raw_stream.tid <= 0;
+                raw_stream.tuser <= 0;
+                raw_stream.tdest <= 0;
+
                 // Tell the input streams we are ready to intake bytes
                 voltage_channel.tready <= 1;
                 current_monitor_channel.tready <= 1;
@@ -115,7 +122,14 @@ module xadc_packetizer (
                     // is where we raise tlast to get the encoder to do the
                     // encoding
                     raw_stream.tdata <= current_lower;
+                    raw_stream.tlast <= 1;
+                    raw_stream.tvalid <= 0;
+                    state <= XADC_PACKETIZER_AWAIT_SAMPLES;
                 end
+            end
+            XADC_PACKETIZER_FINISH_PACKET: begin
+                raw_stream.tlast <= 0;
+                state <= XADC_PACKETIZER_LOAD_NEW_SAMPLES;
             end
         endcase
     end
