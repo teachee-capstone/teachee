@@ -185,9 +185,12 @@ module xadc_cobs (
                 raw_stream.tdest <= '0;
 
                 raw_stream.tvalid <= 0;
+                raw_stream.tdata <= 0;
 
                 // let current monitor channel flow out into nothing to prevent stalls
                 current_monitor_channel.tready <= 1;
+
+                voltage_channel.tready <= 0;
 
                 state <= WAIT_FOR_SAMPLE;
             end
@@ -201,6 +204,7 @@ module xadc_cobs (
             COLLECT_UPPER_LOWER: begin
                 if (voltage_channel.tready && voltage_channel.tvalid) begin
                     voltage_sample <= voltage_channel.tdata;
+                    voltage_channel.tready <= 0;
 
                     state <= PREP_LOAD;
                 end
