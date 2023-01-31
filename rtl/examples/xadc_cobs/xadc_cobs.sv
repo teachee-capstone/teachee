@@ -41,7 +41,9 @@ module xadc_cobs (
         .rst(0)
     );
 
-    axis_interface sys_axis (
+    axis_interface #(
+        .DATA_WIDTH(8)
+    ) sys_axis (
         .clk(sys_clk),
         .rst(0)
     );
@@ -60,7 +62,8 @@ module xadc_cobs (
         .ftdi_adbus(ftdi_data),
 
         // Programmer AXIS Interface
-        .sys_axis(sys_axis.Sink)
+        // .sys_axis(sys_axis.Sink)
+        .sys_axis(cobs_stream.Sink)
     );
 
     var logic xadc_reset;
@@ -127,33 +130,105 @@ module xadc_cobs (
     );
 
 
-    xadc_packetizer sample_cobs_streamer (
-        .voltage_channel(voltage_channel.Sink),
-        .current_monitor_channel(current_monitor_channel.Sink),
-        .packet_stream(sys_axis.Source)
+
+    axis_interface #(
+        .DATA_WIDTH(8)
+    ) cobs_stream (
+        .clk(sys_clk),
+        .rst(0)
     );
 
-    // always_ff @(posedge sys_clk) begin
-    //     // Set sys_axis source defaults here
-    //     sys_axis.tlast <= 1;
-    //     sys_axis.tkeep <= '1;
-    //     sys_axis.tid <= '0;
-    //     sys_axis.tuser <= '0;
-    //     sys_axis.tdest <= '0;
+    axis_interface #(
+        .DATA_WIDTH(8)
+    ) raw_stream (
+        .clk(sys_clk),
+        .rst(0)
+    );
 
-    //     // comment / uncomment blocks depending on whether you want to view voltage or current readings
-    //     // voltage_channel.tready <= 1;
-    //     // current_monitor_channel.tready <= sys_axis.tready;
-    //     // sys_axis.tvalid <= current_monitor_channel.tvalid;
-    //     // sys_axis.tdata <= current_monitor_channel.tdata[11:4];
+    // xadc_packetizer sample_cobs_streamer (
+    //     .voltage_channel(voltage_channel.Sink),
+    //     .current_monitor_channel(current_monitor_channel.Sink),
+    //     .packet_stream(cobs_stream.Source)
+    // );
 
-    //     // The adapter stalls if both FIFOs aren't being consumed
-    //     // set current channel to unload data even though we are not actually sending over USB yet
-    //     current_monitor_channel.tready <= 1;
-    //     voltage_channel.tready <= sys_axis.tready;
-    //     sys_axis.tvalid <= voltage_channel.tvalid;
-    //     sys_axis.tdata <= voltage_channel.tdata[11:4];
-    // end
+    cobs_encode_wrapper cobs_encoder (
+        .raw_stream(raw_stream.Sink),
+        .encoded_stream(cobs_stream.Source)
+    );
+
+    typedef enum int {
+        INIT,
+        WAIT_FOR_SAMPLE,
+        COLLECT_UPPER_LOWER,
+        PREP_LOAD,
+        LOAD_UPPER,
+        LOAD_LOWER
+    } xadc_cobs_state_t;
+    xadc_cobs_state_t state = INIT;
+
+    var logic[15:0] voltage_sample;
+    always_ff @(posedge sys_clk) begin
+        case (state)
+            INIT: begin
+                voltage_sample <= 0;
+
+                sys_axis.tlast <= 1;
+                sys_axis.tkeep <= '1;
+                sys_axis.tid <= '0;
+                sys_axis.tuser <= '0;
+                sys_axis.tdest <= '0;
+
+                raw_stream.tlast <= 0;
+                raw_stream.tkeep <= '1;
+                raw_stream.tid <= '0;
+                raw_stream.tuser <= '0;
+                raw_stream.tdest <= '0;
+
+                raw_stream.tvalid <= 0;
+
+                // let current monitor channel flow out into nothing to prevent stalls
+                current_monitor_channel.tready <= 1;
+
+                state <= WAIT_FOR_SAMPLE;
+            end
+            WAIT_FOR_SAMPLE: begin
+                if (voltage_channel.tvalid) begin
+                    voltage_channel.tready <= 1;
+
+                    state <= COLLECT_UPPER_LOWER;
+                end
+            end
+            COLLECT_UPPER_LOWER: begin
+                if (voltage_channel.tready && voltage_channel.tvalid) begin
+                    voltage_sample <= voltage_channel.tdata;
+
+                    state <= PREP_LOAD;
+                end
+            end
+            PREP_LOAD: begin
+                raw_stream.tdata <= voltage_sample[15:8];
+                raw_stream.tvalid <= 1;
+                
+                state <= LOAD_UPPER;
+            end
+            LOAD_UPPER: begin
+                if (raw_stream.tvalid && raw_stream.tready) begin
+                    // prep lower 8 bytes of voltage sample
+                    raw_stream.tdata <= voltage_sample[7:0];
+                    raw_stream.tlast <= 1;
+                    state <= LOAD_LOWER;
+                end
+            end
+            LOAD_LOWER: begin
+                if (raw_stream.tvalid && raw_stream.tready) begin
+                    // we are done writing into the encoder
+                    raw_stream.tlast <= 0;
+                    raw_stream.tvalid <= 0;
+                    state <= WAIT_FOR_SAMPLE;
+                end
+            end
+        endcase
+    end
 
 endmodule
 

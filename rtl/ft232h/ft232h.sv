@@ -68,9 +68,11 @@ module ft232h (
                 end
             end
             SEND_TO_USB_HOST: begin
+                // if (ftdi_axis.tvalid && ftdi_axis.tready) begin
                 ftdi_wr_n <= 1;
                 ftdi_axis.tready <= 0;
                 state <= AWAIT_USB_HOST;
+                // end
                 // If we fail the send condition. roll back to await state
                 // if (!(!ftdi_txe_n && ftdi_axis.tvalid && ftdi_axis.tready)) begin
                 //     ftdi_wr_n <= 1;

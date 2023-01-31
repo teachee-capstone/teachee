@@ -80,8 +80,8 @@ module xadc_bfm (
                     busy_out <= 0;
 
                     // Set internal registers
-                    vaux12_conv <= 255;
-                    vaux4_conv <= 127;
+                    vaux12_conv <= 'hFFF;
+                    vaux4_conv <= 'hF7F;
                     conv_value <= 0;
 
                     // Proceed to next state

@@ -50,11 +50,11 @@ module xadc_packetizer (
     );
 
     // Declare upper and lower byte for voltage / current
-    var logic[7:0] voltage_upper;
-    var logic[7:0] voltage_lower;
+    var logic[7:0] voltage_upper = 0;
+    var logic[7:0] voltage_lower = 0;
 
-    var logic[7:0] current_upper;
-    var logic[7:0] current_lower;
+    var logic[7:0] current_upper = 0;
+    var logic[7:0] current_lower = 0;
 
     always_ff @(posedge clk) begin
         case (state)
@@ -86,10 +86,10 @@ module xadc_packetizer (
                 // Then build a packet
                 if (voltage_channel.tready && voltage_channel.tvalid && current_monitor_channel.tready && current_monitor_channel.tvalid) begin
                     // load the registers with the sample data
-                    voltage_upper <= voltage_channel.tdata[15:8];
+                    voltage_upper <= voltage_channel.tdata[11:8];
                     voltage_lower <= voltage_channel.tdata[7:0];
 
-                    current_upper <= current_monitor_channel.tdata[15:8];
+                    current_upper <= current_monitor_channel.tdata[11:8];
                     current_lower <= current_monitor_channel.tdata[7:0];
 
                     // The samples are only 12 bits so we are going to abuse the
@@ -106,7 +106,7 @@ module xadc_packetizer (
                     raw_stream.tvalid <= 1;
 
                     // Note that we can't just use voltage_upper yet due to async assign
-                    raw_stream.tdata <= voltage_channel.tdata[15:8]; // Note this includes the header
+                    raw_stream.tdata <= voltage_channel.tdata[11:8]; // Note this includes the header
                     
                     state <= XADC_PACKETIZER_SEND_VOLTAGE_UPPER;
                 end
@@ -139,6 +139,7 @@ module xadc_packetizer (
             end
             XADC_PACKETIZER_SEND_CURRENT_LOWER: begin
                 raw_stream.tvalid <= 0;
+                raw_stream.tlast <= 0;
 
                 // indicate that we are no longer ready for data from the current and voltage stream
                 voltage_channel.tready <= 0;
