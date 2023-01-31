@@ -67,11 +67,17 @@ module xadc_packetizer (
                 raw_stream.tuser <= 0;
                 raw_stream.tdest <= 0;
 
+                raw_stream.tvalid <= 0;
+
                 // Tell the input streams we are ready to intake bytes
-                voltage_channel.tready <= 1;
-                current_monitor_channel.tready <= 1;
-                
-                state <= XADC_PACKETIZER_LOAD_NEW_SAMPLES;
+
+                if (voltage_channel.tvalid && current_monitor_channel.tvalid) begin
+                    // Wait until we have valid data before starting a load
+                    voltage_channel.tready <= 1;
+                    current_monitor_channel.tready <= 1;
+
+                    state <= XADC_PACKETIZER_LOAD_NEW_SAMPLES;
+                end
             end
             XADC_PACKETIZER_LOAD_NEW_SAMPLES: begin
                 // Wait until there is both voltage and current data available
@@ -88,7 +94,7 @@ module xadc_packetizer (
                     // upper 4 bits to serve as packet header
 
                     // load the packet header into voltager_upper
-                    voltage_upper[15:12] <= XADC_PACKET_HEADER_LOW_SPEED_SAMPLE;
+                    // voltage_upper[15:12] <= XADC_PACKET_HEADER_LOW_SPEED_SAMPLE;
 
                     // Disable the tready signal and proceed to the next state
                     voltage_channel.tready <= 0;
@@ -96,7 +102,9 @@ module xadc_packetizer (
 
                     // enable tvalid to stream the data into raw_stream
                     raw_stream.tvalid <= 1;
-                    raw_stream.tdata <= voltage_upper; // Note this includes the header
+
+                    // Note that we can't just use voltage_upper yet due to async assign
+                    raw_stream.tdata <= voltage_channel.tdata[15:8]; // Note this includes the header
                     
                     state <= XADC_PACKETIZER_SEND_VOLTAGE_UPPER;
                 end
@@ -115,6 +123,9 @@ module xadc_packetizer (
                     raw_stream.tdata <= current_upper;
                     state <= XADC_PACKETIZER_SEND_CURRENT_UPPER;
                 end
+            end
+            XADC_PACKETIZER_SEND_CURRENT_UPPER: begin
+                // NEED TO HANDLE UPPER CURRENT CASE HERE
             end
             XADC_PACKETIZER_SEND_CURRENT_LOWER: begin
                 if (raw_stream.tvalid && raw_stream.tready) begin
