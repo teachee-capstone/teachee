@@ -66,6 +66,9 @@ module xadc_packetizer (
                 raw_stream.tuser <= 0;
                 raw_stream.tdest <= 0;
 
+                voltage_channel.tready <= 0;
+                current_monitor_channel.tready <= 0;
+
                 raw_stream.tvalid <= 0;
 
                 // Tell the input streams we are ready to intake bytes

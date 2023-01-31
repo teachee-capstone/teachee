@@ -19,7 +19,11 @@ module axis_async_fifo_wrapper #(
         .USER_WIDTH(USER_WIDTH),
         .ID_WIDTH(ID_WIDTH),
         .DEST_WIDTH(DEST_WIDTH),
-        .KEEP_WIDTH(KEEP_WIDTH)
+        .KEEP_WIDTH(KEEP_WIDTH),
+
+        // Propagate the unused signals
+        .ID_ENABLE(1),
+        .DEST_ENABLE(1)
     ) tx_fifo (
         // AXI Stream Input
         .s_clk(sink.clk),
