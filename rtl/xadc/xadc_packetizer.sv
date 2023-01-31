@@ -32,8 +32,7 @@ module xadc_packetizer (
         XADC_PACKETIZER_SEND_VOLTAGE_UPPER,
         XADC_PACKETIZER_SEND_VOLTAGE_LOWER,
         XADC_PACKETIZER_SEND_CURRENT_UPPER,
-        XADC_PACKETIZER_SEND_CURRENT_LOWER,
-        XADC_PACKETIZER_FINISH_PACKET
+        XADC_PACKETIZER_SEND_CURRENT_LOWER
     } xadc_packetizer_state_t;
 
     xadc_packetizer_state_t state = XADC_PACKETIZER_INIT;
@@ -126,21 +125,23 @@ module xadc_packetizer (
             end
             XADC_PACKETIZER_SEND_CURRENT_UPPER: begin
                 // NEED TO HANDLE UPPER CURRENT CASE HERE
-            end
-            XADC_PACKETIZER_SEND_CURRENT_LOWER: begin
                 if (raw_stream.tvalid && raw_stream.tready) begin
-                    // This is a special case since it is the last packet, This
-                    // is where we raise tlast to get the encoder to do the
-                    // encoding
+                    // load stream data with current lower byte and transition out of the state
                     raw_stream.tdata <= current_lower;
+
+                    // flag to cobs encoder that this is the last byte of the packet
                     raw_stream.tlast <= 1;
-                    raw_stream.tvalid <= 0;
-                    state <= XADC_PACKETIZER_FINISH_PACKET;
+                    state <= XADC_PACKETIZER_SEND_CURRENT_LOWER;
                 end
             end
-            XADC_PACKETIZER_FINISH_PACKET: begin
-                raw_stream.tlast <= 0;
-                state <= XADC_PACKETIZER_LOAD_NEW_SAMPLES;
+            XADC_PACKETIZER_SEND_CURRENT_LOWER: begin
+                raw_stream.tvalid <= 0;
+
+                // indicate that we are no longer ready for data from the current and voltage stream
+                voltage_channel.tready <= 0;
+                current_monitor_channel.tready <= 0;
+
+                state <= XADC_PACKETIZER_INIT;
             end
         endcase
     end

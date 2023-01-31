@@ -1,0 +1,2 @@
+# Modelsim `.do` Files
+When loading up modelsim from VUnit, no signals are loaded into the waveform viewer by default. This folder contains the configs I use to debug certain testbenches. Currently, you need to do File > Load Format, but I am looking at a way to automate this as well.

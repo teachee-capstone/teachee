@@ -112,7 +112,10 @@ module xadc_packetizer_tb;
             // if we stick these two values into a cobs encoder we get the
             // following byte sequence we can check
 
-            // 0x01 0x02 0xff 0x02 0x7f 0x00
+            // input sequence
+            // 0x00 0xff 0x00 0x7f
+            //output sequence
+            // 0x01 0x02 0xff 0x02 0x7f 0x00
             automatic int bytes_consumed = 0;
             while (bytes_consumed < 6) begin
                 @(posedge clk) begin
@@ -128,6 +131,15 @@ module xadc_packetizer_tb;
                             3: begin
                                 `CHECK_EQUAL(cobs_stream.tdata, 'hFF);
                             end
+                            4: begin
+                                `CHECK_EQUAL(cobs_stream.tdata, 'h02);
+                            end
+                            5: begin
+                                `CHECK_EQUAL(cobs_stream.tdata, 'h7F);
+                            end
+                            6: begin
+                                `CHECK_EQUAL(cobs_stream.tdata, 'h00);
+                            end
                         endcase
                     end
                 end
@@ -137,7 +149,7 @@ module xadc_packetizer_tb;
     end
 
 
-    `WATCHDOG(0.1ms);
+    `WATCHDOG(1ms);
 endmodule
 
 `default_nettype wire
