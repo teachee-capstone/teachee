@@ -10,7 +10,9 @@ module axis_adapter_wrapper_tb;
 
     typedef enum int {
         SEND_ORIGINAL_DATA,
-        READ_OUT_MODIFIED
+        READ_OUT_FIRST_BYTE,
+        READ_OUT_SECOND_BYTE,
+        TESTS_FINISHED
     } axis_adapter_wrapper_tb_state_t;
 
     axis_adapter_wrapper_tb_state_t state = SEND_ORIGINAL_DATA;
@@ -60,32 +62,36 @@ module axis_adapter_wrapper_tb;
         end
 
         `TEST_CASE("VIEW_REDUCED_WIDTH STREAM") begin
-            // Check that each byte is legit here
-            // the 16 bit should be broken up into two bytes
-
-            // two output bytes from the 8 bit stream we will test against
-            var logic[7:0] out_byte1;
-            var logic[7:0] out_byte2;
-            automatic int cycles_counted = 0;
-            while (cycles_counted < 100) begin
-                cycles_counted = cycles_counted + 1;
+            while (state != TESTS_FINISHED) begin
                 @(posedge clk) begin
                     case (state)
                         SEND_ORIGINAL_DATA: begin
                             original_data.tvalid <= 1;
                             if (original_data.tready && original_data.tvalid) begin
                                 modified_width_data.tready <= 1;
+                                original_data.tvalid <= 0;
 
-                                state <= READ_OUT_MODIFIED;
+                                state <= READ_OUT_FIRST_BYTE;
                             end
                         end
-                        READ_OUT_MODIFIED: begin
-                            original_data.tvalid <= 0;
+                        READ_OUT_FIRST_BYTE: begin
+                            if (modified_width_data.tready && modified_width_data.tvalid) begin
+                                `CHECK_EQUAL(modified_width_data.tdata, 8'h71);
+
+                                state <= READ_OUT_SECOND_BYTE;
+                            end
+                        end
+                        READ_OUT_SECOND_BYTE: begin
+                            if (modified_width_data.tready && modified_width_data.tvalid) begin
+                                `CHECK_EQUAL(modified_width_data.tdata, 8'h69);
+                                modified_width_data.tready <= 0;
+
+                                state <= TESTS_FINISHED;
+                            end
                         end
                     endcase
                 end
             end
-            `CHECK_EQUAL(0,0);
         end
     end
 
