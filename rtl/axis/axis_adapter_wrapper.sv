@@ -22,7 +22,7 @@ module axis_adapter_wrapper #(
         .USER_ENABLE(USER_ENABLE)
     ) width_adapter (
         .clk(original_data.clk),
-        .rst(original_data.reset || modified_data.reset),
+        .rst(original_data.rst || modified_width_data.rst),
 
         // AXI INPUT
         .s_axis_tdata(original_data.tdata),
