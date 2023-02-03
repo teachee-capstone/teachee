@@ -79,6 +79,3 @@ xvlog.*
 # For ModelSim
 work/
 *.wlf
-
-# emacs
-*.~undo-tree~

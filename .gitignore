@@ -1,1 +1,4 @@
+#vscode
 .vscode
+# emacs
+*.~undo-tree~
