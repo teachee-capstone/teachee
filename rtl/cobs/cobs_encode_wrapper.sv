@@ -27,4 +27,3 @@ module cobs_encode_wrapper (
 endmodule
 
 `default_nettype none
-

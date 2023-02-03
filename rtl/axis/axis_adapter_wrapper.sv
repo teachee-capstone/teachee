@@ -47,3 +47,4 @@ module axis_adapter_wrapper #(
 endmodule
 
 `default_nettype wire
+

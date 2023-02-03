@@ -80,3 +80,5 @@ xvlog.*
 work/
 *.wlf
 
+# emacs
+*.~undo-tree~

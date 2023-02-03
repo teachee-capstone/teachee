@@ -3,7 +3,7 @@
 
 `include "vunit_defines.svh"
 
-module axis_adapter_wrapper_tb;
+module cobs_axis_adapter_wrapper_tb;
 
     var logic reset = 0;
     var logic clk;
@@ -12,10 +12,12 @@ module axis_adapter_wrapper_tb;
         SEND_ORIGINAL_DATA,
         READ_OUT_FIRST_BYTE,
         READ_OUT_SECOND_BYTE,
+        READ_OUT_THIRD_BYTE,
+        READ_OUT_FOURTH_BYTE,
         TESTS_FINISHED
-    } axis_adapter_wrapper_tb_state_t;
+    } cobs_axis_adapter_wrapper_tb_state_t;
 
-    axis_adapter_wrapper_tb_state_t state = SEND_ORIGINAL_DATA;
+    cobs_axis_adapter_wrapper_tb_state_t state = SEND_ORIGINAL_DATA;
 
     always begin
         #10
@@ -31,17 +33,17 @@ module axis_adapter_wrapper_tb;
 
     axis_interface #(
         .DATA_WIDTH(8)
-    ) modified_width_data (
+    ) encoded_data (
         .clk(clk),
         .rst(reset)
     );
 
-    axis_adapter_wrapper #(
+    cobs_axis_adapter_wrapper #(
         .S_DATA_WIDTH(16),
         .M_DATA_WIDTH(8)
     ) DUT (
         .original_data(original_data.Sink),
-        .modified_width_data(modified_width_data.Source)
+        .encoded_data(encoded_data.Source)
     );
 
     `TEST_SUITE begin
@@ -58,33 +60,49 @@ module axis_adapter_wrapper_tb;
             original_data.tid <= '0;
             original_data.tdest <= '0;
 
-            modified_width_data.tready = 0;
+            encoded_data.tready = 0;
         end
 
-        `TEST_CASE("VIEW_REDUCED_WIDTH STREAM") begin
+        `TEST_CASE("VIEW_REDUCED_WIDTH_COBS_STREAM") begin
             while (state != TESTS_FINISHED) begin
                 @(posedge clk) begin
                     case (state)
                         SEND_ORIGINAL_DATA: begin
                             original_data.tvalid <= 1;
                             if (original_data.tready && original_data.tvalid) begin
-                                modified_width_data.tready <= 1;
+                                encoded_data.tready <= 1;
                                 original_data.tvalid <= 0;
 
                                 state <= READ_OUT_FIRST_BYTE;
                             end
                         end
                         READ_OUT_FIRST_BYTE: begin
-                            if (modified_width_data.tready && modified_width_data.tvalid) begin
-                                `CHECK_EQUAL(modified_width_data.tdata, 8'h71);
+                            if (encoded_data.tready && encoded_data.tvalid) begin
+                                `CHECK_EQUAL(encoded_data.tdata, 8'h03);
 
                                 state <= READ_OUT_SECOND_BYTE;
                             end
                         end
                         READ_OUT_SECOND_BYTE: begin
-                            if (modified_width_data.tready && modified_width_data.tvalid) begin
-                                `CHECK_EQUAL(modified_width_data.tdata, 8'h69);
-                                modified_width_data.tready <= 0;
+                            if (encoded_data.tready && encoded_data.tvalid) begin
+                                `CHECK_EQUAL(encoded_data.tdata, 8'h71);
+
+                                state <= READ_OUT_THIRD_BYTE;
+                            end
+                        end
+                        READ_OUT_THIRD_BYTE: begin
+                            if (encoded_data.tready && encoded_data.tvalid) begin
+                                `CHECK_EQUAL(encoded_data.tdata, 8'h69);
+
+                                state <= READ_OUT_FOURTH_BYTE;
+                            end
+
+                        end
+                        READ_OUT_FOURTH_BYTE: begin
+                            if (encoded_data.tready && encoded_data.tvalid) begin
+                                `CHECK_EQUAL(encoded_data.tdata, 8'h00);
+
+                                encoded_data.tready <= 0;
 
                                 state <= TESTS_FINISHED;
                             end
@@ -92,6 +110,7 @@ module axis_adapter_wrapper_tb;
                     endcase
                 end
             end
+            `CHECK_EQUAL(0, 0);
         end
     end
     `WATCHDOG(0.1ms);
