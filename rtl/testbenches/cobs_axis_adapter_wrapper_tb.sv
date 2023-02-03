@@ -56,9 +56,9 @@ module cobs_axis_adapter_wrapper_tb;
             original_data.tvalid = 0;
             original_data.tlast = 1;
             original_data.tuser = 0;
-            original_data.tkeep <= '1;
-            original_data.tid <= '0;
-            original_data.tdest <= '0;
+            original_data.tkeep = '1;
+            original_data.tid = '0;
+            original_data.tdest = '0;
 
             encoded_data.tready = 0;
         end
