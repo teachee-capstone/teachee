@@ -7,7 +7,8 @@ module axis_async_fifo_wrapper #(
     parameter USER_WIDTH = 1,
     parameter ID_WIDTH = 8,
     parameter DEST_WIDTH = 8,
-    parameter KEEP_WIDTH = (DATA_WIDTH+7)/8
+    parameter KEEP_WIDTH = (DATA_WIDTH+7)/8,
+    parameter KEEP_ENABLE = 0
 ) (
     axis_interface.Sink sink,
     axis_interface.Source source
@@ -23,7 +24,8 @@ module axis_async_fifo_wrapper #(
 
         // Propagate the unused signals
         .ID_ENABLE(1),
-        .DEST_ENABLE(1)
+        .DEST_ENABLE(1),
+        .KEEP_ENABLE(KEEP_ENABLE)
     ) tx_fifo (
         // AXI Stream Input
         .s_clk(sink.clk),
@@ -35,6 +37,7 @@ module axis_async_fifo_wrapper #(
         .s_axis_tid(sink.tid),
         .s_axis_tdest(sink.tdest),
         .s_axis_tuser(sink.tuser),
+        .s_axis_tkeep(sink.tkeep),
 
         // AXI Stream Output
         .m_clk(source.clk),
@@ -45,8 +48,11 @@ module axis_async_fifo_wrapper #(
         .m_axis_tlast(source.tlast),
         .m_axis_tid(source.tid),
         .m_axis_tdest(source.tdest),
-        .m_axis_tuser(source.tuser)
+        .m_axis_tuser(source.tuser),
+        .m_axis_tkeep(source.tkeep)
     );
+
+
 
 endmodule
 

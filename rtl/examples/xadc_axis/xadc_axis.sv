@@ -41,7 +41,9 @@ module xadc_axis (
         .rst(0)
     );
 
-    axis_interface sys_axis (
+    axis_interface #(
+        .DATA_WIDTH(8)
+    ) sys_axis (
         .clk(sys_clk),
         .rst(0)
     );
@@ -155,18 +157,18 @@ module xadc_axis (
     //     // sys_axis.tdata <= voltage_channel.tdata[11:4];
     // end
     always_comb begin
-        voltage_channel.tlast = 1;
-        voltage_channel.tuser = 0;
-        voltage_channel.tkeep = '1;
-        voltage_channel.tid = '0;
-        voltage_channel.tdest = '0;
+        // voltage_channel.tlast = 1;
+        // voltage_channel.tuser = 0;
+        // voltage_channel.tkeep = '1;
+        // voltage_channel.tid = '0;
+        // voltage_channel.tdest = '0;
 
         current_monitor_channel.tready = 1;
-        current_monitor_channel.tlast = 1;
-        current_monitor_channel.tuser = 0;
-        current_monitor_channel.tkeep = '1;
-        current_monitor_channel.tid = '0;
-        current_monitor_channel.tdest = '0;
+        // current_monitor_channel.tlast = 1;
+        // current_monitor_channel.tuser = 0;
+        // current_monitor_channel.tkeep = '1;
+        // current_monitor_channel.tid = '0;
+        // current_monitor_channel.tdest = '0;
     end
 
 endmodule

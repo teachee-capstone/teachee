@@ -20,6 +20,8 @@ module axis_adapter_wrapper #(
         .ID_ENABLE(ID_ENABLE),
         .DEST_ENABLE(DEST_ENABLE),
         .USER_ENABLE(USER_ENABLE)
+        // .S_KEEP_ENABLE(0)
+        // .M_KEEP_ENABLE(0)
     ) width_adapter (
         .clk(original_data.clk),
         .rst(original_data.rst || modified_width_data.rst),
