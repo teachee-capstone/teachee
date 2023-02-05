@@ -106,15 +106,17 @@ module xadc_packetizer (
                     raw_stream.tvalid <= 1;
 
                     // Note that we can't just use voltage_upper yet due to async assign
-                    raw_stream.tdata <= voltage_channel.tdata[15:8]; // Note this includes the header
-                    
+                    // Note this includes the header
+                    raw_stream.tdata <= voltage_channel.tdata[15:8];
+
                     state <= XADC_PACKETIZER_SEND_VOLTAGE_UPPER;
                 end
             end
             XADC_PACKETIZER_SEND_VOLTAGE_UPPER: begin
                 if (raw_stream.tvalid && raw_stream.tready) begin
-                    // await tready to ensure the voltage upper is written and proceed to the next state
-                    
+                    // await tready to ensure the voltage upper is written and
+                    // proceed to the next state
+
                     raw_stream.tdata <= voltage_lower;
                     state <= XADC_PACKETIZER_SEND_VOLTAGE_LOWER;
                 end

@@ -58,3 +58,4 @@ jobs:
         run: |
           export VUNIT_MODELSIM_PATH=$HOME/intelFPGA/20.1/modelsim_ase/bin
           for f in rtl/python/*_tb.py; do echo $f && python $f; done
+

@@ -128,19 +128,12 @@ module xadc_axis (
         .busy_out()        // output wire busy_out
     );
 
-    cobs_axis_adapter_wrapper #(
-        .S_DATA_WIDTH(16),
-        .M_DATA_WIDTH(8)
-    ) voltage_data_cobs_encoder (
-        .original_data(voltage_channel.Sink),
-        .encoded_data(sys_axis.Source)
-    );
+    xadc_packetizer cobs_streamer (
+        .voltage_channel(voltage_channel.Sink),
+        .current_monitor_channel(current_monitor_channel.Sink),
 
-    always_comb begin
-        // need to consume current monitor data to avoid stalling out the XADC
-        // data streams
-        current_monitor_channel.tready = 1;
-    end
+        .packet_stream(sys_axis.Source)
+    );
 
 endmodule
 
