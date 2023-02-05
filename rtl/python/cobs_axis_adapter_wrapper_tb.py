@@ -16,6 +16,7 @@ sources = [
     RTL_ROOT / "verilog-axis" / "rtl" / "axis_adapter.v",
     RTL_ROOT / "verilog-axis" / "rtl" / "axis_fifo.v",
     RTL_ROOT / "verilog-axis" / "rtl" / "axis_async_fifo.v",
+    RTL_ROOT / "verilog-axis" / "rtl" / "axis_cobs_encode.v",
     RTL_ROOT / "axis" / "*.sv",
     RTL_ROOT / "cobs" / "*.sv"
 ]
