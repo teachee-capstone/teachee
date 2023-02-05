@@ -60,7 +60,8 @@ module xadc_drp_axis_adapter (
 
     axis_async_fifo_wrapper #(
         .DEPTH(XADC_DRP_AXIS_FIFO_DEPTH),
-        .DATA_WIDTH(XADC_DRP_DATA_WIDTH)
+        .DATA_WIDTH(XADC_DRP_DATA_WIDTH),
+        .KEEP_ENABLE(0)
     ) xadc_voltage_fifo (
         .sink(xadc_voltage_axis.Sink),
         .source(voltage_channel)

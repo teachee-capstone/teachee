@@ -20,7 +20,7 @@ module axis_adapter_wrapper_tb;
     always begin
         #10
         clk <= !clk;
-    end 
+    end
 
     axis_interface #(
         .DATA_WIDTH(16)
@@ -94,7 +94,6 @@ module axis_adapter_wrapper_tb;
             end
         end
     end
-
     `WATCHDOG(0.1ms);
 endmodule
 

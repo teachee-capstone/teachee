@@ -41,7 +41,9 @@ module xadc_axis (
         .rst(0)
     );
 
-    axis_interface sys_axis (
+    axis_interface #(
+        .DATA_WIDTH(8)
+    ) sys_axis (
         .clk(sys_clk),
         .rst(0)
     );
@@ -73,7 +75,7 @@ module xadc_axis (
 
     xadc_drp_axis_adapter xadc_drp_axis_adapter_inst (
         .xadc_dclk(sys_clk),
-        .xadc_reset(0), 
+        .xadc_reset(0),
 
         // DRP and Conversion Signals
         .xadc_daddr(xadc_daddr),
@@ -126,27 +128,12 @@ module xadc_axis (
         .busy_out()        // output wire busy_out
     );
 
-    always_ff @(posedge sys_clk) begin
-        // Set sys_axis source defaults here
-        sys_axis.tlast <= 1;
-        sys_axis.tkeep <= '1;
-        sys_axis.tid <= '0;
-        sys_axis.tuser <= '0;
-        sys_axis.tdest <= '0;
+    xadc_packetizer cobs_streamer (
+        .voltage_channel(voltage_channel.Sink),
+        .current_monitor_channel(current_monitor_channel.Sink),
 
-        // comment / uncomment blocks depending on whether you want to view voltage or current readings
-        // voltage_channel.tready <= 1;
-        // current_monitor_channel.tready <= sys_axis.tready;
-        // sys_axis.tvalid <= current_monitor_channel.tvalid;
-        // sys_axis.tdata <= current_monitor_channel.tdata[11:4];
-
-        // The adapter stalls if both FIFOs aren't being consumed
-        // set current channel to unload data even though we are not actually sending over USB yet
-        current_monitor_channel.tready <= 1;
-        voltage_channel.tready <= sys_axis.tready;
-        sys_axis.tvalid <= voltage_channel.tvalid;
-        sys_axis.tdata <= voltage_channel.tdata[11:4];
-    end
+        .packet_stream(sys_axis.Source)
+    );
 
 endmodule
 
