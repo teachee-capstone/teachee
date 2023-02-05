@@ -15,6 +15,7 @@ sources = [
     RTL_ROOT / "testbenches" / "cobs_axis_adapter_wrapper_tb.sv",
     RTL_ROOT / "verilog-axis" / "rtl" / "axis_adapter.v",
     RTL_ROOT / "verilog-axis" / "rtl" / "axis_fifo.v",
+    RTL_ROOT / "verilog-axis" / "rtl" / "axis_async_fifo.v",
     RTL_ROOT / "axis" / "*.sv",
     RTL_ROOT / "cobs" / "*.sv"
 ]
