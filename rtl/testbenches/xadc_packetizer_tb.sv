@@ -14,7 +14,7 @@ module xadc_packetizer_tb;
     always begin
         #10
         clk <= !clk;
-    end 
+    end
 
     // Define AXIS interfaces for the packetizer
     axis_interface #(
