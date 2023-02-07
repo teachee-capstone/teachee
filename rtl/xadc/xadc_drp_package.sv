@@ -12,3 +12,4 @@ package xadc_drp_package;
 endpackage
 
 `default_nettype wire
+
