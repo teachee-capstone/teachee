@@ -4,7 +4,6 @@
 `include "vunit_defines.svh"
 
 import xadc_drp_package::*;
-import xadc_packet_package::*;
 
 module xadc_packetizer_tb;
 
@@ -147,7 +146,6 @@ module xadc_packetizer_tb;
             // Placeholder until full TB is implemented
         end
     end
-
 
     `WATCHDOG(1ms);
 endmodule
