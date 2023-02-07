@@ -4,7 +4,7 @@
 import xadc_drp_package::*;
 
 module teachee (
-    input var logic sys_clk, // 12 MHz provided on the CMOD
+    input var logic cmod_osc, // 12 MHz provided on the CMOD
     input var logic ftdi_clk, // 60 MHz provided by the FTDI
 
     // FTDI Control Interface
@@ -28,6 +28,30 @@ module teachee (
     // TeachEE IO Declarations
     output var logic[1:0] teachee_led
 );
+
+    var logic locked;
+    var logic sys_clk;
+    assign sys_clk = cmod_osc;
+
+    var logic clk_100;
+    var logic clk_50;
+    var logic clk_20;
+    var logic clk_10;
+
+    // teachee_pll sys_pll (
+    //     // Clock out ports
+    //     .clk_100(clk_100),     // output clk_100
+    //     .clk_50(clk_50),     // output clk_50
+    //     .clk_20(clk_20),     // output clk_20
+    //     .clk_10(clk_10),     // output clk_10
+
+    //     // Status and control signals
+    //     .reset(0), // input reset
+    //     .locked(locked),       // output locked
+
+    //     // Clock in ports
+    //     .cmod_osc(cmod_osc)      // input cmod_osc
+    // );
 
     axis_interface #(
         .DATA_WIDTH(XADC_DRP_DATA_WIDTH)
@@ -67,7 +91,6 @@ module teachee (
         .sys_axis(sys_axis.Sink)
     );
 
-    var logic xadc_reset;
     xadc_drp_addr_t xadc_daddr;
     var logic xadc_den;
 
