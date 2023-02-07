@@ -5,17 +5,25 @@
 
 ## 12 MHz Clock Signal
 set_property -dict { PACKAGE_PIN L17   IOSTANDARD LVCMOS33 } [get_ports { cmod_osc }]; #IO_L12P_T1_MRCC_14 Sch=gclk
-create_clock -add -name cmod_osc_pin -period 83.33 -waveform {0 41.66} [get_ports {cmod_osc}];
+create_clock -add -name cmod_osc -period 83.33 -waveform {0 41.66} [get_ports {cmod_osc}];
 
 ## FTDI232Hq Clock Output
 set_property -dict { PACKAGE_PIN W4    IOSTANDARD LVCMOS33 } [get_ports { ftdi_clk }]; #IO_L12N_T1_MRCC_34 Sch=pio[40]
+create_clock -add -name ftdi_clk -period 16.67 -waveform {0 8.33} [get_ports {ftdi_clk}];
 set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets {ftdi_clk_IBUF}]
 
 # set_property -dict { PACKAGE_PIN W5    IOSTANDARD LVCMOS33 } [get_ports { ftdi_clk }]; #IO_L12P_T1_MRCC_34 Sch=pio[36]
-create_clock -add -name ftdi_clk_pin -period 16.67 -waveform {0 8.33} [get_ports {ftdi_clk}];
 
-set_clock_groups -group cmod_osc_pin -group ftdi_clk_pin -asynchronous
+# Create clocks for the PLL outputs
+# create_clock -add -name clk_100_pin -period 10.0 -waveform {0 5.0} [get_nets {clk_100}];
+# create_clock -add -name clk_50_pin -period 20.0 -waveform {0 10.0} [get_nets {clk_50}];
+# create_clock -add -name clk_25_pin -period 40.0 -waveform {0 20.0} [get_nets {clk_25}];
+# create_clock -add -name clk_20_pin -period 50.0 -waveform {0 25.0} [get_nets {clk_20}];
+# create_generated_clock -name clk_10_pin [get_nets {clk_10}];
 
+
+# Mark all clocks as async to one another
+set_clock_groups -group cmod_osc -group ftdi_clk -group clk_10_teachee_pll -group clkfbout_teachee_pll -asynchronous
 
 
 ## LEDs

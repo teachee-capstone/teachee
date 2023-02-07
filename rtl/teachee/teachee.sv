@@ -31,47 +31,53 @@ module teachee (
 
     var logic locked;
     var logic sys_clk;
-    assign sys_clk = cmod_osc;
+    var logic reset;
+
+    assign reset = !locked;
+
+    assign sys_clk = clk_50;
 
     var logic clk_100;
     var logic clk_50;
+    var logic clk_25;
     var logic clk_20;
     var logic clk_10;
 
-    // teachee_pll sys_pll (
-    //     // Clock out ports
-    //     .clk_100(clk_100),     // output clk_100
-    //     .clk_50(clk_50),     // output clk_50
-    //     .clk_20(clk_20),     // output clk_20
-    //     .clk_10(clk_10),     // output clk_10
+    teachee_pll teachee_pll_ip_inst (
+        // Clock out ports
+        .clk_100(clk_100),     // output clk_100
+        .clk_50(clk_50),     // output clk_50
+        .clk_25(clk_25),     // output clk_25
+        .clk_20(clk_20),     // output clk_20
+        .clk_10(clk_10),     // output clk_10
 
-    //     // Status and control signals
-    //     .reset(0), // input reset
-    //     .locked(locked),       // output locked
+        // Status and control signals
+        .reset(0), // input reset
+        .locked(locked),       // output locked
 
-    //     // Clock in ports
-    //     .cmod_osc(cmod_osc)      // input cmod_osc
-    // );
+        // Clock in ports
+        .cmod_osc(cmod_osc)      // input cmod_osc
+    );
 
     axis_interface #(
         .DATA_WIDTH(XADC_DRP_DATA_WIDTH)
     ) voltage_channel (
         .clk(sys_clk),
-        .rst(0)
+        .rst(reset)
     );
 
     axis_interface #(
         .DATA_WIDTH(XADC_DRP_DATA_WIDTH)
     ) current_monitor_channel (
         .clk(sys_clk),
-        .rst(0)
+        .rst(reset)
     );
 
     axis_interface #(
         .DATA_WIDTH(8)
     ) sys_axis (
         .clk(sys_clk),
-        .rst(0)
+        .rst(reset)
     );
 
     ft232h usb_fifo (
@@ -100,7 +106,7 @@ module teachee (
 
     xadc_drp_axis_adapter xadc_drp_axis_adapter_inst (
         .xadc_dclk(sys_clk),
-        .xadc_reset(0),
+        .xadc_reset(reset),
 
         // DRP and Conversion Signals
         .xadc_daddr(xadc_daddr),
@@ -118,7 +124,7 @@ module teachee (
     xadc_teachee xadc_teachee_inst (
         // Clock and Reset
         .dclk_in(sys_clk),          // input wire dclk_in
-        .reset_in(0),        // input wire reset_in
+        .reset_in(reset),        // input wire reset_in
 
         // DRP interface
         .di_in(0),              // input wire [15 : 0] di_in
@@ -153,6 +159,15 @@ module teachee (
 
         .packet_stream(sys_axis.Source)
     );
+
+    var logic [31:0] counter = 0;
+    always_ff @(posedge clk_10) begin
+        counter <= counter + 1;
+        if (counter == 10_000_000) begin
+            counter <= 0;
+            teachee_led[0] <= !teachee_led[0];
+        end
+    end
 
 endmodule
 
