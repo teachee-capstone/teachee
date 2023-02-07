@@ -1,7 +1,7 @@
 `default_nettype none
 `timescale 1ns / 1ps
+
 import xadc_drp_package::*;
-import xadc_packet_package::*;
 
 // This module will consume data from the XADC Channel FIFOs. The module will
 // convert the two 16 bit streams into a single 8 bit stream. The 8 bit stream
@@ -86,11 +86,11 @@ module xadc_packetizer (
                 // Then build a packet
                 if (voltage_channel.tready && voltage_channel.tvalid && current_monitor_channel.tready && current_monitor_channel.tvalid) begin
                     // load the registers with the sample data
-                    voltage_upper <= voltage_channel.tdata[15:8];
-                    voltage_lower <= voltage_channel.tdata[7:0];
+                    voltage_upper <= voltage_channel.tdata[XADC_DRP_SAMPLE_MSB_IDX:8];
+                    voltage_lower <= voltage_channel.tdata[7:XADC_DRP_SAMPLE_LSB_IDX];
 
-                    current_upper <= current_monitor_channel.tdata[15:8];
-                    current_lower <= current_monitor_channel.tdata[7:0];
+                    current_upper <= current_monitor_channel.tdata[XADC_DRP_SAMPLE_MSB_IDX:8];
+                    current_lower <= current_monitor_channel.tdata[7:XADC_DRP_SAMPLE_LSB_IDX];
 
                     // The samples are only 12 bits so we are going to abuse the
                     // upper 4 bits to serve as packet header
@@ -107,7 +107,7 @@ module xadc_packetizer (
 
                     // Note that we can't just use voltage_upper yet due to async assign
                     // Note this includes the header
-                    raw_stream.tdata <= voltage_channel.tdata[15:8];
+                    raw_stream.tdata <= voltage_channel.tdata[XADC_DRP_SAMPLE_MSB_IDX:8];
 
                     state <= XADC_PACKETIZER_SEND_VOLTAGE_UPPER;
                 end
