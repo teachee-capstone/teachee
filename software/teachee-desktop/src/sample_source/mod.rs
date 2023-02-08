@@ -1,13 +1,13 @@
 use std::{marker::PhantomData, thread, time::Duration};
 
-use crate::storage::Storage;
-
 mod ft;
 mod sine;
 
 // flatten module structure
 pub use ft::FtSampleSource;
 pub use sine::SineSampleSource;
+
+use crate::controller::Buffers;
 
 pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
@@ -30,13 +30,12 @@ pub trait SampleSource {
     fn read_samples(&mut self, samples: &mut [f64]) -> Result<(usize, Channel)>;
 }
 
-/// A generic manager which reads from a given `SampleSource` in order to update `Storage` with data
-/// for the UI.
+/// A generic manager which reads from a given `SampleSource` into shared buffers.
 pub struct Manager<T>
 where
     T: SampleSource,
 {
-    storage: Storage,
+    buffers: Buffers,
     phantom: PhantomData<T>,
 }
 
@@ -45,9 +44,9 @@ where
     T: SampleSource,
 {
     /// Infinite loop which continually attempts to initialize the `SampleSource`.
-    pub fn manager_loop(storage: Storage) {
+    pub fn manager_loop(buffers: Buffers) {
         let mut manager = Self {
-            storage,
+            buffers,
             phantom: PhantomData,
         };
 
@@ -67,26 +66,27 @@ where
     fn read_samples_loop(&mut self, mut reader: T) {
         // TODO: set connection status flag on self.storage = true
 
-        const SAMPLE_BUF_SIZE: usize = 100_000;
-        let mut sample_buf = vec![0.0; SAMPLE_BUF_SIZE];
-
         loop {
-            match reader.read_samples(&mut sample_buf) {
-                Ok((num_samples, channel)) => {
-                    self.handle_samples(channel, &sample_buf[0..num_samples])
-                }
-                Err(error) => {
+            for buf in self.buffers.bufs.iter() {
+                let condvar = &buf.0;
+                let mutex = &buf.1;
+                let mut guard = mutex.lock().unwrap();
+                let buf = &mut *guard;
+                if let Err(error) = reader.read_samples(buf) {
                     eprintln!("{error:?}");
                     // TODO: set connection status flag on self.storage = false
-                    break;
+                    return;
                 }
+                condvar.notify_all();
+                condvar.wait(guard).unwrap();
+                println!("Swap");
             }
         }
     }
 
     fn handle_samples(&mut self, _channel: Channel, samples: &[f64]) {
-        self.storage.app.lock().unwrap().flip_flag();
-        dbg!(samples);
-        todo!("Do something with samples")
+        // self.storage.app.lock().unwrap().points[..samples.len()].copy_from_slice(&samples[..]);
+        // dbg!(samples);
+        // todo!("Do something with samples")
     }
 }

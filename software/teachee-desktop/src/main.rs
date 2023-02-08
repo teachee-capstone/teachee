@@ -1,14 +1,14 @@
 // hide console window on Windows in release
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use std::thread;
+use std::{thread, sync::{Arc, Mutex, Condvar}};
 
 use eframe::{self, epaint::Vec2, NativeOptions, Theme};
 
 use structopt::StructOpt;
 use teachee_desktop::{
     sample_source::{FtSampleSource, Manager, SineSampleSource},
-    storage::Storage,
+    storage::Storage, controller::{Buffers, Controller}, app::App,
 };
 
 #[derive(Debug, StructOpt)]
@@ -31,18 +31,25 @@ fn main() {
         "TeachEE",
         options,
         Box::new(move |_cc| {
-            let storage = Storage::default();
-            let manager_storage = storage.clone();
+            let app_storage = Arc::new((Condvar::new(), Mutex::new(Storage::default())));
+            let controller_storage = app_storage.clone();
 
-            thread::spawn(move || {
+            let manager_buffers = Buffers::default();
+            let controller_buffers = manager_buffers.clone();
+
+            thread::Builder::new().name("USB Manager".into()).spawn(move || {
                 if opt.sine {
-                    Manager::<SineSampleSource>::manager_loop(manager_storage)
+                    Manager::<SineSampleSource>::manager_loop(manager_buffers)
                 } else {
-                    Manager::<FtSampleSource>::manager_loop(manager_storage)
+                    Manager::<FtSampleSource>::manager_loop(manager_buffers)
                 }
             });
 
-            Box::new(storage)
+            thread::Builder::new().name("Sample Controller".into()).spawn(move || {
+                Controller::new(controller_buffers, controller_storage).controller_loop()
+            });
+
+            Box::new(App::new(app_storage))
         }),
     );
 }

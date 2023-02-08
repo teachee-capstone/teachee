@@ -1,6 +1,8 @@
-use std::{f64::consts::TAU, fmt};
+use std::{f64::consts::TAU, fmt, sync::{Mutex, Arc, Condvar}};
 
 use eframe::egui::*;
+
+use crate::storage::Storage;
 
 #[derive(Debug, Clone, Copy, Default, PartialEq)]
 enum Channel {
@@ -49,17 +51,29 @@ struct UIControls {
     trigger_button_text: TriggerControl,
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct App {
     flag: bool,
     channel1: Channel,
     channel1_offset: f64,
     channel2: Channel,
     channel2_offset: f64,
+    storage: Arc<(Condvar, Mutex<Storage>)>,
     ui_controls: UIControls,
 }
 
 impl App {
+    pub fn new(storage: Arc<(Condvar, Mutex<Storage>)>) -> Self {
+        Self {
+            flag: false,
+            channel1: Channel::default(),
+            channel1_offset: 0.0,
+            channel2: Channel::default(),
+            channel2_offset: 0.0,
+            storage,
+            ui_controls: UIControls::default(),
+        }
+    }
     pub fn flip_flag(&mut self) {
         self.flag = !self.flag
     }
@@ -122,6 +136,7 @@ impl eframe::App for App {
             channel1_offset,
             channel2,
             channel2_offset,
+            storage,
             ui_controls,
             ..
         } = self;
@@ -300,12 +315,14 @@ impl eframe::App for App {
             });
 
         CentralPanel::default().show(ctx, |ui| {
-            let lines = [
-                generate_points(0, 1000, 0.01, channel1, channel1_offset),
-                generate_points(0, 1000, 0.01, channel2, channel2_offset),
-            ]
-            .into_iter()
-            .map(plot::Line::new);
+            let condvar = &storage.0;
+            let guard = storage.1.lock().unwrap();
+            let samples = &guard.samples;
+            let lines = plot::Line::new(plot::PlotPoints::from_parametric_callback(
+                |i| (i * 0.01, samples[i as usize]),
+                0.0..(samples.len() as f64),
+                samples.len(),
+            ));
 
             plot::Plot::new("plot")
                 .data_aspect(1.0)
@@ -313,7 +330,10 @@ impl eframe::App for App {
                 .allow_scroll(false)
                 .allow_zoom(false)
                 .allow_boxed_zoom(false)
-                .show(ui, |ui| lines.for_each(|l| ui.line(l)));
+                .show(ui, |ui| ui.line(lines));
+            condvar.notify_all();
+            condvar.wait(guard);
         });
+        println!("Update");
     }
 }

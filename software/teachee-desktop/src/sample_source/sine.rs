@@ -8,8 +8,8 @@ use super::{Channel, Result, SampleSource};
 const SAMPLE_DELAY_SEC: f64 = 1.0 / 10_000.0;
 const CHUNK_DELAY_SEC: f64 = 1.0 / 100.0;
 
-const SINE_PERIOD_SEC: f64 = 1.0 / 60.0;
-const SINE_AMPLITUDE: f64 = 1.0;
+const SINE_PERIOD_SEC: f64 = 1.0;
+const SINE_AMPLITUDE: f64 = 2.0;
 
 /// A sample source that outputs a sine wave on one channel
 pub struct SineSampleSource {
@@ -31,7 +31,7 @@ impl SampleSource for SineSampleSource {
         thread::sleep(Duration::from_secs_f64(CHUNK_DELAY_SEC));
 
         let now = Instant::now();
-        let num_samples = ((now - self.last_read).as_secs_f64() / SAMPLE_DELAY_SEC) as usize;
+        let num_samples = std::cmp::min(((now - self.last_read).as_secs_f64() / SAMPLE_DELAY_SEC) as usize, 1000);
         let mut t = (now - self.start).as_secs_f64() % SINE_PERIOD_SEC;
 
         for sample in samples.iter_mut().take(num_samples) {
