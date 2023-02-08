@@ -104,17 +104,16 @@ module xadc_packetizer_tb;
         end
 
         `TEST_CASE("VERIFY_COBS_VOLTAGE_CURRENT_PACKETS") begin
-            // the XADC BFM will send out the following samples
-            // voltage = 255
-            // current = 127
-
             // if we stick these two values into a cobs encoder we get the
             // following byte sequence we can check
 
             // input sequence
-            // 0x00 0xff 0x00 0x7f
-            //output sequence
-            // 0x01 0x02 0xff 0x02 0x7f 0x00
+            // 0x00 0x0F 0x00 0x07
+
+            // output sequence
+            // 0x01 0x02 0x0F 0x02 0x07 0x00
+
+
             automatic int bytes_consumed = 0;
             while (bytes_consumed < 6) begin
                 @(posedge clk) begin
@@ -128,13 +127,13 @@ module xadc_packetizer_tb;
                                 `CHECK_EQUAL(cobs_stream.tdata, 'h02);
                             end
                             3: begin
-                                `CHECK_EQUAL(cobs_stream.tdata, 'hFF);
+                                `CHECK_EQUAL(cobs_stream.tdata, 'h0F);
                             end
                             4: begin
                                 `CHECK_EQUAL(cobs_stream.tdata, 'h02);
                             end
                             5: begin
-                                `CHECK_EQUAL(cobs_stream.tdata, 'h7F);
+                                `CHECK_EQUAL(cobs_stream.tdata, 'h07);
                             end
                             6: begin
                                 `CHECK_EQUAL(cobs_stream.tdata, 'h00);
