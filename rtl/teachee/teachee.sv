@@ -35,7 +35,7 @@ module teachee (
 
     assign reset = !locked;
 
-    assign sys_clk = clk_50;
+    assign sys_clk = clk_100;
 
     var logic clk_100;
     var logic clk_50;
@@ -159,15 +159,6 @@ module teachee (
 
         .packet_stream(sys_axis.Source)
     );
-
-    var logic [31:0] counter = 0;
-    always_ff @(posedge clk_10) begin
-        counter <= counter + 1;
-        if (counter == 10_000_000) begin
-            counter <= 0;
-            teachee_led[0] <= !teachee_led[0];
-        end
-    end
 
 endmodule
 

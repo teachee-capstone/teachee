@@ -23,7 +23,7 @@ set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets {ftdi_clk_IBUF}]
 
 
 # Mark all clocks as async to one another
-set_clock_groups -group cmod_osc -group ftdi_clk -group clk_10_teachee_pll -group clkfbout_teachee_pll -asynchronous
+set_clock_groups -group cmod_osc -group ftdi_clk -group clk_10_teachee_pll -group clkfbout_teachee_pll -group clk_100_teachee_pll -asynchronous
 
 
 ## LEDs
