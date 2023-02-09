@@ -1,8 +1,8 @@
-use std::{f64::consts::TAU, fmt, sync::{Mutex, Arc, Condvar}};
+use std::{f64::consts::TAU, fmt};
 
 use eframe::egui::*;
 
-use crate::storage::Storage;
+use crate::controller::{BufferState, Buffers};
 
 #[derive(Debug, Clone, Copy, Default, PartialEq)]
 enum Channel {
@@ -58,19 +58,21 @@ pub struct App {
     channel1_offset: f64,
     channel2: Channel,
     channel2_offset: f64,
-    storage: Arc<(Condvar, Mutex<Storage>)>,
+    buffers: Buffers,
+    buf_idx: usize,
     ui_controls: UIControls,
 }
 
 impl App {
-    pub fn new(storage: Arc<(Condvar, Mutex<Storage>)>) -> Self {
+    pub fn new(buffers: Buffers) -> Self {
         Self {
             flag: false,
             channel1: Channel::default(),
             channel1_offset: 0.0,
             channel2: Channel::default(),
             channel2_offset: 0.0,
-            storage,
+            buffers,
+            buf_idx: 0,
             ui_controls: UIControls::default(),
         }
     }
@@ -136,7 +138,8 @@ impl eframe::App for App {
             channel1_offset,
             channel2,
             channel2_offset,
-            storage,
+            buffers,
+            buf_idx,
             ui_controls,
             ..
         } = self;
@@ -315,14 +318,29 @@ impl eframe::App for App {
             });
 
         CentralPanel::default().show(ctx, |ui| {
-            let condvar = &storage.0;
-            let guard = storage.1.lock().unwrap();
-            let samples = &guard.samples;
+            // Get the current buffer. Alternating between buffers is done by toggling
+            // the buf_idx.
+            let (condvar, mutex) = &*buffers.bufs[*buf_idx];
+
+            // Wait until controller thread has filled the current buffer.
+            let mut buf_state = condvar
+                .wait_while(mutex.lock().unwrap(), |buf_state| buf_state.is_empty())
+                .unwrap();
+
+            let samples = buf_state.unwrap();
+            // Mapping i -> t using the fixed sample rate to get point (i * period, samples[i]).
+            // TODO: get the actual sample period
             let lines = plot::Line::new(plot::PlotPoints::from_parametric_callback(
                 |i| (i * 0.01, samples[i as usize]),
                 0.0..(samples.len() as f64),
                 samples.len(),
             ));
+
+            println!("Update {}", *buf_idx);
+            // Next update, use the other buffer.
+            *buf_idx ^= 0x1;
+            *buf_state = BufferState::Empty(samples);
+            condvar.notify_one();
 
             plot::Plot::new("plot")
                 .data_aspect(1.0)
@@ -331,9 +349,6 @@ impl eframe::App for App {
                 .allow_zoom(false)
                 .allow_boxed_zoom(false)
                 .show(ui, |ui| ui.line(lines));
-            condvar.notify_all();
-            condvar.wait(guard);
         });
-        println!("Update");
     }
 }

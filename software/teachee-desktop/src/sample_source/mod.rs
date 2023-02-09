@@ -7,7 +7,7 @@ mod sine;
 pub use ft::FtSampleSource;
 pub use sine::SineSampleSource;
 
-use crate::controller::Buffers;
+use crate::controller::{BufferState, Buffers};
 
 pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
@@ -67,19 +67,26 @@ where
         // TODO: set connection status flag on self.storage = true
 
         loop {
+            let mut i = 0;
             for buf in self.buffers.bufs.iter() {
-                let condvar = &buf.0;
-                let mutex = &buf.1;
-                let mut guard = mutex.lock().unwrap();
-                let buf = &mut *guard;
-                if let Err(error) = reader.read_samples(buf) {
+                let (condvar, mutex) = &**buf;
+
+                let mut buf_state = condvar
+                    .wait_while(mutex.lock().unwrap(), |buf_state| buf_state.is_full())
+                    .unwrap();
+
+                let mut buffer = buf_state.unwrap();
+                if let Err(error) = reader.read_samples(&mut buffer) {
                     eprintln!("{error:?}");
                     // TODO: set connection status flag on self.storage = false
                     return;
                 }
-                condvar.notify_all();
-                condvar.wait(guard).unwrap();
-                println!("Swap");
+
+                // Tell Controller that this buffer is full, and wake them up if waiting.
+                *buf_state = BufferState::Full(buffer);
+                condvar.notify_one();
+                println!("Read {}", i);
+                i ^= 0x1;
             }
         }
     }

@@ -31,7 +31,10 @@ impl SampleSource for SineSampleSource {
         thread::sleep(Duration::from_secs_f64(CHUNK_DELAY_SEC));
 
         let now = Instant::now();
-        let num_samples = std::cmp::min(((now - self.last_read).as_secs_f64() / SAMPLE_DELAY_SEC) as usize, 1000);
+        let num_samples = std::cmp::min(
+            ((now - self.last_read).as_secs_f64() / SAMPLE_DELAY_SEC) as usize,
+            1000,
+        );
         let mut t = (now - self.start).as_secs_f64() % SINE_PERIOD_SEC;
 
         for sample in samples.iter_mut().take(num_samples) {

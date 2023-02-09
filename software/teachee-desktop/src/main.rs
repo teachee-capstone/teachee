@@ -1,14 +1,15 @@
 // hide console window on Windows in release
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use std::{thread, sync::{Arc, Mutex, Condvar}};
+use std::thread;
 
 use eframe::{self, epaint::Vec2, NativeOptions, Theme};
 
 use structopt::StructOpt;
 use teachee_desktop::{
+    app::App,
+    controller::{Buffers, Controller},
     sample_source::{FtSampleSource, Manager, SineSampleSource},
-    storage::Storage, controller::{Buffers, Controller}, app::App,
 };
 
 #[derive(Debug, StructOpt)]
@@ -31,25 +32,30 @@ fn main() {
         "TeachEE",
         options,
         Box::new(move |_cc| {
-            let app_storage = Arc::new((Condvar::new(), Mutex::new(Storage::default())));
-            let controller_storage = app_storage.clone();
+            let app_buffers = Buffers::default();
+            let controller_app_buffers = app_buffers.clone();
 
             let manager_buffers = Buffers::default();
-            let controller_buffers = manager_buffers.clone();
+            let controller_manager_buffers = manager_buffers.clone();
 
-            thread::Builder::new().name("USB Manager".into()).spawn(move || {
-                if opt.sine {
-                    Manager::<SineSampleSource>::manager_loop(manager_buffers)
-                } else {
-                    Manager::<FtSampleSource>::manager_loop(manager_buffers)
-                }
-            });
+            thread::Builder::new()
+                .name("USB Manager".into())
+                .spawn(move || {
+                    if opt.sine {
+                        Manager::<SineSampleSource>::manager_loop(manager_buffers)
+                    } else {
+                        Manager::<FtSampleSource>::manager_loop(manager_buffers)
+                    }
+                });
 
-            thread::Builder::new().name("Sample Controller".into()).spawn(move || {
-                Controller::new(controller_buffers, controller_storage).controller_loop()
-            });
+            thread::Builder::new()
+                .name("Sample Controller".into())
+                .spawn(move || {
+                    Controller::new(controller_manager_buffers, controller_app_buffers)
+                        .controller_loop()
+                });
 
-            Box::new(App::new(app_storage))
+            Box::new(App::new(app_buffers))
         }),
     );
 }
