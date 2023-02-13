@@ -7,7 +7,7 @@ mod sine;
 pub use ft::FtSampleSource;
 pub use sine::SineSampleSource;
 
-use crate::controller::{BufferState, Buffers};
+use crate::controller::{BufferState, USBData};
 
 pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
@@ -35,7 +35,7 @@ pub struct Manager<T>
 where
     T: SampleSource,
 {
-    buffers: Buffers,
+    data: USBData,
     phantom: PhantomData<T>,
 }
 
@@ -44,9 +44,9 @@ where
     T: SampleSource,
 {
     /// Infinite loop which continually attempts to initialize the `SampleSource`.
-    pub fn manager_loop(buffers: Buffers) {
+    pub fn manager_loop(data: USBData) {
         let mut manager = Self {
-            buffers,
+            data,
             phantom: PhantomData,
         };
 
@@ -68,32 +68,29 @@ where
 
         loop {
             let mut i = 0;
-            for buf in self.buffers.bufs.iter() {
+            for buf in self.data.bufs.iter() {
                 let (condvar, mutex) = &**buf;
 
                 let mut buf_state = condvar
                     .wait_while(mutex.lock().unwrap(), |buf_state| buf_state.is_full())
                     .unwrap();
 
-                let mut buffer = buf_state.unwrap();
-                if let Err(error) = reader.read_samples(&mut buffer) {
-                    eprintln!("{error:?}");
-                    // TODO: set connection status flag on self.storage = false
-                    return;
+                let (mut buffer, _) = buf_state.unwrap();
+                match reader.read_samples(&mut buffer) {
+                    Ok((num_samples, _channel)) => {
+                        // Tell Controller that this buffer is full, and wake them up if waiting.
+                        *buf_state = BufferState::Full(buffer, num_samples);
+                        condvar.notify_one();
+                        println!("Read {}, {} samples", i, num_samples);
+                        i ^= 0x1;
+                    }
+                    Err(error) => {
+                        eprintln!("{error:?}");
+                        // TODO: set connection status flag on self.storage = false
+                        return;
+                    }
                 }
-
-                // Tell Controller that this buffer is full, and wake them up if waiting.
-                *buf_state = BufferState::Full(buffer);
-                condvar.notify_one();
-                println!("Read {}", i);
-                i ^= 0x1;
             }
         }
-    }
-
-    fn handle_samples(&mut self, _channel: Channel, samples: &[f64]) {
-        // self.storage.app.lock().unwrap().points[..samples.len()].copy_from_slice(&samples[..]);
-        // dbg!(samples);
-        // todo!("Do something with samples")
     }
 }

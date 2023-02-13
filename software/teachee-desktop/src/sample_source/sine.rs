@@ -5,11 +5,11 @@ use std::{
 
 use super::{Channel, Result, SampleSource};
 
-const SAMPLE_DELAY_SEC: f64 = 1.0 / 10_000.0;
+const SAMPLE_DELAY_SEC: f64 = 1.0 / 1_000.0;
 const CHUNK_DELAY_SEC: f64 = 1.0 / 100.0;
 
-const SINE_PERIOD_SEC: f64 = 1.0;
-const SINE_AMPLITUDE: f64 = 2.0;
+const SINE_PERIOD_SEC: f64 = 0.1;
+const SINE_AMPLITUDE: f64 = 500.0;
 
 /// A sample source that outputs a sine wave on one channel
 pub struct SineSampleSource {

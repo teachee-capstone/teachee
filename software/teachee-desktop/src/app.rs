@@ -2,7 +2,7 @@ use std::{f64::consts::TAU, fmt};
 
 use eframe::egui::*;
 
-use crate::controller::{BufferState, Buffers};
+use crate::controller::{AppData, BufferState};
 
 #[derive(Debug, Clone, Copy, Default, PartialEq)]
 enum Channel {
@@ -49,6 +49,8 @@ struct UIControls {
     channel1_on: bool,
     channel2_on: bool,
     trigger_button_text: TriggerControl,
+    trigger_threshold_text: String,
+    trigger_format_wrong: bool,
 }
 
 #[derive(Debug)]
@@ -58,51 +60,26 @@ pub struct App {
     channel1_offset: f64,
     channel2: Channel,
     channel2_offset: f64,
-    buffers: Buffers,
+    data: AppData,
     buf_idx: usize,
     ui_controls: UIControls,
 }
 
 impl App {
-    pub fn new(buffers: Buffers) -> Self {
+    pub fn new(data: AppData) -> Self {
         Self {
             flag: false,
             channel1: Channel::default(),
             channel1_offset: 0.0,
             channel2: Channel::default(),
             channel2_offset: 0.0,
-            buffers,
+            data,
             buf_idx: 0,
             ui_controls: UIControls::default(),
         }
     }
     pub fn flip_flag(&mut self) {
         self.flag = !self.flag
-    }
-}
-
-fn generate_points(
-    start: i64,
-    stop: i64,
-    step: f64,
-    channel: &Channel,
-    offset: &f64,
-) -> Vec<[f64; 2]> {
-    if let Channel::Off = channel {
-        Vec::new()
-    } else {
-        let f = match channel {
-            Channel::Sine => f64::sin,
-            Channel::Cos => f64::cos,
-            Channel::Off => unreachable!(),
-        };
-
-        (start..stop)
-            .map(|i| {
-                let x = i as f64 * step;
-                [x, f(x + offset)]
-            })
-            .collect()
     }
 }
 
@@ -138,7 +115,7 @@ impl eframe::App for App {
             channel1_offset,
             channel2,
             channel2_offset,
-            buffers,
+            data,
             buf_idx,
             ui_controls,
             ..
@@ -247,6 +224,21 @@ impl eframe::App for App {
                         ui.separator();
                         ui.add_space(GROUP_SPACING);
                         ui.vertical_centered_justified(|ui| {
+                            ui.with_layout(
+                                Layout::top_down(Align::Center).with_cross_align(Align::Min),
+                                |ui| {
+                                    if ui_controls.trigger_format_wrong {
+                                        ui.style_mut().visuals.extreme_bg_color =
+                                            Color32::LIGHT_RED;
+                                    }
+                                    ui.add(
+                                        TextEdit::singleline(
+                                            &mut ui_controls.trigger_threshold_text,
+                                        )
+                                        .hint_text("Trigger threshold"),
+                                    );
+                                },
+                            );
                             if ui
                                 .add(
                                     Button::new(ui_controls.trigger_button_text.to_string())
@@ -255,12 +247,26 @@ impl eframe::App for App {
                                 .clicked()
                             {
                                 use TriggerControl::*;
-                                // TODO: enable/disable triggering
-                                ui_controls.trigger_button_text =
-                                    match ui_controls.trigger_button_text {
-                                        Start => Stop,
-                                        Stop => Start,
-                                    };
+                                match ui_controls.trigger_button_text {
+                                    Start => {
+                                        let parsed =
+                                            ui_controls.trigger_threshold_text.parse::<f64>();
+                                        match parsed {
+                                            Ok(new_value) => {
+                                                *data.trigger_value.write().unwrap() = new_value;
+                                                ui_controls.trigger_button_text = Stop;
+                                                ui_controls.trigger_format_wrong = false;
+                                            }
+                                            Err(_) => {
+                                                ui_controls.trigger_format_wrong = true;
+                                            }
+                                        }
+                                    }
+                                    Stop => {
+                                        *data.trigger_value.write().unwrap() = 0.0;
+                                        ui_controls.trigger_button_text = Start;
+                                    }
+                                };
                             }
                         });
                     });
@@ -320,20 +326,20 @@ impl eframe::App for App {
         CentralPanel::default().show(ctx, |ui| {
             // Get the current buffer. Alternating between buffers is done by toggling
             // the buf_idx.
-            let (condvar, mutex) = &*buffers.bufs[*buf_idx];
+            let (condvar, mutex) = &*data.bufs[*buf_idx];
 
             // Wait until controller thread has filled the current buffer.
             let mut buf_state = condvar
                 .wait_while(mutex.lock().unwrap(), |buf_state| buf_state.is_empty())
                 .unwrap();
 
-            let samples = buf_state.unwrap();
+            let (samples, num_samples) = buf_state.unwrap();
             // Mapping i -> t using the fixed sample rate to get point (i * period, samples[i]).
             // TODO: get the actual sample period
             let lines = plot::Line::new(plot::PlotPoints::from_parametric_callback(
                 |i| (i * 0.01, samples[i as usize]),
-                0.0..(samples.len() as f64),
-                samples.len(),
+                0.0..(num_samples as f64),
+                num_samples,
             ));
 
             println!("Update {}", *buf_idx);
