@@ -1,4 +1,5 @@
 use std::{
+    cmp::min,
     thread,
     time::{Duration, Instant},
 };
@@ -33,7 +34,10 @@ impl SampleSource for SineSampleSource {
         thread::sleep(Duration::from_secs_f64(CHUNK_DELAY_SEC));
 
         let now = Instant::now();
-        let num_samples = ((now - self.last_read).as_secs_f64() / SAMPLE_DELAY_SEC) as usize;
+        let num_samples = min(
+            ((now - self.last_read).as_secs_f64() / SAMPLE_DELAY_SEC) as usize,
+            channels.voltage1.len(),
+        );
         let mut t = (now - self.start).as_secs_f64() % SINE_PERIOD_SEC;
 
         for (v_sample, c_sample) in channels

@@ -1,4 +1,4 @@
-use std::{thread, time::Duration};
+use std::{iter::zip, thread, time::Duration};
 
 use libftd2xx::{BitMode, Ft232h, FtdiCommon};
 
@@ -37,10 +37,8 @@ impl SampleSource for FtSampleSource {
 
     fn read_samples(&mut self, channels: &mut Channels) -> Result<(usize, Channel)> {
         let num_bytes = self.read_bytes()?;
-        let _rx_bytes = &self.rx_buf[0..num_bytes];
-        // TODO: decode rx_bytes as samples
-        self.decode_and_copy(channels);
-        Ok((0, Channel::VoltageA))
+        let num_samples = self.decode_and_copy(channels, num_bytes);
+        Ok((num_samples, Channel::VoltageA))
     }
 }
 
@@ -50,5 +48,22 @@ impl FtSampleSource {
         self.ft.read_all(&mut self.rx_buf[0..num_bytes])?;
         Ok(num_bytes)
     }
-    fn decode_and_copy(&mut self, _channels: &mut Channels) {}
+    fn decode_and_copy(&self, channels: &mut Channels, num_bytes: usize) -> usize {
+        let start = self.rx_buf[0..num_bytes]
+            .iter()
+            .position(|&val| val == 0)
+            .unwrap();
+        let chunk_size = self.rx_buf[start + 1] as usize;
+        for (chunk, (v_sample, c_sample)) in self.rx_buf[start..num_bytes]
+            .chunks_exact(chunk_size)
+            .zip(zip(
+                channels.voltage1.iter_mut(),
+                channels.current1.iter_mut(),
+            ))
+        {
+            *v_sample = ((chunk[2] << 4) | chunk[3]) as f64 * 3.3 / 4095.0;
+            *c_sample = ((chunk[4] << 4) | chunk[5]) as f64 * 3.3 / 4095.0;
+        }
+        (num_bytes - start) / chunk_size
+    }
 }
