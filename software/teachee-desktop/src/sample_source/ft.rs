@@ -2,6 +2,8 @@ use std::{thread, time::Duration};
 
 use libftd2xx::{BitMode, Ft232h, FtdiCommon};
 
+use crate::controller::Channels;
+
 use super::{Channel, Result, SampleSource};
 
 const MASK: u8 = 0xFF;
@@ -33,10 +35,11 @@ impl SampleSource for FtSampleSource {
         })
     }
 
-    fn read_samples(&mut self, _samples: &mut [f64]) -> Result<(usize, Channel)> {
+    fn read_samples(&mut self, channels: &mut Channels) -> Result<(usize, Channel)> {
         let num_bytes = self.read_bytes()?;
         let _rx_bytes = &self.rx_buf[0..num_bytes];
         // TODO: decode rx_bytes as samples
+        self.decode_and_copy(channels);
         Ok((0, Channel::VoltageA))
     }
 }
@@ -47,4 +50,5 @@ impl FtSampleSource {
         self.ft.read_all(&mut self.rx_buf[0..num_bytes])?;
         Ok(num_bytes)
     }
+    fn decode_and_copy(&mut self, _channels: &mut Channels) {}
 }

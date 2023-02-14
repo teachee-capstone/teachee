@@ -4,9 +4,24 @@ use std::{
 };
 
 #[derive(Debug)]
+pub struct Channels {
+    pub voltage1: Vec<f64>,
+    pub current1: Vec<f64>,
+}
+
+impl Default for Channels {
+    fn default() -> Self {
+        Self {
+            voltage1: vec![0.0; BUF_SIZE],
+            current1: vec![0.0; BUF_SIZE],
+        }
+    }
+}
+
+#[derive(Debug)]
 pub enum BufferState {
-    Full(Vec<f64>, usize),
-    Empty(Vec<f64>),
+    Full(Channels, usize),
+    Empty(Channels),
 }
 
 impl BufferState {
@@ -24,12 +39,12 @@ impl BufferState {
         }
     }
 
-    /// Fetch the Vec from the enum. take() is used to take ownership
-    /// by swapping with an empty Vec.
-    pub fn unwrap(&mut self) -> (Vec<f64>, usize) {
+    /// Fetch the Channels from the enum. take() is used to take ownership
+    /// by swapping with an empty Channels.
+    pub fn unwrap(&mut self) -> (Channels, usize) {
         match self {
-            BufferState::Empty(v) => (take(&mut *v), 0),
-            BufferState::Full(v, num_samples) => (take(&mut *v), *num_samples),
+            BufferState::Empty(c) => (take(&mut *c), 0),
+            BufferState::Full(c, num_samples) => (take(&mut *c), *num_samples),
         }
     }
 }
@@ -53,7 +68,7 @@ fn generate_buffers() -> Vec<Arc<(Condvar, Mutex<BufferState>)>> {
     (0..NUM_BUFS).for_each(|_| {
         v.push(Arc::new((
             Condvar::new(),
-            Mutex::new(BufferState::Empty(vec![0.0; BUF_SIZE])),
+            Mutex::new(BufferState::Empty(Channels::default())),
         )))
     });
     v
@@ -111,7 +126,7 @@ impl Controller {
 
                 let (mut dst, _) = app_state.unwrap();
                 let (src, num_samples) = data_state.unwrap();
-                Self::copy_with_trigger(
+                Self::copy_channels(
                     &mut dst,
                     &src,
                     num_samples,
@@ -129,6 +144,11 @@ impl Controller {
                 i ^= 0x1;
             }
         }
+    }
+
+    fn copy_channels(dst: &mut Channels, src: &Channels, num_samples: usize, trigger: f64) {
+        Self::copy_with_trigger(&mut dst.voltage1, &src.voltage1, num_samples, trigger);
+        Self::copy_with_trigger(&mut dst.current1, &src.current1, num_samples, trigger);
     }
 
     fn copy_with_trigger(dst: &mut [f64], src: &[f64], num_samples: usize, trigger: f64) {

@@ -333,19 +333,26 @@ impl eframe::App for App {
                 .wait_while(mutex.lock().unwrap(), |buf_state| buf_state.is_empty())
                 .unwrap();
 
-            let (samples, num_samples) = buf_state.unwrap();
+            let (channels, num_samples) = buf_state.unwrap();
             // Mapping i -> t using the fixed sample rate to get point (i * period, samples[i]).
             // TODO: get the actual sample period
-            let lines = plot::Line::new(plot::PlotPoints::from_parametric_callback(
-                |i| (i * 0.01, samples[i as usize]),
+            let voltage = plot::Line::new(plot::PlotPoints::from_parametric_callback(
+                |i| (i * 0.01, channels.voltage1[i as usize] + 3.0),
                 0.0..(num_samples as f64),
                 num_samples,
-            ));
+            ))
+            .name("Channel 1");
+            let current = plot::Line::new(plot::PlotPoints::from_parametric_callback(
+                |i| (i * 0.01, channels.current1[i as usize]),
+                0.0..(num_samples as f64),
+                num_samples,
+            ))
+            .name("Channel 2");
 
             println!("Update {}", *buf_idx);
             // Next update, use the other buffer.
             *buf_idx ^= 0x1;
-            *buf_state = BufferState::Empty(samples);
+            *buf_state = BufferState::Empty(channels);
             condvar.notify_one();
 
             plot::Plot::new("plot")
@@ -354,7 +361,11 @@ impl eframe::App for App {
                 .allow_scroll(false)
                 .allow_zoom(false)
                 .allow_boxed_zoom(false)
-                .show(ui, |ui| ui.line(lines));
+                .legend(plot::Legend::default())
+                .show(ui, |ui| {
+                    ui.line(voltage);
+                    ui.line(current);
+                });
         });
     }
 }
