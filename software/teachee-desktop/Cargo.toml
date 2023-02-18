@@ -7,6 +7,7 @@ edition = "2021"
 eframe = "0.20.1"
 libftd2xx = "0.32.1"
 structopt = "0.3.26"
+cobs = "0.2.3"
 
 [target.'cfg(any(windows,linux))'.dependencies.libftd2xx]
 version = "0.32.1"
