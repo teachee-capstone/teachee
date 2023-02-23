@@ -54,21 +54,30 @@ impl FtSampleSource {
     }
     fn decode_and_copy(&mut self, channels: &mut Channels, num_bytes: usize) -> usize {
         // Position after first 0
-        let start = self.rx_buf[..num_bytes].iter().position(|&x| x == 0).unwrap() + 1;
+        let start = self.rx_buf[..num_bytes]
+            .iter()
+            .position(|&x| x == 0)
+            .unwrap()
+            + 1;
         // Position after last 0
-        let end = num_bytes - self.rx_buf[..num_bytes].iter().rev().position(|&x| x == 0).unwrap();
+        let end = num_bytes
+            - self.rx_buf[..num_bytes]
+                .iter()
+                .rev()
+                .position(|&x| x == 0)
+                .unwrap();
         // Check that we have at least one packet
         debug_assert_ne!(start, end);
         debug_assert_eq!((end - start) % PACKET_SIZE, 0, "{start} {end}");
 
-        for (packet, (v_sample, c_sample)) in self.rx_buf[start..end]
-            .chunks_exact(PACKET_SIZE)
-            .zip(zip(
-                channels.voltage1.iter_mut(),
-                channels.current1.iter_mut(),
-            ))
-        {
-            debug_assert!(packet[0] < PACKET_SIZE as u8, "Unexpected block size: {}", packet[0]);
+        for (packet, (v_sample, c_sample)) in self.rx_buf[start..end].chunks_exact(PACKET_SIZE).zip(
+            zip(channels.voltage1.iter_mut(), channels.current1.iter_mut()),
+        ) {
+            debug_assert!(
+                packet[0] < PACKET_SIZE as u8,
+                "Unexpected block size: {}",
+                packet[0]
+            );
             debug_assert_eq!(packet[5], 0);
             if packet[0] == 5 {
                 // Fast path

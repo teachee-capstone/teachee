@@ -67,7 +67,6 @@ where
         // TODO: set connection status flag on self.storage = true
 
         loop {
-            let mut i = 0;
             for buf in self.data.bufs.iter() {
                 let (condvar, mutex) = &**buf;
 
@@ -81,8 +80,6 @@ where
                         // Tell Controller that this buffer is full, and wake them up if waiting.
                         *buf_state = BufferState::Full(channels, num_samples);
                         condvar.notify_one();
-                        println!("Read {}, {} samples", i, num_samples);
-                        i ^= 0x1;
                     }
                     Err(error) => {
                         eprintln!("{error:?}");

@@ -336,8 +336,9 @@ impl eframe::App for App {
             let (channels, num_samples) = buf_state.unwrap();
             // Mapping i -> t using the fixed sample rate to get point (i * period, samples[i]).
             // TODO: get the actual sample period
+            // TODO: Scale and offset
             let voltage = plot::Line::new(plot::PlotPoints::from_parametric_callback(
-                |i| (i * 0.01, channels.voltage1[i as usize] + 3.0),
+                |i| (i * 0.01, channels.voltage1[i as usize]),
                 0.0..(num_samples as f64),
                 num_samples,
             ))
@@ -349,7 +350,6 @@ impl eframe::App for App {
             ))
             .name("Channel 2");
 
-            println!("Update {}", *buf_idx);
             // Next update, use the other buffer.
             *buf_idx ^= 0x1;
             *buf_state = BufferState::Empty(channels);

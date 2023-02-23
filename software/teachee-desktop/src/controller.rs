@@ -3,6 +3,10 @@ use std::{
     sync::{Arc, Condvar, Mutex, RwLock},
 };
 
+// Number of samples in each channel's buffer
+const BUF_SIZE: usize = 1000;
+const NUM_BUFS: usize = 2;
+
 #[derive(Debug)]
 pub struct Channels {
     pub voltage1: Vec<f64>,
@@ -49,8 +53,6 @@ impl BufferState {
     }
 }
 
-const BUF_SIZE: usize = 1000;
-const NUM_BUFS: usize = 2;
 /// Represents two buffers that you can swap accesses between.
 #[derive(Debug, Clone)]
 pub struct USBData {
@@ -104,7 +106,6 @@ impl Controller {
     }
     pub fn controller_loop(&mut self) {
         loop {
-            let mut i = 0;
             // Cycle between the two buffers in each pair.
             for (dbuf, abuf) in self.usb_data.bufs.iter().zip(self.app_data.bufs.iter()) {
                 // TODO: ignore samples until trigger sample
@@ -140,8 +141,6 @@ impl Controller {
                 data_condvar.notify_one();
                 // Tell App thread that the current app buffer is now full.
                 app_condvar.notify_one();
-                println!("Copy {}", i);
-                i ^= 0x1;
             }
         }
     }
