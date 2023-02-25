@@ -1,13 +1,13 @@
 use std::{marker::PhantomData, thread, time::Duration};
 
-use crate::storage::Storage;
-
 mod ft;
 mod sine;
 
 // flatten module structure
 pub use ft::FtSampleSource;
 pub use sine::SineSampleSource;
+
+use crate::controller::{BufferState, Channels, USBData};
 
 pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
@@ -27,16 +27,15 @@ pub trait SampleSource {
 
     /// Read samples into a pre-allocated buffer. Return the number of samples written and their
     /// channel.
-    fn read_samples(&mut self, samples: &mut [f64]) -> Result<(usize, Channel)>;
+    fn read_samples(&mut self, samples: &mut Channels) -> Result<(usize, Channel)>;
 }
 
-/// A generic manager which reads from a given `SampleSource` in order to update `Storage` with data
-/// for the UI.
+/// A generic manager which reads from a given `SampleSource` into shared buffers.
 pub struct Manager<T>
 where
     T: SampleSource,
 {
-    storage: Storage,
+    data: USBData,
     phantom: PhantomData<T>,
 }
 
@@ -45,9 +44,9 @@ where
     T: SampleSource,
 {
     /// Infinite loop which continually attempts to initialize the `SampleSource`.
-    pub fn manager_loop(storage: Storage) {
+    pub fn manager_loop(data: USBData) {
         let mut manager = Self {
-            storage,
+            data,
             phantom: PhantomData,
         };
 
@@ -67,26 +66,28 @@ where
     fn read_samples_loop(&mut self, mut reader: T) {
         // TODO: set connection status flag on self.storage = true
 
-        const SAMPLE_BUF_SIZE: usize = 100_000;
-        let mut sample_buf = vec![0.0; SAMPLE_BUF_SIZE];
-
         loop {
-            match reader.read_samples(&mut sample_buf) {
-                Ok((num_samples, channel)) => {
-                    self.handle_samples(channel, &sample_buf[0..num_samples])
-                }
-                Err(error) => {
-                    eprintln!("{error:?}");
-                    // TODO: set connection status flag on self.storage = false
-                    break;
+            for buf in self.data.bufs.iter() {
+                let (condvar, mutex) = &**buf;
+
+                let mut buf_state = condvar
+                    .wait_while(mutex.lock().unwrap(), |buf_state| buf_state.is_full())
+                    .unwrap();
+
+                let (mut channels, _) = buf_state.unwrap();
+                match reader.read_samples(&mut channels) {
+                    Ok((num_samples, _channel)) => {
+                        // Tell Controller that this buffer is full, and wake them up if waiting.
+                        *buf_state = BufferState::Full(channels, num_samples);
+                        condvar.notify_one();
+                    }
+                    Err(error) => {
+                        eprintln!("{error:?}");
+                        // TODO: set connection status flag on self.storage = false
+                        return;
+                    }
                 }
             }
         }
-    }
-
-    fn handle_samples(&mut self, _channel: Channel, samples: &[f64]) {
-        self.storage.app.lock().unwrap().flip_flag();
-        dbg!(samples);
-        todo!("Do something with samples")
     }
 }

@@ -7,8 +7,9 @@ use eframe::{self, epaint::Vec2, NativeOptions, Theme};
 
 use structopt::StructOpt;
 use teachee_desktop::{
+    app::App,
+    controller::{AppData, Controller, USBData},
     sample_source::{FtSampleSource, Manager, SineSampleSource},
-    storage::Storage,
 };
 
 #[derive(Debug, StructOpt)]
@@ -31,18 +32,31 @@ fn main() {
         "TeachEE",
         options,
         Box::new(move |_cc| {
-            let storage = Storage::default();
-            let manager_storage = storage.clone();
+            let app_data = AppData::default();
+            let controller_app_data = app_data.clone();
 
-            thread::spawn(move || {
-                if opt.sine {
-                    Manager::<SineSampleSource>::manager_loop(manager_storage)
-                } else {
-                    Manager::<FtSampleSource>::manager_loop(manager_storage)
-                }
-            });
+            let manager_data = USBData::default();
+            let controller_manager_data = manager_data.clone();
 
-            Box::new(storage)
+            thread::Builder::new()
+                .name("USB Manager".into())
+                .spawn(move || {
+                    if opt.sine {
+                        Manager::<SineSampleSource>::manager_loop(manager_data)
+                    } else {
+                        Manager::<FtSampleSource>::manager_loop(manager_data)
+                    }
+                })
+                .unwrap();
+
+            thread::Builder::new()
+                .name("Sample Controller".into())
+                .spawn(move || {
+                    Controller::new(controller_manager_data, controller_app_data).controller_loop()
+                })
+                .unwrap();
+
+            Box::new(App::new(app_data))
         }),
     );
 }
