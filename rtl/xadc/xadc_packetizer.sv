@@ -145,6 +145,7 @@ module xadc_packetizer (
                 // indicate that we are no longer ready for data from the current and voltage stream
                 voltage_channel.tready <= 0;
                 current_monitor_channel.tready <= 0;
+                raw_stream.tlast <= 0;
 
                 state <= XADC_PACKETIZER_INIT;
             end
