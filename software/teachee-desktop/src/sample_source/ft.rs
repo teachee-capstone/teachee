@@ -81,8 +81,8 @@ impl FtSampleSource {
             debug_assert_eq!(packet[5], 0);
             if packet[0] == 5 {
                 // Fast path
-                *v_sample = ((packet[1] << 4) | packet[2]) as f64 * 3.3 / 4095.0;
-                *c_sample = ((packet[3] << 4) | packet[4]) as f64 * 3.3 / 4095.0;
+                *v_sample = (((packet[4] as u16) << 4) | packet[3] as u16) as f64 * 3.3 / 4095.0;
+                *c_sample = (((packet[2] as u16) << 4) | packet[1] as u16) as f64 * 15.0 / 4095.0;
             } else {
                 let mut block = packet[0] - 1;
                 // Two bytes of packet overhead
@@ -103,8 +103,8 @@ impl FtSampleSource {
                     block -= 1;
                 }
 
-                *v_sample = ((decoded[0] << 4) | decoded[1]) as f64 * 3.3 / 4095.0;
-                *c_sample = ((decoded[2] << 4) | decoded[3]) as f64 * 3.3 / 4095.0;
+                *v_sample = (((decoded[3] as u16) << 4) | decoded[2] as u16) as f64 * 3.3 / 4095.0;
+                *c_sample = (((decoded[1] as u16) << 4) | decoded[0] as u16) as f64 * 3.3 / 4095.0;
             }
         }
 
