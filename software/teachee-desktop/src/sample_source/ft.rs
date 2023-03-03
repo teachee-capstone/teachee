@@ -1,4 +1,5 @@
-use std::{iter::zip, thread, time::Duration};
+use core::num;
+use std::{iter::zip, thread, time::Duration, cmp::{max, min}};
 
 use libftd2xx::{BitMode, Ft232h, FtdiCommon};
 
@@ -31,7 +32,7 @@ impl SampleSource for FtSampleSource {
         ft.set_flow_control_rts_cts()?;
         ft.purge_rx()?;
 
-        thread::sleep(Duration::from_millis(10));
+        thread::sleep(Duration::from_millis(1000));
 
         Ok(Self {
             ft,
@@ -48,12 +49,17 @@ impl SampleSource for FtSampleSource {
 
 impl FtSampleSource {
     fn read_bytes(&mut self) -> Result<usize> {
-        let num_bytes = self.ft.queue_status()?;
+        let mut num_bytes = self.ft.queue_status()?;
+        println!("{num_bytes}");
+        num_bytes = 10000;
+
         self.ft.read_all(&mut self.rx_buf[0..num_bytes])?;
+        
         Ok(num_bytes)
     }
     fn decode_and_copy(&mut self, channels: &mut Channels, num_bytes: usize) -> usize {
         // Position after first 0
+        // println!("{num_bytes}");
         let start = self.rx_buf[..num_bytes]
             .iter()
             .position(|&x| x == 0)
@@ -79,11 +85,11 @@ impl FtSampleSource {
                 packet[0]
             );
             debug_assert_eq!(packet[5], 0);
-            if packet[0] == 5 {
-                // Fast path
-                *v_sample = (((packet[4] as u16) << 4) | packet[3] as u16) as f64 * 3.3 / 4095.0;
-                *c_sample = (((packet[2] as u16) << 4) | packet[1] as u16) as f64 * 15.0 / 4095.0;
-            } else {
+            // if packet[0] == 5 {
+            //     // Fast path
+            //     *v_sample = (((packet[4] as u16) << 4) | packet[3] as u16) as f64 * 3.3 / 4095.0;
+            //     *c_sample = (((packet[2] as u16) << 4) | packet[1] as u16) as f64 * 15.0 / 4095.0;
+            // } else {
                 let mut block = packet[0] - 1;
                 // Two bytes of packet overhead
                 let mut decoded: [u8; PACKET_SIZE - 2] = [0; PACKET_SIZE - 2];
@@ -104,8 +110,8 @@ impl FtSampleSource {
                 }
 
                 *v_sample = (((decoded[3] as u16) << 4) | decoded[2] as u16) as f64 * 3.3 / 4095.0;
-                *c_sample = (((decoded[1] as u16) << 4) | decoded[0] as u16) as f64 * 3.3 / 4095.0;
-            }
+                *c_sample = ((((decoded[1] as u16) << 4) | decoded[0] as u16) as f64 * 3.3 / 4095.0 - 1.5) * (1.0 / 0.09);
+            // }
         }
 
         (end - start) / PACKET_SIZE

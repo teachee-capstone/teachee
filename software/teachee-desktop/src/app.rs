@@ -338,13 +338,13 @@ impl eframe::App for App {
             // TODO: get the actual sample period
             // TODO: Scale and offset
             let voltage = plot::Line::new(plot::PlotPoints::from_parametric_callback(
-                |i| (i * 0.01, channels.voltage1[i as usize]),
+                |i| (i * 0.000001, channels.voltage1[i as usize]),
                 0.0..(num_samples as f64),
                 num_samples,
             ))
             .name("Channel 1");
             let current = plot::Line::new(plot::PlotPoints::from_parametric_callback(
-                |i| (i * 0.01, channels.current1[i as usize]),
+                |i| (i * 0.000001, channels.current1[i as usize]),
                 0.0..(num_samples as f64),
                 num_samples,
             ))
@@ -356,11 +356,11 @@ impl eframe::App for App {
             condvar.notify_one();
 
             plot::Plot::new("plot")
-                .data_aspect(1.0)
-                .allow_drag(false)
-                .allow_scroll(false)
-                .allow_zoom(false)
-                .allow_boxed_zoom(false)
+                // .data_aspect(1.0)
+                // .allow_drag(false)
+                // .allow_scroll(false)
+                // .allow_zoom(false)
+                // .allow_boxed_zoom(false)
                 .legend(plot::Legend::default())
                 .show(ui, |ui| {
                     ui.line(voltage);
