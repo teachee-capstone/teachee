@@ -3,7 +3,7 @@
 
 import xadc_drp_package::*;
 
-module xadc_drp_axis_adapter (
+module xadc_drp_axis_single_stream (
     // Xilinx XADC IP Interface (Only putting through the required signals)
     input var logic xadc_dclk,
     input var logic xadc_reset,
@@ -16,8 +16,7 @@ module xadc_drp_axis_adapter (
     input var logic xadc_eos,
 
     // ADC Channel AXI Streams
-    axis_interface.Source current_monitor_channel,
-    axis_interface.Source voltage_channel
+    axis_interface.Source sample_stream
 );
 
     typedef enum int {
@@ -25,10 +24,10 @@ module xadc_drp_axis_adapter (
         XADC_AXIS_AWAIT_EOS,
         XADC_AXIS_START_DRP_VOLTAGE_READ,
         XADC_AXIS_AWAIT_VOLTAGE_DATA,
-        XADC_AXIS_SEND_TO_VOLTAGE_FIFO,
+        XADC_AXIS_STORE_VOLTAGE_DATA,
         XADC_AXIS_START_DRP_CURRENT_READ,
         XADC_AXIS_AWAIT_CURRENT_DATA,
-        XADC_AXIS_SEND_TO_CURRENT_FIFO
+        XADC_AXIS_SEND_TO_SAMPLE_FIFO
     } xadc_drp_axis_adapter_state_t;
 
     xadc_drp_axis_adapter_state_t state = XADC_AXIS_INIT;
@@ -36,15 +35,8 @@ module xadc_drp_axis_adapter (
     // Define AXI Stream Interfaces
     // These interfaces will be tagged as sinks into the FIFO
     axis_interface #(
-        .DATA_WIDTH(XADC_DRP_DATA_WIDTH)
-    ) xadc_current_axis (
-        .clk(xadc_dclk),
-        .rst(xadc_reset)
-    );
-
-    axis_interface #(
-        .DATA_WIDTH(XADC_DRP_DATA_WIDTH)
-    ) xadc_voltage_axis (
+        .DATA_WIDTH(2 * XADC_DRP_DATA_WIDTH)
+    ) xadc_sample_data_axis (
         .clk(xadc_dclk),
         .rst(xadc_reset)
     );
@@ -52,31 +44,20 @@ module xadc_drp_axis_adapter (
     // Create Async FIFOs
     axis_async_fifo_wrapper #(
         .DEPTH(XADC_DRP_AXIS_FIFO_DEPTH),
-        .DATA_WIDTH(XADC_DRP_DATA_WIDTH),
+        .DATA_WIDTH(2 * XADC_DRP_DATA_WIDTH),
         .KEEP_ENABLE(0)
     ) xadc_current_fifo (
-        .sink(xadc_current_axis.Sink),
-        .source(current_monitor_channel)
+        .sink(xadc_sample_data_axis.Sink),
+        .source(sample_stream)
     );
 
-    axis_async_fifo_wrapper #(
-        .DEPTH(XADC_DRP_AXIS_FIFO_DEPTH),
-        .DATA_WIDTH(XADC_DRP_DATA_WIDTH),
-        .KEEP_ENABLE(0)
-    ) xadc_voltage_fifo (
-        .sink(xadc_voltage_axis.Sink),
-        .source(voltage_channel)
-    );
-
+    var logic [XADC_DRP_DATA_WIDTH-1:0] voltage_sample;
     always_ff @(posedge xadc_dclk) begin
         case (state)
             XADC_AXIS_INIT: begin
                 // Init both AXIS Sinks
-                xadc_current_axis.tdata <= 0;
-                xadc_current_axis.tvalid <= 0;
-
-                xadc_voltage_axis.tdata <= 0;
-                xadc_voltage_axis.tvalid <= 0;
+                xadc_sample_data_axis.tdata <= 0;
+                xadc_sample_data_axis.tvalid <= 0;
 
                 xadc_daddr <= XADC_DRP_ADDR_VOLTAGE_CHANNEL;
                 xadc_den <= 0;
@@ -98,15 +79,8 @@ module xadc_drp_axis_adapter (
             end
             XADC_AXIS_AWAIT_VOLTAGE_DATA: begin
                 if (xadc_drdy) begin
-                    xadc_voltage_axis.tdata <= xadc_do;
-                    xadc_voltage_axis.tvalid <= 1;
+                    voltage_sample <= xadc_do;
 
-                    state <= XADC_AXIS_SEND_TO_VOLTAGE_FIFO;
-                end
-            end
-            XADC_AXIS_SEND_TO_VOLTAGE_FIFO: begin
-                if (xadc_voltage_axis.tready && xadc_voltage_axis.tvalid) begin
-                    xadc_voltage_axis.tvalid <= 0;
                     state <= XADC_AXIS_START_DRP_CURRENT_READ;
                 end
             end
@@ -119,15 +93,16 @@ module xadc_drp_axis_adapter (
             XADC_AXIS_AWAIT_CURRENT_DATA: begin
                 xadc_den <= 0;
                 if (xadc_drdy) begin
-                    xadc_current_axis.tdata <= xadc_do;
-                    xadc_current_axis.tvalid <= 1;
+                    xadc_sample_data_axis.tdata[XADC_DRP_DATA_WIDTH-1:0] <= xadc_do;
+                    xadc_sample_data_axis.tdata[2*XADC_DRP_DATA_WIDTH - 1:XADC_DRP_DATA_WIDTH] <= voltage_sample;
+                    xadc_sample_data_axis.tvalid <= 1;
 
-                    state <= XADC_AXIS_SEND_TO_CURRENT_FIFO;
+                    state <= XADC_AXIS_SEND_TO_SAMPLE_FIFO;
                 end
             end
-            XADC_AXIS_SEND_TO_CURRENT_FIFO: begin
-                if (xadc_current_axis.tready && xadc_current_axis.tvalid) begin
-                    xadc_current_axis.tvalid <= 0;
+            XADC_AXIS_SEND_TO_SAMPLE_FIFO: begin
+                if (xadc_sample_data_axis.tready && xadc_sample_data_axis.tvalid) begin
+                    xadc_sample_data_axis.tvalid <= 0;
 
                     state <= XADC_AXIS_AWAIT_EOS;
                 end
@@ -137,17 +112,11 @@ module xadc_drp_axis_adapter (
 
     // Set default values for the unused AXIS signals
     always_comb begin
-        xadc_current_axis.tlast = 1;
-        xadc_current_axis.tkeep = '1;
-        xadc_current_axis.tid = '0;
-        xadc_current_axis.tuser = '0;
-        xadc_current_axis.tdest = '0;
-
-        xadc_voltage_axis.tlast = 1;
-        xadc_voltage_axis.tkeep = '1;
-        xadc_voltage_axis.tid = '0;
-        xadc_voltage_axis.tuser = '0;
-        xadc_voltage_axis.tdest = '0;
+        xadc_sample_data_axis.tlast = 1;
+        xadc_sample_data_axis.tkeep = '1;
+        xadc_sample_data_axis.tid = '0;
+        xadc_sample_data_axis.tuser = '0;
+        xadc_sample_data_axis.tdest = '0;
     end
 endmodule
 
