@@ -4,7 +4,7 @@ use std::{
 };
 
 // Number of samples in each channel's buffer
-const BUF_SIZE: usize = 1000;
+const BUF_SIZE: usize = 65536;
 const NUM_BUFS: usize = 2;
 
 #[derive(Debug)]

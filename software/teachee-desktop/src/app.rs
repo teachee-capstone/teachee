@@ -30,6 +30,9 @@ const GROUP_SPACING: f32 = 3.0;
 const BUTTON_HEIGHT: f32 = 25.0;
 const TEXTEDIT_WIDTH: f32 = 30.0;
 
+// 1 MSPS
+const SAMPLE_PERIOD: f64 = 1e-6;
+
 #[derive(Debug, Default)]
 struct UIControls {
     h_offset: f64,
@@ -335,16 +338,15 @@ impl eframe::App for App {
 
             let (channels, num_samples) = buf_state.unwrap();
             // Mapping i -> t using the fixed sample rate to get point (i * period, samples[i]).
-            // TODO: get the actual sample period
             // TODO: Scale and offset
             let voltage = plot::Line::new(plot::PlotPoints::from_parametric_callback(
-                |i| (i * 0.01, channels.voltage1[i as usize]),
+                |i| (i * SAMPLE_PERIOD, channels.voltage1[i as usize]),
                 0.0..(num_samples as f64),
                 num_samples,
             ))
             .name("Channel 1");
             let current = plot::Line::new(plot::PlotPoints::from_parametric_callback(
-                |i| (i * 0.01, channels.current1[i as usize]),
+                |i| (i * SAMPLE_PERIOD, channels.current1[i as usize]),
                 0.0..(num_samples as f64),
                 num_samples,
             ))
@@ -356,11 +358,6 @@ impl eframe::App for App {
             condvar.notify_one();
 
             plot::Plot::new("plot")
-                .data_aspect(1.0)
-                .allow_drag(false)
-                .allow_scroll(false)
-                .allow_zoom(false)
-                .allow_boxed_zoom(false)
                 .legend(plot::Legend::default())
                 .show(ui, |ui| {
                     ui.line(voltage);
