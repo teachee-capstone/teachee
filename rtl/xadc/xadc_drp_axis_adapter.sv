@@ -74,13 +74,9 @@ module xadc_drp_axis_adapter (
                 // Init both AXIS Sinks
                 xadc_current_axis.tdata <= 0;
                 xadc_current_axis.tvalid <= 0;
-                xadc_current_axis.tlast <= 1;
-                xadc_current_axis.tkeep <= 0;
 
                 xadc_voltage_axis.tdata <= 0;
                 xadc_voltage_axis.tvalid <= 0;
-                xadc_voltage_axis.tlast <= 1;
-                xadc_voltage_axis.tkeep <= 0;
 
                 xadc_daddr <= XADC_DRP_ADDR_VOLTAGE_CHANNEL;
                 xadc_den <= 0;
