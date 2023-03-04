@@ -147,13 +147,7 @@ module xadc_packetizer (
                 current_monitor_channel.tready <= 0;
                 raw_stream.tlast <= 0;
 
-                if (voltage_channel.tvalid && current_monitor_channel.tvalid) begin
-                    // Wait until we have valid data before starting another load
-                    voltage_channel.tready <= 1;
-                    current_monitor_channel.tready <= 1;
-
-                    state <= XADC_PACKETIZER_LOAD_NEW_SAMPLES;
-                end
+                state <= XADC_PACKETIZER_INIT;
             end
         endcase
     end
