@@ -1,4 +1,3 @@
-use core::num;
 use std::{iter::zip, thread, time::Duration, cmp::{max, min}};
 
 use libftd2xx::{BitMode, Ft232h, FtdiCommon};
@@ -10,7 +9,7 @@ use super::{Channel, Result, SampleSource};
 const MASK: u8 = 0xFF;
 const LATENCY_TIMER: Duration = Duration::from_millis(16);
 const IN_TRANSFER_SIZE: u32 = 0x10000;
-const RX_BUF_SIZE: usize = 100_000;
+const RX_BUF_SIZE: usize = 10000;
 const PACKET_SIZE: usize = 6;
 
 /// A sample source that reads from a real TeachEE device.
@@ -49,13 +48,9 @@ impl SampleSource for FtSampleSource {
 
 impl FtSampleSource {
     fn read_bytes(&mut self) -> Result<usize> {
-        let mut num_bytes = self.ft.queue_status()?;
-        println!("{num_bytes}");
-        num_bytes = 10000;
+        self.ft.read_all(&mut self.rx_buf)?;
 
-        self.ft.read_all(&mut self.rx_buf[0..num_bytes])?;
-        
-        Ok(num_bytes)
+        Ok(RX_BUF_SIZE)
     }
     fn decode_and_copy(&mut self, channels: &mut Channels, num_bytes: usize) -> usize {
         // Position after first 0
@@ -72,48 +67,53 @@ impl FtSampleSource {
                 .rev()
                 .position(|&x| x == 0)
                 .unwrap();
-        // Check that we have at least one packet
-        debug_assert_ne!(start, end);
-        debug_assert_eq!((end - start) % PACKET_SIZE, 0, "{start} {end}");
+        let mut src_index = start;
+        let mut dst_index = 0;
 
-        for (packet, (v_sample, c_sample)) in self.rx_buf[start..end].chunks_exact(PACKET_SIZE).zip(
-            zip(channels.voltage1.iter_mut(), channels.current1.iter_mut()),
-        ) {
-            debug_assert!(
-                packet[0] < PACKET_SIZE as u8,
-                "Unexpected block size: {}",
-                packet[0]
-            );
-            debug_assert_eq!(packet[5], 0);
-            // if packet[0] == 5 {
-            //     // Fast path
-            //     *v_sample = (((packet[4] as u16) << 4) | packet[3] as u16) as f64 * 3.3 / 4095.0;
-            //     *c_sample = (((packet[2] as u16) << 4) | packet[1] as u16) as f64 * 15.0 / 4095.0;
-            // } else {
+        while src_index + 6 < end && dst_index < channels.voltage1.len() {
+            // Packet error: offset byte not in [1, 5] or packet not delimited with 0
+            if self.rx_buf[src_index] == 0 || self.rx_buf[src_index] > 5 || self.rx_buf[src_index + 5] != 0 {
+                // Find the next 0
+                // Note that the +5 skips at least 1 packet, +6 would skip at least this and the next.
+                match self.rx_buf[(src_index + 5)..(end - 1)].iter().position(|&x| x == 0) {
+                    Some(i) => {
+                        // Advance to the next packet (which follows the 0)
+                        src_index += i + 1;
+                        debug_assert!(src_index + 6 <= end, "{src_index} {end}");
+                    },
+                    None => {
+                        // No more valid packets or the erroneous packet was the last
+                        break;
+                    }
+                }
+            } else {
+                let packet = &self.rx_buf[src_index..(src_index + 6)];
                 let mut block = packet[0] - 1;
                 // Two bytes of packet overhead
                 let mut decoded: [u8; PACKET_SIZE - 2] = [0; PACKET_SIZE - 2];
-                let mut dst_index = 0;
+                let mut decoded_index = 0;
 
-                // Note: the packet index is just the dst_index + 1 (skip the first offset byte)
+                // Note: the packet index is just the decoded_index + 1 (skip the first offset byte)
                 // Example packet: 01 02 22 02 44 00
                 // Decodes to:        00 22 00 44
-                while dst_index < decoded.len() {
+                while decoded_index < decoded.len() {
                     if block > 0 {
-                        decoded[dst_index] = packet[dst_index + 1];
+                        decoded[decoded_index] = packet[decoded_index + 1];
                     } else {
-                        decoded[dst_index] = 0;
-                        block = packet[dst_index + 1];
+                        decoded[decoded_index] = 0;
+                        block = packet[decoded_index + 1];
                     }
-                    dst_index += 1;
+                    decoded_index += 1;
                     block -= 1;
                 }
 
-                *v_sample = (((decoded[3] as u16) << 4) | decoded[2] as u16) as f64 * 3.3 / 4095.0;
-                *c_sample = ((((decoded[1] as u16) << 4) | decoded[0] as u16) as f64 * 3.3 / 4095.0 - 1.5) * (1.0 / 0.09);
-            // }
+                channels.voltage1[dst_index] = (((decoded[3] as u16) << 4) | decoded[2] as u16) as f64 * 3.3 / 4095.0;
+                channels.current1[dst_index] = ((((decoded[1] as u16) << 4) | decoded[0] as u16) as f64 * 3.3 / 4095.0 - 1.5) * (1.0 / 0.09);
+                src_index += 6;
+                dst_index += 1;
+            }
         }
 
-        (end - start) / PACKET_SIZE
+        dst_index
     }
 }
