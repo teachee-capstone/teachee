@@ -58,8 +58,6 @@ module xadc_drp_axis_single_stream (
                 // Init both AXIS Sinks
                 xadc_sample_data_axis.tdata <= 0;
                 xadc_sample_data_axis.tvalid <= 0;
-                xadc_sample_data_axis.tlast <= 1;
-                xadc_sample_data_axis.tkeep <= 0;
 
                 xadc_daddr <= XADC_DRP_ADDR_VOLTAGE_CHANNEL;
                 xadc_den <= 0;
