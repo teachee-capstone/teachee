@@ -1,4 +1,4 @@
-use std::{iter::zip, thread, time::Duration, cmp::{max, min}};
+use std::{thread, time::Duration};
 
 use libftd2xx::{BitMode, Ft232h, FtdiCommon};
 
@@ -70,33 +70,30 @@ impl FtSampleSource {
         let mut src_index = start;
         let mut dst_index = 0;
 
-        while src_index + 6 < end && dst_index < channels.voltage1.len() {
+        while src_index + PACKET_SIZE < end && dst_index < channels.voltage1.len() {
             // Packet error: offset byte not in [1, 5] or packet not delimited with 0
-            if self.rx_buf[src_index] == 0 || self.rx_buf[src_index] > 5 || self.rx_buf[src_index + 5] != 0 {
-                println!("Packet Error {src_index}");
-                for val in self.rx_buf[src_index..(src_index + 6)].iter() {
-                    print!("{val}, ");
-                }
-                println!("");
+            if self.rx_buf[src_index] == 0
+                || self.rx_buf[src_index] >= PACKET_SIZE as u8
+                || self.rx_buf[src_index + PACKET_SIZE - 1] != 0
+            {
+                src_index += 1;
                 // Find the next 0
-                // Note that the +5 skips at least 1 packet, +6 would skip at least this and the next.
-                match self.rx_buf[(src_index + 1)..(end - 1)].iter().position(|&x| x == 0) {
+                match self.rx_buf[src_index..(end - 1)]
+                    .iter()
+                    .position(|&x| x == 0)
+                {
                     Some(i) => {
                         // Advance to the next packet (which follows the 0)
-                        src_index += i + 2;
-                        for val in self.rx_buf[src_index..(src_index + 6)].iter() {
-                            print!("{val}, ");
-                        }
-                        println!("");
-                        debug_assert!(src_index + 6 <= end, "{src_index} {end}");
-                    },
+                        src_index += i + 1;
+                        debug_assert!(src_index + PACKET_SIZE <= end, "{src_index} {end}");
+                    }
                     None => {
                         // No more valid packets or the erroneous packet was the last
                         break;
                     }
                 }
             } else {
-                let packet = &self.rx_buf[src_index..(src_index + 6)];
+                let packet = &self.rx_buf[src_index..(src_index + PACKET_SIZE)];
                 let mut block = packet[0] - 1;
                 // Two bytes of packet overhead
                 let mut decoded: [u8; PACKET_SIZE - 2] = [0; PACKET_SIZE - 2];
@@ -116,9 +113,12 @@ impl FtSampleSource {
                     block -= 1;
                 }
 
-                channels.voltage1[dst_index] = (((decoded[3] as u16) << 4) | decoded[2] as u16) as f64 * 3.3 / 4095.0;
-                channels.current1[dst_index] = ((((decoded[1] as u16) << 4) | decoded[0] as u16) as f64 * 3.3 / 4095.0 - 1.5) * (1.0 / 0.09);
-                src_index += 6;
+                channels.voltage1[dst_index] =
+                    (((decoded[3] as u16) << 4) | decoded[2] as u16) as f64 * 3.3 / 4095.0;
+                channels.current1[dst_index] =
+                    ((((decoded[1] as u16) << 4) | decoded[0] as u16) as f64 * 3.3 / 4095.0 - 1.5)
+                        * (1.0 / 0.09);
+                src_index += PACKET_SIZE;
                 dst_index += 1;
             }
         }
