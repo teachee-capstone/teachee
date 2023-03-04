@@ -73,12 +73,21 @@ impl FtSampleSource {
         while src_index + 6 < end && dst_index < channels.voltage1.len() {
             // Packet error: offset byte not in [1, 5] or packet not delimited with 0
             if self.rx_buf[src_index] == 0 || self.rx_buf[src_index] > 5 || self.rx_buf[src_index + 5] != 0 {
+                println!("Packet Error {src_index}");
+                for val in self.rx_buf[src_index..(src_index + 6)].iter() {
+                    print!("{val}, ");
+                }
+                println!("");
                 // Find the next 0
                 // Note that the +5 skips at least 1 packet, +6 would skip at least this and the next.
-                match self.rx_buf[(src_index + 5)..(end - 1)].iter().position(|&x| x == 0) {
+                match self.rx_buf[(src_index + 1)..(end - 1)].iter().position(|&x| x == 0) {
                     Some(i) => {
                         // Advance to the next packet (which follows the 0)
-                        src_index += i + 1;
+                        src_index += i + 2;
+                        for val in self.rx_buf[src_index..(src_index + 6)].iter() {
+                            print!("{val}, ");
+                        }
+                        println!("");
                         debug_assert!(src_index + 6 <= end, "{src_index} {end}");
                     },
                     None => {
