@@ -4,12 +4,12 @@
 import xadc_drp_package::*;
 
 module teachee (
-    input var logic cmod_osc, // 12 MHz provided on the CMOD
-    input var logic ftdi_clk, // 60 MHz provided by the FTDI
+    input  var logic cmod_osc, // 12 MHz provided on the CMOD
+    input  var logic ftdi_clk, // 60 MHz provided by the FTDI
 
     // FTDI Control Interface
-    input var logic ftdi_rxf_n,
-    input var logic ftdi_txe_n,
+    input  var logic ftdi_rxf_n,
+    input  var logic ftdi_txe_n,
 
     output var logic ftdi_rd_n,
     output var logic ftdi_wr_n,
@@ -17,6 +17,13 @@ module teachee (
     output var logic ftdi_oe_n,
 
     output var logic[7:0] ftdi_data,
+
+    // High Speed ADC IO Interface
+    output var logic hsadc_a_enc,
+    input var logic[7:0] hsadc_a,
+
+    output var logic hsadc_b_enc,
+    input var logic[7:0] hsadc_b,
 
     // CMOD IO Declarations
     input var logic[1:0] btn,
@@ -26,8 +33,11 @@ module teachee (
     input var logic[1:0] xa_p,
 
     // TeachEE IO Declarations
-    output var logic[1:0] teachee_led
+    output var logic[1:0] teachee_led,
+    inout wire[5:0] spare_pin
 );
+    // Spare pin 0 = s1
+    // spare pin 1 = s2
 
     var logic locked;
     var logic sys_clk;
