@@ -38,6 +38,7 @@ module teachee (
 );
     // Spare pin 0 = s1
     // spare pin 1 = s2
+    // spare pin 4 = dfs
 
     var logic locked;
     var logic sys_clk;
@@ -67,6 +68,19 @@ module teachee (
 
         // Clock in ports
         .cmod_osc(cmod_osc)      // input cmod_osc
+    );
+
+    hsadc_interface hsadc_ctrl (
+        .channel_a_enc(hsadc_a_enc),
+        .channel_a(hsadc_a),
+
+        .channel_b_enc(hsadc_b_enc),
+        .channel_b(hsadc_b),
+
+        // mode signals
+        .s1(spare_pin[0]),
+        .s2(spare_pin[1]),
+        .dfs(spare_pin[4])
     );
 
     axis_interface #(

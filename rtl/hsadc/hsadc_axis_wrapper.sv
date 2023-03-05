@@ -10,9 +10,15 @@ stream manipulation.
 
  */
 
-module hsadc (
-              // TODO
+module hsadc_axis_wrapper (
+    input var logic sample_clk,
+    input var logic stream_clk,
+
+    hsadc_interface hsadc_ctrl_signals,
+    axis_interface.Source sample_stream
 );
+    // sample clock to control the ADC.
+    // output side of the async fifo will use the stream clock provided to the module
 endmodule
 
 `default_nettype none
