@@ -1,6 +1,7 @@
 `default_nettype none
 `timescale 1ns / 1ps
 
+import xadc_drp_package::*;
 module xadc_axis (
     input var logic sys_clk, // 12 MHz provided on the CMOD
     input var logic ftdi_clk, // 60 MHz provided by the FTDI
@@ -28,7 +29,7 @@ module xadc_axis (
 );
 
     axis_interface #(
-        .DATA_WIDTH(16)
+        .DATA_WIDTH(32)
     ) voltage_channel (
         .clk(sys_clk),
         .rst(0)
@@ -73,7 +74,8 @@ module xadc_axis (
     var logic[15:0] xadc_do;
     var logic xadc_eos;
 
-    xadc_drp_axis_adapter xadc_drp_axis_adapter_inst (
+
+    xadc_drp_axis_single_stream xadc_drp_axis_adapter_inst (
         .xadc_dclk(sys_clk),
         .xadc_reset(0),
 
@@ -91,9 +93,29 @@ module xadc_axis (
         // .vauxp12(xa_p[1]),
         // .vauxn12(xa_n[1]),
 
-        .current_monitor_channel(current_monitor_channel.Source),
-        .voltage_channel(voltage_channel.Source)
+        .sample_stream(voltage_channel.Source)
     );
+    // xadc_drp_axis_adapter xadc_drp_axis_adapter_inst (
+    //     .xadc_dclk(sys_clk),
+    //     .xadc_reset(0),
+
+    //     // DRP and Conversion Signals
+    //     .xadc_daddr(xadc_daddr),
+    //     .xadc_den(xadc_den),
+    //     .xadc_drdy(xadc_drdy),
+    //     .xadc_do(xadc_do),
+
+    //     .xadc_eos(xadc_eos),
+
+    //     // .vauxp4(xa_p[0]),
+    //     // .vauxn4(xa_n[0]),
+
+    //     // .vauxp12(xa_p[1]),
+    //     // .vauxn12(xa_n[1]),
+
+    //     .current_monitor_channel(current_monitor_channel.Source),
+    //     .voltage_channel(voltage_channel.Source)
+    // );
 
 
     xadc_axis_ip xadc_teachee_inst (
@@ -128,12 +150,18 @@ module xadc_axis (
         .busy_out()        // output wire busy_out
     );
 
-    xadc_packetizer cobs_streamer (
-        .voltage_channel(voltage_channel.Sink),
-        .current_monitor_channel(current_monitor_channel.Sink),
-
-        .packet_stream(sys_axis.Source)
+    cobs_axis_adapter_wrapper #(
+                                .S_DATA_WIDTH(32),
+                                .M_DATA_WIDTH(8)
+    ) packetizer (
+                  .original_data(voltage_channel.Sink),
+                  .encoded_data(sys_axis.Source)
     );
+
+    always_comb begin
+        // prevent stalling of the current monitor fifo
+        current_monitor_channel.tready = 1;
+    end
 
 endmodule
 

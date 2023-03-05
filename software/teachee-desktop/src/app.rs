@@ -2,6 +2,8 @@ use std::{f64::consts::TAU, fmt};
 
 use eframe::egui::*;
 
+use crate::controller::{AppData, BufferState};
+
 #[derive(Debug, Clone, Copy, Default, PartialEq)]
 enum Channel {
     #[default]
@@ -28,6 +30,9 @@ const GROUP_SPACING: f32 = 3.0;
 const BUTTON_HEIGHT: f32 = 25.0;
 const TEXTEDIT_WIDTH: f32 = 30.0;
 
+// 1 MSPS
+const SAMPLE_PERIOD: f64 = 1e-6;
+
 #[derive(Debug, Default)]
 struct UIControls {
     h_offset: f64,
@@ -47,46 +52,37 @@ struct UIControls {
     channel1_on: bool,
     channel2_on: bool,
     trigger_button_text: TriggerControl,
+    trigger_threshold_text: String,
+    trigger_format_wrong: bool,
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct App {
     flag: bool,
     channel1: Channel,
     channel1_offset: f64,
     channel2: Channel,
     channel2_offset: f64,
+    data: AppData,
+    buf_idx: usize,
     ui_controls: UIControls,
 }
 
 impl App {
+    pub fn new(data: AppData) -> Self {
+        Self {
+            flag: false,
+            channel1: Channel::default(),
+            channel1_offset: 0.0,
+            channel2: Channel::default(),
+            channel2_offset: 0.0,
+            data,
+            buf_idx: 0,
+            ui_controls: UIControls::default(),
+        }
+    }
     pub fn flip_flag(&mut self) {
         self.flag = !self.flag
-    }
-}
-
-fn generate_points(
-    start: i64,
-    stop: i64,
-    step: f64,
-    channel: &Channel,
-    offset: &f64,
-) -> Vec<[f64; 2]> {
-    if let Channel::Off = channel {
-        Vec::new()
-    } else {
-        let f = match channel {
-            Channel::Sine => f64::sin,
-            Channel::Cos => f64::cos,
-            Channel::Off => unreachable!(),
-        };
-
-        (start..stop)
-            .map(|i| {
-                let x = i as f64 * step;
-                [x, f(x + offset)]
-            })
-            .collect()
     }
 }
 
@@ -122,6 +118,8 @@ impl eframe::App for App {
             channel1_offset,
             channel2,
             channel2_offset,
+            data,
+            buf_idx,
             ui_controls,
             ..
         } = self;
@@ -229,6 +227,21 @@ impl eframe::App for App {
                         ui.separator();
                         ui.add_space(GROUP_SPACING);
                         ui.vertical_centered_justified(|ui| {
+                            ui.with_layout(
+                                Layout::top_down(Align::Center).with_cross_align(Align::Min),
+                                |ui| {
+                                    if ui_controls.trigger_format_wrong {
+                                        ui.style_mut().visuals.extreme_bg_color =
+                                            Color32::LIGHT_RED;
+                                    }
+                                    ui.add(
+                                        TextEdit::singleline(
+                                            &mut ui_controls.trigger_threshold_text,
+                                        )
+                                        .hint_text("Trigger threshold"),
+                                    );
+                                },
+                            );
                             if ui
                                 .add(
                                     Button::new(ui_controls.trigger_button_text.to_string())
@@ -237,12 +250,26 @@ impl eframe::App for App {
                                 .clicked()
                             {
                                 use TriggerControl::*;
-                                // TODO: enable/disable triggering
-                                ui_controls.trigger_button_text =
-                                    match ui_controls.trigger_button_text {
-                                        Start => Stop,
-                                        Stop => Start,
-                                    };
+                                match ui_controls.trigger_button_text {
+                                    Start => {
+                                        let parsed =
+                                            ui_controls.trigger_threshold_text.parse::<f64>();
+                                        match parsed {
+                                            Ok(new_value) => {
+                                                *data.trigger_value.write().unwrap() = new_value;
+                                                ui_controls.trigger_button_text = Stop;
+                                                ui_controls.trigger_format_wrong = false;
+                                            }
+                                            Err(_) => {
+                                                ui_controls.trigger_format_wrong = true;
+                                            }
+                                        }
+                                    }
+                                    Stop => {
+                                        *data.trigger_value.write().unwrap() = 0.0;
+                                        ui_controls.trigger_button_text = Start;
+                                    }
+                                };
                             }
                         });
                     });
@@ -300,20 +327,42 @@ impl eframe::App for App {
             });
 
         CentralPanel::default().show(ctx, |ui| {
-            let lines = [
-                generate_points(0, 1000, 0.01, channel1, channel1_offset),
-                generate_points(0, 1000, 0.01, channel2, channel2_offset),
-            ]
-            .into_iter()
-            .map(plot::Line::new);
+            // Get the current buffer. Alternating between buffers is done by toggling
+            // the buf_idx.
+            let (condvar, mutex) = &*data.bufs[*buf_idx];
+
+            // Wait until controller thread has filled the current buffer.
+            let mut buf_state = condvar
+                .wait_while(mutex.lock().unwrap(), |buf_state| buf_state.is_empty())
+                .unwrap();
+
+            let (channels, num_samples) = buf_state.unwrap();
+            // Mapping i -> t using the fixed sample rate to get point (i * period, samples[i]).
+            // TODO: Scale and offset
+            let voltage = plot::Line::new(plot::PlotPoints::from_parametric_callback(
+                |i| (i * SAMPLE_PERIOD, channels.voltage1[i as usize]),
+                0.0..(num_samples as f64),
+                num_samples,
+            ))
+            .name("Channel 1");
+            let current = plot::Line::new(plot::PlotPoints::from_parametric_callback(
+                |i| (i * SAMPLE_PERIOD, channels.current1[i as usize]),
+                0.0..(num_samples as f64),
+                num_samples,
+            ))
+            .name("Channel 2");
+
+            // Next update, use the other buffer.
+            *buf_idx ^= 0x1;
+            *buf_state = BufferState::Empty(channels);
+            condvar.notify_one();
 
             plot::Plot::new("plot")
-                .data_aspect(1.0)
-                .allow_drag(false)
-                .allow_scroll(false)
-                .allow_zoom(false)
-                .allow_boxed_zoom(false)
-                .show(ui, |ui| lines.for_each(|l| ui.line(l)));
+                .legend(plot::Legend::default())
+                .show(ui, |ui| {
+                    ui.line(voltage);
+                    ui.line(current);
+                });
         });
     }
 }
