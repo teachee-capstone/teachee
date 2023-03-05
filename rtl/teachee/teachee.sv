@@ -60,15 +60,8 @@ module teachee (
     );
 
     axis_interface #(
-        .DATA_WIDTH(XADC_DRP_DATA_WIDTH)
-    ) voltage_channel (
-        .clk(sys_clk),
-        .rst(reset)
-    );
-
-    axis_interface #(
-        .DATA_WIDTH(XADC_DRP_DATA_WIDTH)
-    ) current_monitor_channel (
+        .DATA_WIDTH(2 * XADC_DRP_DATA_WIDTH)
+    ) xadc_sample_channel (
         .clk(sys_clk),
         .rst(reset)
     );
@@ -101,10 +94,10 @@ module teachee (
     var logic xadc_den;
 
     var logic xadc_drdy;
-    var logic[15:0] xadc_do;
+    var logic[XADC_DRP_DATA_WIDTH-1:0] xadc_do;
     var logic xadc_eos;
 
-    xadc_drp_axis_adapter xadc_drp_axis_adapter_inst (
+    xadc_drp_axis_single_stream xadc_drp_axis_adapter_inst (
         .xadc_dclk(sys_clk),
         .xadc_reset(reset),
 
@@ -116,8 +109,7 @@ module teachee (
 
         .xadc_eos(xadc_eos),
 
-        .current_monitor_channel(current_monitor_channel.Source),
-        .voltage_channel(voltage_channel.Source)
+        .sample_stream(xadc_sample_channel.Source)
     );
 
 
@@ -153,11 +145,12 @@ module teachee (
         .busy_out()        // output wire busy_out
     );
 
-    xadc_packetizer cobs_streamer (
-        .voltage_channel(voltage_channel.Sink),
-        .current_monitor_channel(current_monitor_channel.Sink),
-
-        .packet_stream(sys_axis.Source)
+    cobs_axis_adapter_wrapper #(
+        .S_DATA_WIDTH(2 * XADC_DRP_DATA_WIDTH),
+        .M_DATA_WIDTH(8)
+    ) packetizer (
+        .original_data(xadc_sample_channel.Sink),
+        .encoded_data(sys_axis.Source)
     );
 
 endmodule
