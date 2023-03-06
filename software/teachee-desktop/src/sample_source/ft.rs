@@ -54,7 +54,6 @@ impl FtSampleSource {
     }
     fn decode_and_copy(&mut self, channels: &mut Channels, num_bytes: usize) -> usize {
         // Position after first 0
-        // println!("{num_bytes}");
         let start = self.rx_buf[..num_bytes]
             .iter()
             .position(|&x| x == 0)
