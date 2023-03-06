@@ -70,7 +70,7 @@ impl FtSampleSource {
         let mut src_index = start;
         let mut dst_index = 0;
 
-        while src_index + PACKET_SIZE < end && dst_index < channels.voltage1.len() {
+        'outer: while src_index + PACKET_SIZE < end && dst_index < channels.voltage1.len() {
             // Packet error: offset byte not in [1, 5] or packet not delimited with 0
             if self.rx_buf[src_index] == 0
                 || self.rx_buf[src_index] >= PACKET_SIZE as u8
@@ -85,7 +85,6 @@ impl FtSampleSource {
                     Some(i) => {
                         // Advance to the next packet (which follows the 0)
                         src_index += i + 1;
-                        debug_assert!(src_index + PACKET_SIZE <= end, "{src_index} {end}");
                     }
                     None => {
                         // No more valid packets or the erroneous packet was the last
@@ -108,6 +107,12 @@ impl FtSampleSource {
                     } else {
                         decoded[decoded_index] = 0;
                         block = packet[decoded_index + 1];
+
+                        if block == 0 {
+                            // The 4 sample bytes cannot be zero; skip this packet
+                            src_index += PACKET_SIZE;
+                            continue 'outer;
+                        }
                     }
                     decoded_index += 1;
                     block -= 1;
