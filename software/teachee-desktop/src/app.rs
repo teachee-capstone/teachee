@@ -28,10 +28,10 @@ const BUTTON_HEIGHT: f32 = 25.0;
 // 1 MSPS
 const SAMPLE_PERIOD: f64 = 1e-6;
 
-const H_SCALE_RANGE: RangeInclusive<f64> = RangeInclusive::new(0.1, 5.0);
-// TODO: use SAMPLE_PERIOD
-const H_OFFSET_RANGE: RangeInclusive<f64> = RangeInclusive::new(-5.0, 5.0);
-const V_SCALE_RANGE: RangeInclusive<f64> = RangeInclusive::new(0.1, 5.0);
+const H_SCALE_RANGE: RangeInclusive<f64> = RangeInclusive::new(0.1, 10.0);
+const H_OFFSET_RANGE: RangeInclusive<f64> =
+    RangeInclusive::new(-10000.0 * SAMPLE_PERIOD, 10000.0 * SAMPLE_PERIOD);
+const V_SCALE_RANGE: RangeInclusive<f64> = RangeInclusive::new(0.1, 10.0);
 const V_OFFSET_RANGE: RangeInclusive<f64> = RangeInclusive::new(-5.0, 5.0);
 
 #[derive(Debug)]
@@ -130,6 +130,25 @@ fn update_trigger(
     }
 }
 
+fn offset_scale_sliders(
+    ui: &mut Ui,
+    offset: &mut f64,
+    o_range: RangeInclusive<f64>,
+    scale: &mut f64,
+    s_range: RangeInclusive<f64>,
+) {
+    ui.columns(2, |uis| {
+        uis[0].label("Offset");
+        uis[0].add(Slider::new(offset, o_range).clamp_to_range(false));
+        uis[1].label("Scale");
+        uis[1].add(
+            Slider::new(scale, s_range)
+                .clamp_to_range(false)
+                .logarithmic(true),
+        );
+    });
+}
+
 impl eframe::App for App {
     fn update(&mut self, ctx: &Context, frame: &mut eframe::Frame) {
         // Always redraw on the next frame. Ensures that state changes from
@@ -173,50 +192,35 @@ impl eframe::App for App {
                         ui.add_space(GROUP_SPACING);
 
                         ui.label("Horizontal");
-                        ui.columns(2, |uis| {
-                            uis[0].label("Offset");
-                            uis[0].add(
-                                Slider::new(&mut ui_controls.h_offset, H_OFFSET_RANGE)
-                                    .clamp_to_range(false),
-                            );
-                            uis[1].label("Scale");
-                            uis[1].add(
-                                Slider::new(&mut ui_controls.h_scale, H_SCALE_RANGE)
-                                    .clamp_to_range(false),
-                            );
-                        });
+                        offset_scale_sliders(
+                            ui,
+                            &mut ui_controls.h_offset,
+                            H_OFFSET_RANGE,
+                            &mut ui_controls.h_scale,
+                            H_SCALE_RANGE,
+                        );
 
                         ui.add_space(GROUP_SPACING);
                         ui.separator();
                         ui.add_space(GROUP_SPACING);
 
                         ui.label("Channel 1 Vertical");
-                        ui.columns(2, |uis| {
-                            uis[0].label("Offset");
-                            uis[0].add(
-                                Slider::new(&mut ui_controls.channel1_v_offset, V_OFFSET_RANGE)
-                                    .clamp_to_range(false),
-                            );
-                            uis[1].label("Scale");
-                            uis[1].add(
-                                Slider::new(&mut ui_controls.channel1_v_scale, V_SCALE_RANGE)
-                                    .clamp_to_range(false),
-                            );
-                        });
+                        offset_scale_sliders(
+                            ui,
+                            &mut ui_controls.channel1_v_offset,
+                            V_OFFSET_RANGE,
+                            &mut ui_controls.channel1_v_scale,
+                            V_SCALE_RANGE,
+                        );
 
                         ui.label("Channel 2 Vertical");
-                        ui.columns(2, |uis| {
-                            uis[0].label("Offset");
-                            uis[0].add(
-                                Slider::new(&mut ui_controls.channel2_v_offset, V_OFFSET_RANGE)
-                                    .clamp_to_range(false),
-                            );
-                            uis[1].label("Scale");
-                            uis[1].add(
-                                Slider::new(&mut ui_controls.channel2_v_scale, V_SCALE_RANGE)
-                                    .clamp_to_range(false),
-                            );
-                        });
+                        offset_scale_sliders(
+                            ui,
+                            &mut ui_controls.channel2_v_offset,
+                            V_OFFSET_RANGE,
+                            &mut ui_controls.channel2_v_scale,
+                            V_SCALE_RANGE,
+                        );
 
                         ui.add_space(GROUP_SPACING);
                         ui.separator();
@@ -275,13 +279,25 @@ impl eframe::App for App {
             // Mapping i -> t using the fixed sample rate to get point (i * period, samples[i]).
             // TODO: Scale and offset
             let voltage = plot::Line::new(plot::PlotPoints::from_parametric_callback(
-                |i| (i * SAMPLE_PERIOD * ui_controls.h_scale + ui_controls.h_offset, channels.voltage1[i as usize] * ui_controls.channel1_v_scale + ui_controls.channel1_v_offset),
+                |i| {
+                    (
+                        i * SAMPLE_PERIOD * ui_controls.h_scale + ui_controls.h_offset,
+                        channels.voltage1[i as usize] * ui_controls.channel1_v_scale
+                            + ui_controls.channel1_v_offset,
+                    )
+                },
                 0.0..(num_samples as f64),
                 num_samples,
             ))
             .name("Channel 1");
             let current = plot::Line::new(plot::PlotPoints::from_parametric_callback(
-                |i| (i * SAMPLE_PERIOD * ui_controls.h_scale + ui_controls.h_offset, channels.current1[i as usize] * ui_controls.channel2_v_scale + ui_controls.channel2_v_offset),
+                |i| {
+                    (
+                        i * SAMPLE_PERIOD * ui_controls.h_scale + ui_controls.h_offset,
+                        channels.current1[i as usize] * ui_controls.channel2_v_scale
+                            + ui_controls.channel2_v_offset,
+                    )
+                },
                 0.0..(num_samples as f64),
                 num_samples,
             ))
