@@ -1,4 +1,8 @@
-use std::{f64::consts::TAU, fmt};
+use std::{
+    f64::consts::TAU,
+    fmt,
+    sync::{Arc, RwLock},
+};
 
 use eframe::egui::*;
 
@@ -51,9 +55,12 @@ struct UIControls {
     channel2_v_scale_str: String,
     channel1_on: bool,
     channel2_on: bool,
-    trigger_button_text: TriggerControl,
-    trigger_threshold_text: String,
-    trigger_format_wrong: bool,
+    v_trigger_button_text: TriggerControl,
+    v_trigger_threshold_text: String,
+    v_trigger_format_wrong: bool,
+    c_trigger_button_text: TriggerControl,
+    c_trigger_threshold_text: String,
+    c_trigger_format_wrong: bool,
 }
 
 #[derive(Debug)]
@@ -104,6 +111,50 @@ fn channel_control(ui: &mut Ui, label: &str, channel: &mut Channel, offset: &mut
                     .text("Offset"),
             );
         });
+}
+
+fn update_trigger(
+    ui: &mut Ui,
+    trigger_val: &mut Arc<RwLock<f64>>,
+    button_text: &mut TriggerControl,
+    textedit_text: &mut String,
+    format_wrong: &mut bool,
+    hint_text: &str,
+) {
+    ui.with_layout(
+        Layout::top_down(Align::Center).with_cross_align(Align::Min),
+        |ui| {
+            if *format_wrong {
+                ui.style_mut().visuals.extreme_bg_color = Color32::LIGHT_RED;
+            }
+            ui.add(TextEdit::singleline(textedit_text).hint_text(hint_text));
+        },
+    );
+    if ui
+        .add(Button::new(button_text.to_string()).min_size((0.0, BUTTON_HEIGHT).into()))
+        .clicked()
+    {
+        use TriggerControl::*;
+        match button_text {
+            Start => {
+                let parsed = textedit_text.parse::<f64>();
+                match parsed {
+                    Ok(new_value) => {
+                        *trigger_val.write().unwrap() = new_value;
+                        *button_text = Stop;
+                        *format_wrong = false;
+                    }
+                    Err(_) => {
+                        *format_wrong = true;
+                    }
+                }
+            }
+            Stop => {
+                *trigger_val.write().unwrap() = 0.0;
+                *button_text = Start;
+            }
+        };
+    }
 }
 
 impl eframe::App for App {
@@ -227,50 +278,22 @@ impl eframe::App for App {
                         ui.separator();
                         ui.add_space(GROUP_SPACING);
                         ui.vertical_centered_justified(|ui| {
-                            ui.with_layout(
-                                Layout::top_down(Align::Center).with_cross_align(Align::Min),
-                                |ui| {
-                                    if ui_controls.trigger_format_wrong {
-                                        ui.style_mut().visuals.extreme_bg_color =
-                                            Color32::LIGHT_RED;
-                                    }
-                                    ui.add(
-                                        TextEdit::singleline(
-                                            &mut ui_controls.trigger_threshold_text,
-                                        )
-                                        .hint_text("Trigger threshold"),
-                                    );
-                                },
+                            update_trigger(
+                                ui,
+                                &mut data.voltage_trigger_threshold,
+                                &mut ui_controls.v_trigger_button_text,
+                                &mut ui_controls.v_trigger_threshold_text,
+                                &mut ui_controls.v_trigger_format_wrong,
+                                "Channel 1",
                             );
-                            if ui
-                                .add(
-                                    Button::new(ui_controls.trigger_button_text.to_string())
-                                        .min_size((0.0, BUTTON_HEIGHT).into()),
-                                )
-                                .clicked()
-                            {
-                                use TriggerControl::*;
-                                match ui_controls.trigger_button_text {
-                                    Start => {
-                                        let parsed =
-                                            ui_controls.trigger_threshold_text.parse::<f64>();
-                                        match parsed {
-                                            Ok(new_value) => {
-                                                *data.trigger_value.write().unwrap() = new_value;
-                                                ui_controls.trigger_button_text = Stop;
-                                                ui_controls.trigger_format_wrong = false;
-                                            }
-                                            Err(_) => {
-                                                ui_controls.trigger_format_wrong = true;
-                                            }
-                                        }
-                                    }
-                                    Stop => {
-                                        *data.trigger_value.write().unwrap() = 0.0;
-                                        ui_controls.trigger_button_text = Start;
-                                    }
-                                };
-                            }
+                            update_trigger(
+                                ui,
+                                &mut data.current_trigger_threshold,
+                                &mut ui_controls.c_trigger_button_text,
+                                &mut ui_controls.c_trigger_threshold_text,
+                                &mut ui_controls.c_trigger_format_wrong,
+                                "Channel 2",
+                            );
                         });
                     });
                 });

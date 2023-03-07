@@ -1,4 +1,5 @@
 use std::{
+    cmp::min,
     mem::take,
     sync::{Arc, Condvar, Mutex, RwLock},
 };
@@ -62,7 +63,8 @@ pub struct USBData {
 #[derive(Debug, Clone)]
 pub struct AppData {
     pub bufs: Vec<Arc<(Condvar, Mutex<BufferState>)>>,
-    pub trigger_value: Arc<RwLock<f64>>,
+    pub voltage_trigger_threshold: Arc<RwLock<f64>>,
+    pub current_trigger_threshold: Arc<RwLock<f64>>,
 }
 
 fn generate_buffers() -> Vec<Arc<(Condvar, Mutex<BufferState>)>> {
@@ -88,7 +90,8 @@ impl Default for AppData {
     fn default() -> Self {
         Self {
             bufs: generate_buffers(),
-            trigger_value: Arc::new(RwLock::new(0.0)),
+            voltage_trigger_threshold: Arc::new(RwLock::new(0.0)),
+            current_trigger_threshold: Arc::new(RwLock::new(0.0)),
         }
     }
 }
@@ -127,15 +130,16 @@ impl Controller {
 
                 let (mut dst, _) = app_state.unwrap();
                 let (src, num_samples) = data_state.unwrap();
-                Self::copy_channels(
+                let num_remaining = Self::copy_channels(
                     &mut dst,
                     &src,
                     num_samples,
-                    *self.app_data.trigger_value.read().unwrap(),
+                    *self.app_data.voltage_trigger_threshold.read().unwrap(),
+                    *self.app_data.current_trigger_threshold.read().unwrap(),
                 );
 
                 *data_state = BufferState::Empty(src);
-                *app_state = BufferState::Full(dst, num_samples);
+                *app_state = BufferState::Full(dst, num_remaining);
 
                 // Tell USB thread that the current data buffer is now empty.
                 data_condvar.notify_one();
@@ -145,21 +149,30 @@ impl Controller {
         }
     }
 
-    fn copy_channels(dst: &mut Channels, src: &Channels, num_samples: usize, trigger: f64) {
-        Self::copy_with_trigger(&mut dst.voltage1, &src.voltage1, num_samples, trigger);
-        Self::copy_with_trigger(&mut dst.current1, &src.current1, num_samples, trigger);
+    fn copy_channels(
+        dst: &mut Channels,
+        src: &Channels,
+        num_samples: usize,
+        v_trigger: f64,
+        c_trigger: f64,
+    ) -> usize {
+        // Return the least number of samples between the two channels (discard some from the channel with more)
+        min(
+            Self::copy_with_trigger(&mut dst.voltage1, &src.voltage1, num_samples, v_trigger),
+            Self::copy_with_trigger(&mut dst.current1, &src.current1, num_samples, c_trigger),
+        )
     }
 
-    fn copy_with_trigger(dst: &mut [f64], src: &[f64], num_samples: usize, trigger: f64) {
+    fn copy_with_trigger(dst: &mut [f64], src: &[f64], num_samples: usize, trigger: f64) -> usize {
         if trigger > 0.0 {
             let first_lower = src.iter().position(|&val| val < trigger);
             if let Some(lower_idx) = first_lower {
-                const WINDOW_SIZE: usize = 5;
+                const WINDOW_SIZE: usize = 10;
                 let mut sum: f64 = src[lower_idx..(lower_idx + WINDOW_SIZE)].iter().sum();
 
                 // Iterate over all windows of size WINDOW_SIZE + 1. The first WINDOW_SIZE samples
                 // are used to calculate the average value of previous samples, which is then
-                // compared to the last (current) sample. This is done to find a rising trigger
+                // compared to the last sample. This is done to find a rising trigger
                 // while attempting to filter out noise.
                 let first_higher = src[lower_idx..]
                     .windows(WINDOW_SIZE + 1)
@@ -178,12 +191,14 @@ impl Controller {
                     let first_sample = lower_idx + higher_idx + WINDOW_SIZE;
                     dst[..(num_samples - first_sample)]
                         .copy_from_slice(&src[first_sample..num_samples]);
-                    return;
+
+                    return num_samples - first_sample;
                 }
             }
         }
 
         // If no trigger or trigger search failed, just copy the available samples without triggering.
         dst[..num_samples].copy_from_slice(&src[..num_samples]);
+        num_samples
     }
 }
