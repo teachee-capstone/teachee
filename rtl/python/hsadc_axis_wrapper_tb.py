@@ -12,6 +12,7 @@ RTL_ROOT = Path(__file__).parent / ".."
 # Create source list
 sources = [
     RTL_ROOT / "testbenches" / "hsadc_axis_wrapper_tb.sv",
+    RTL_ROOT / "hsadc" / "*.sv",
     RTL_ROOT / "axis" / "*.sv"
 ]
 

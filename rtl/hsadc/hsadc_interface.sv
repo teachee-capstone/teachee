@@ -1,18 +1,27 @@
 `default_nettype none
 `timescale 1ns / 1ps
 
-interface hsadc_interface (
-    output var logic channel_a_enc,
-    input  var logic[7:0] channel_a,
+interface hsadc_interface;
+    var logic channel_a_enc;
 
-    output var logic channel_b_enc,
-    input  var logic[7:0] channel_b,
+    var logic[7:0] channel_a;
 
-    // control signals
-    output var logic s1,
-    output var logic s2,
-    output var logic dfs
-);
+    var logic channel_b_enc;
+    var logic[7:0] channel_b;
+
+    var logic s1;
+    var logic s2;
+    var logic dfs;
+
+    modport Source (
+        output channel_a, channel_b,
+        input channel_a_enc, channel_b_enc, s1, s2, dfs
+    );
+
+    modport Sink (
+        input channel_a, channel_b,
+        output channel_a_enc, channel_b_enc, s1, s2, dfs
+    );
 
 endinterface // hsadc_interface
 

@@ -18,6 +18,7 @@ module hsadc_axis_wrapper (
     hsadc_interface hsadc_ctrl_signals,
     axis_interface.Source sample_stream
 );
+
     typedef enum int {
         HSADC_INIT,
         HSADC_COLLECT,
@@ -31,7 +32,7 @@ module hsadc_axis_wrapper (
         .DATA_WIDTH(16)
     ) hsadc_axis (
         .clk(sample_clk),
-        .rst(reset),
+        .rst(reset)
     );
 
     axis_async_fifo_wrapper #(
@@ -39,7 +40,7 @@ module hsadc_axis_wrapper (
         .DATA_WIDTH(16),
         .KEEP_ENABLE(0)
     ) hsadc_sample_fifo (
-        .sink(hsadc_axis),
+        .sink(hsadc_axis.Sink),
         .source(sample_stream)
     );
 
@@ -62,7 +63,7 @@ module hsadc_axis_wrapper (
                 hsadc_ctrl_signals.channel_a_enc <= 0;
 
                 // Start awaiting data
-                state <= HSADC_COLLECT_AND_STORE;
+                state <= HSADC_COLLECT;
             end
             HSADC_COLLECT: begin
                 // effective sampling at 1 MSPS
@@ -76,6 +77,10 @@ module hsadc_axis_wrapper (
                 end
             end
             HSADC_IDLE: begin
+                // immediately drop the clock back low
+                hsadc_ctrl_signals.channel_a_enc <= 0;
+
+                // load up data to be sent into the FIFO
                 hsadc_axis.tdata[15:8] <= hsadc_ctrl_signals.channel_a;
                 hsadc_axis.tdata[7:0] <= hsadc_ctrl_signals.channel_b;
                 hsadc_axis.tvalid <= 1;
