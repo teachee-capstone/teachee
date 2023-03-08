@@ -71,21 +71,38 @@ module teachee (
     );
 
     hsadc_interface hsadc_ctrl (
-        .channel_a_enc(hsadc_a_enc),
-        .channel_a(hsadc_a),
+        // .channel_a_enc(hsadc_a_enc),
+        // .channel_a(hsadc_a),
 
-        .channel_b_enc(hsadc_b_enc),
-        .channel_b(hsadc_b),
+        // .channel_b_enc(hsadc_b_enc),
+        // .channel_b(hsadc_b),
 
-        // mode signals
-        .s1(spare_pin[0]),
-        .s2(spare_pin[1]),
-        .dfs(spare_pin[4])
+        // // mode signals
+        // .s1(spare_pin[0]),
+        // .s2(spare_pin[1]),
+        // .dfs(spare_pin[4])
     );
+
+    assign hsadc_a_enc = hsadc_ctrl.channel_a_enc;
+    assign hsadc_ctrl.channel_a = hsadc_a;
+
+    assign hsadc_b_enc = hsadc_ctrl.channel_b_enc;
+    assign hsadc_ctrl.channel_b = hsadc_b;
+
+    assign hsadc_ctrl.s1 = spare_pin[0];
+    assign hsadc_ctrl.s2 = spare_pin[1];
+    assign hsadc_ctrl.dfs = spare_pin[4];
 
     axis_interface #(
         .DATA_WIDTH(2 * XADC_DRP_DATA_WIDTH)
     ) xadc_sample_channel (
+        .clk(sys_clk),
+        .rst(reset)
+    );
+
+    axis_interface #(
+        .DATA_WIDTH(2 * XADC_DRP_DATA_WIDTH)
+    ) hsadc_sample_channel (
         .clk(sys_clk),
         .rst(reset)
     );
@@ -169,13 +186,27 @@ module teachee (
         .busy_out()        // output wire busy_out
     );
 
+    // Configure HSADC AXI Streamer
+    hsadc_axis_wrapper hsadc (
+        .sample_clk(clk_10),
+        .stream_clk(sys_clk),
+        .reset(reset),
+
+        .hsadc_ctrl_signals(hsadc_ctrl.Sink),
+        .sample_stream(hsadc_sample_channel.Source)
+    );
+
     cobs_axis_adapter_wrapper #(
         .S_DATA_WIDTH(2 * XADC_DRP_DATA_WIDTH),
         .M_DATA_WIDTH(8)
     ) packetizer (
-        .original_data(xadc_sample_channel.Sink),
+        .original_data(hsadc_sample_channel.Sink),
         .encoded_data(sys_axis.Source)
     );
+
+    always_comb begin
+        xadc_sample_channel.tready = 1;
+    end
 
 endmodule
 
