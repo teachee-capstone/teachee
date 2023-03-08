@@ -92,6 +92,7 @@ fn update_trigger(
     button_text: &mut TriggerControl,
     textedit_text: &mut String,
     format_wrong: &mut bool,
+    (offset, scale): (f64, f64),
     hint_text: &str,
 ) {
     ui.with_layout(
@@ -113,7 +114,7 @@ fn update_trigger(
                 let parsed = textedit_text.parse::<f64>();
                 match parsed {
                     Ok(new_value) => {
-                        *trigger_val.write().unwrap() = new_value;
+                        *trigger_val.write().unwrap() = (new_value - offset) / scale;
                         *button_text = Stop;
                         *format_wrong = false;
                     }
@@ -123,7 +124,7 @@ fn update_trigger(
                 }
             }
             Stop => {
-                *trigger_val.write().unwrap() = 0.0;
+                *trigger_val.write().unwrap() = f64::INFINITY;
                 *button_text = Start;
             }
         };
@@ -213,6 +214,8 @@ impl eframe::App for App {
                             V_SCALE_RANGE,
                         );
 
+                        ui.add_space(GROUP_SPACING);
+
                         ui.label("Channel 2 Vertical");
                         offset_scale_sliders(
                             ui,
@@ -250,6 +253,7 @@ impl eframe::App for App {
                                 &mut ui_controls.v_trigger_button_text,
                                 &mut ui_controls.v_trigger_threshold_text,
                                 &mut ui_controls.v_trigger_format_wrong,
+                                (ui_controls.channel1_v_offset, ui_controls.channel1_v_scale),
                                 "Channel 1",
                             );
                             update_trigger(
@@ -258,6 +262,7 @@ impl eframe::App for App {
                                 &mut ui_controls.c_trigger_button_text,
                                 &mut ui_controls.c_trigger_threshold_text,
                                 &mut ui_controls.c_trigger_format_wrong,
+                                (ui_controls.channel2_v_offset, ui_controls.channel2_v_scale),
                                 "Channel 2",
                             );
                         });
