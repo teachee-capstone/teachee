@@ -101,7 +101,7 @@ module teachee (
     );
 
     axis_interface #(
-        .DATA_WIDTH(2 * XADC_DRP_DATA_WIDTH)
+        .DATA_WIDTH(16)
     ) hsadc_sample_channel (
         .clk(sys_clk),
         .rst(reset)
@@ -197,7 +197,7 @@ module teachee (
     );
 
     cobs_axis_adapter_wrapper #(
-        .S_DATA_WIDTH(2 * XADC_DRP_DATA_WIDTH),
+        .S_DATA_WIDTH(16),
         .M_DATA_WIDTH(8)
     ) packetizer (
         .original_data(hsadc_sample_channel.Sink),
