@@ -23,7 +23,7 @@ module hsadc_axis_wrapper_tb;
         .DATA_WIDTH(16)
     ) hsadc_stream_axis (
         .clk(stream_clk),
-        .rst(reset),
+        .rst(reset)
     );
 
     `TEST_SUITE begin
