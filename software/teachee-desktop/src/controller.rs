@@ -5,7 +5,7 @@ use std::{
 };
 
 // Number of samples in each channel's buffer
-const BUF_SIZE: usize = 65536;
+const BUF_SIZE: usize = 10000;
 const NUM_BUFS: usize = 2;
 
 #[derive(Debug)]
@@ -164,7 +164,7 @@ impl Controller {
     }
 
     fn copy_with_trigger(dst: &mut [f64], src: &[f64], num_samples: usize, trigger: f64) -> usize {
-        if trigger > 0.0 {
+        if trigger > -15.0 && trigger < 15.0 {
             let first_lower = src.iter().position(|&val| val < trigger);
             if let Some(lower_idx) = first_lower {
                 const WINDOW_SIZE: usize = 10;
