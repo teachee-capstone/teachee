@@ -101,7 +101,24 @@ fn update_trigger(
             if *format_wrong {
                 ui.style_mut().visuals.extreme_bg_color = Color32::LIGHT_RED;
             }
-            ui.add(TextEdit::singleline(textedit_text).hint_text(hint_text));
+            let re = ui.add(
+                TextEdit::singleline(textedit_text)
+                    .hint_text(hint_text)
+                    .desired_width(f32::INFINITY),
+            );
+            if re.lost_focus() && re.ctx.input().key_pressed(Key::Enter) {
+                let parsed = textedit_text.parse::<f64>();
+                match parsed {
+                    Ok(new_value) => {
+                        *trigger_val.write().unwrap() = new_value;
+                        *button_text = TriggerControl::Stop;
+                        *format_wrong = false;
+                    }
+                    Err(_) => {
+                        *format_wrong = true;
+                    }
+                }
+            }
         },
     );
     if ui
@@ -224,19 +241,6 @@ impl eframe::App for App {
                             &mut ui_controls.channel2_v_scale,
                             V_SCALE_RANGE,
                         );
-
-                        ui.add_space(GROUP_SPACING);
-                        ui.separator();
-                        ui.add_space(GROUP_SPACING);
-
-                        ui.vertical_centered_justified(|ui| {
-                            if ui
-                                .add(Button::new("Reset").min_size((0.0, BUTTON_HEIGHT).into()))
-                                .clicked()
-                            {
-                                *ui_controls = UIControls::default();
-                            }
-                        });
                     });
 
                     ui.add_space(GROUP_SPACING);
@@ -267,6 +271,25 @@ impl eframe::App for App {
                             );
                         });
                     });
+
+                    ui.add_space(GROUP_SPACING);
+
+                    ui.group(|ui| {
+                        ui.label("Reset All Configurations");
+                        ui.add_space(GROUP_SPACING);
+                        ui.separator();
+                        ui.add_space(GROUP_SPACING);
+                        ui.vertical_centered_justified(|ui| {
+                            if ui
+                                .add(Button::new("Reset").min_size((0.0, BUTTON_HEIGHT).into()))
+                                .clicked()
+                            {
+                                *ui_controls = UIControls::default();
+                                *data.voltage_trigger_threshold.write().unwrap() = f64::INFINITY;
+                                *data.current_trigger_threshold.write().unwrap() = f64::INFINITY;
+                            }
+                        });
+                    })
                 });
             });
 
