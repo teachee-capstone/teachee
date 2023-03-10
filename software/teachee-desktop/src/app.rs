@@ -225,12 +225,12 @@ impl eframe::App for App {
                             .map(|e| e.to_string());
 
                         let do_writing = move || -> Result<(), Box<dyn Error>> {
-                            writer.write_field("current1")?;
+                            writer.write_field("Channel1")?;
                             writer.write_record(v_strs)?;
                             let c_strs = channels.current1[0..num_samples]
                                 .iter()
                                 .map(|e| e.to_string());
-                            writer.write_field("voltage1")?;
+                            writer.write_field("Channel2")?;
                             writer.write_record(c_strs)?;
                             Ok(())
                         };
