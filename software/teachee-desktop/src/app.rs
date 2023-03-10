@@ -240,10 +240,7 @@ impl eframe::App for App {
                             Err(e) => {
                                 let err = format!("Error writing csv output: {e}");
                                 thread::spawn(move || {
-                                    MessageDialog::new()
-                                        .set_text(&err)
-                                        .show_alert()
-                                        .unwrap();
+                                    MessageDialog::new().set_text(&err).show_alert().unwrap();
                                 });
                                 return;
                             }
