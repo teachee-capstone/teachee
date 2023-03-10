@@ -123,6 +123,7 @@ module teachee (
         .ftdi_adbus(ftdi_data),
 
         // Programmer AXIS Interface
+        // CHANGE THIS BASED ON WHETHER YOU WANT TO USE XADC OR HSADC
         .sys_axis(hsadc_usb_axis.Sink)
     );
 
@@ -212,7 +213,7 @@ module teachee (
         xadc_usb_axis.tready = 1;
 
         // hsadc_sample_channel.tready = 1;
-        // hsadc_usb_axis.tready = 1
+        // hsadc_usb_axis.tready = 1;
 
     end
 
