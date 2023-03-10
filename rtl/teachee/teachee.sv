@@ -70,19 +70,7 @@ module teachee (
         .cmod_osc(cmod_osc)      // input cmod_osc
     );
 
-    hsadc_interface hsadc_ctrl (
-        // .channel_a_enc(hsadc_a_enc),
-        // .channel_a(hsadc_a),
-
-        // .channel_b_enc(hsadc_b_enc),
-        // .channel_b(hsadc_b),
-
-        // // mode signals
-        // .s1(spare_pin[0]),
-        // .s2(spare_pin[1]),
-        // .dfs(spare_pin[4])
-    );
-
+    hsadc_interface hsadc_ctrl ();
     assign hsadc_a_enc = hsadc_ctrl.channel_a_enc;
     assign hsadc_ctrl.channel_a = hsadc_a;
 
@@ -109,7 +97,14 @@ module teachee (
 
     axis_interface #(
         .DATA_WIDTH(8)
-    ) sys_axis (
+    ) hsadc_usb_axis (
+        .clk(sys_clk),
+        .rst(reset)
+    );
+
+    axis_interface #(
+        .DATA_WIDTH(8)
+    ) xadc_usb_axis (
         .clk(sys_clk),
         .rst(reset)
     );
@@ -128,7 +123,7 @@ module teachee (
         .ftdi_adbus(ftdi_data),
 
         // Programmer AXIS Interface
-        .sys_axis(sys_axis.Sink)
+        .sys_axis(hsadc_usb_axis.Sink)
     );
 
     xadc_drp_addr_t xadc_daddr;
@@ -152,7 +147,6 @@ module teachee (
 
         .sample_stream(xadc_sample_channel.Source)
     );
-
 
     xadc_teachee xadc_teachee_inst (
         // Clock and Reset
@@ -199,13 +193,27 @@ module teachee (
     cobs_axis_adapter_wrapper #(
         .S_DATA_WIDTH(16),
         .M_DATA_WIDTH(8)
-    ) packetizer (
+    ) hsadc_packetizer (
         .original_data(hsadc_sample_channel.Sink),
-        .encoded_data(sys_axis.Source)
+        .encoded_data(hsadc_usb_axis.Source)
+    );
+
+    cobs_axis_adapter_wrapper #(
+        .S_DATA_WIDTH(2 * XADC_DRP_DATA_WIDTH),
+        .M_DATA_WIDTH(8)
+    ) xadc_packetizer (
+        .original_data(xadc_sample_channel.Sink),
+        .encoded_data(xadc_usb_axis.Source)
     );
 
     always_comb begin
+        // Set one of these depending on which stream is being sent
         xadc_sample_channel.tready = 1;
+        xadc_usb_axis.tready = 1;
+
+        // hsadc_sample_channel.tready = 1;
+        // hsadc_usb_axis.tready = 1
+
     end
 
 endmodule

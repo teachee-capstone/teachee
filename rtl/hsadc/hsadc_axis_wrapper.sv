@@ -97,9 +97,6 @@ module hsadc_axis_wrapper (
                 end
             end
         endcase
-        // DATA COLLECTION FSM HERE
-        // GOAL: get data from both chanA and chanB. Store in a single 16 bit FIFO
-        // Also Remember to scale sample clk to an effective 1MHz sample rate
     end
 
     // Set default values for the unused AXIS signals
