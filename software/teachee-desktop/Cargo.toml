@@ -17,6 +17,7 @@ version = "0.32.1"
 
 [features]
 default = []
+window_trigger = []
 static = ["libftd2xx/static"]
 
 [workspace]

@@ -165,40 +165,80 @@ impl Controller {
 
     fn copy_with_trigger(dst: &mut [f64], src: &[f64], num_samples: usize, trigger: f64) -> usize {
         if trigger > -15.0 && trigger < 15.0 {
-            let first_lower = src.iter().position(|&val| val < trigger);
-            if let Some(lower_idx) = first_lower {
-                const WINDOW_SIZE: usize = 10;
-                let mut sum: f64 = src[lower_idx..(lower_idx + WINDOW_SIZE)].iter().sum();
+            let first_sample: usize;
+            #[cfg(feature = "window_trigger")]
+            {
+                first_sample = Self::window_trigger(&src[..num_samples], trigger);
+            }
+            #[cfg(not(feature = "window_trigger"))]
+            {
+                first_sample = Self::hysteresis_trigger(&src[..num_samples], trigger);
+            }
 
-                // Iterate over all windows of size WINDOW_SIZE + 1. The first WINDOW_SIZE samples
-                // are used to calculate the average value of previous samples, which is then
-                // compared to the last sample. This is done to find a rising trigger
-                // while attempting to filter out noise.
-                let first_higher = src[lower_idx..]
-                    .windows(WINDOW_SIZE + 1)
-                    .position(|window| {
-                        let val = *window.last().unwrap();
-                        val >= trigger && sum / (WINDOW_SIZE as f64) < val || {
-                            // Update sliding window.
-                            sum += val;
-                            sum -= *window.first().unwrap();
-                            false
-                        }
-                    });
-                if let Some(higher_idx) = first_higher {
-                    // higher_idx is relative to lower_idx. Also add WINDOW_SIZE to get the
-                    // last element in the window.
-                    let first_sample = lower_idx + higher_idx + WINDOW_SIZE;
-                    dst[..(num_samples - first_sample)]
-                        .copy_from_slice(&src[first_sample..num_samples]);
+            dst[..(num_samples - first_sample)].copy_from_slice(&src[first_sample..num_samples]);
 
-                    return num_samples - first_sample;
-                }
+            return num_samples - first_sample;
+        }
+
+        // If no trigger, just copy the available samples without triggering.
+        dst[..num_samples].copy_from_slice(&src[..num_samples]);
+        num_samples
+    }
+
+    #[cfg(feature = "window_trigger")]
+    fn window_trigger(src: &[f64], trigger: f64) -> usize {
+        let first_lower = src.iter().position(|&val| val < trigger);
+        if let Some(lower_idx) = first_lower {
+            const WINDOW_SIZE: usize = 10;
+            let mut sum: f64 = src[lower_idx..(lower_idx + WINDOW_SIZE)].iter().sum();
+
+            // Iterate over all windows of size WINDOW_SIZE + 1. The first WINDOW_SIZE samples
+            // are used to calculate the average value of previous samples, which is then
+            // compared to the last sample. This is done to find a rising trigger
+            // while attempting to filter out noise.
+            let first_higher = src[lower_idx..]
+                .windows(WINDOW_SIZE + 1)
+                .position(|window| {
+                    let val = *window.last().unwrap();
+                    val >= trigger && sum / (WINDOW_SIZE as f64) < val || {
+                        // Update sliding window.
+                        sum += val;
+                        sum -= *window.first().unwrap();
+                        false
+                    }
+                });
+            if let Some(higher_idx) = first_higher {
+                // higher_idx is relative to lower_idx. Also add WINDOW_SIZE to get the
+                // last element in the window.
+                return lower_idx + higher_idx + WINDOW_SIZE;
             }
         }
 
-        // If no trigger or trigger search failed, just copy the available samples without triggering.
-        dst[..num_samples].copy_from_slice(&src[..num_samples]);
-        num_samples
+        // If trigger failed, copy without trigger
+        0
+    }
+
+    #[cfg(not(feature = "window_trigger"))]
+    fn hysteresis_trigger(src: &[f64], trigger: f64) -> usize {
+        // Hysteresis width as fraction of peak to peak
+        const HYSTERESIS_WIDTH: f64 = 0.25;
+        let mut max_val = f64::MIN;
+        let mut min_val = f64::MAX;
+        for &val in src.iter() {
+            max_val = f64::max(max_val, val);
+            min_val = f64::min(min_val, val);
+        }
+        let hysteresis = (max_val - min_val) * HYSTERESIS_WIDTH;
+
+        // Trigger when signal first falls below trigger - hysteresis and then rises above trigger
+        let first_lower = src.iter().position(|&val| val < trigger - hysteresis);
+        if let Some(lower_idx) = first_lower {
+            let first_higher = src[lower_idx..].iter().position(|&val| val >= trigger);
+            if let Some(higher_idx) = first_higher {
+                return lower_idx + higher_idx;
+            }
+        }
+
+        0
     }
 }
