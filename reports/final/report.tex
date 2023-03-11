@@ -187,14 +187,34 @@ guide for the PCB design implementation.
 \end{figure}
 
 \subsection{FPGA} % Ethan
-The FPGA RTL is primarily driven by the need to send multiple streams of data
-with low latency. The sample rate and bandwidth requirements are not as
-concerning in the design of the FPGA subsystem. This is because sample rates can
-be easily tuned in the FPGA with clock generation PLLs and bandwidth depends on
-the analog bandwidth of the input circuitry on the PCB.
+The FPGA RTL is primarily driven by the implicit requirement to send multiple
+streams of data with low latency. The sample rate and bandwidth requirements are
+not as concerning in the design of the FPGA subsystem. This is because sample
+rates can be easily tuned in the FPGA with clock generation PLLs and bandwidth
+depends on the analog bandwidth of the input circuitry on the PCB.
+
+In order to transmit multiple streams, the FPGA needs to frame multi-channel
+data in a standard packet format. A multiplexer is also used for a case where
+sending all data at once is too much throughput for USB 2.0. With these issues
+in mind, the diagram given in Figure \ref{fig:fpga-block-diagram} provides a
+system-level block diagram for the FPGA design.
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=\textwidth]{../../misc/TeachEE-System-Diagram-FPGA.png}
+  \caption{FPGA System Block Diagram}
+  \label{fig:fpga-block-diagram}
+\end{figure}
+
+A full breakdown of Figure \ref{fig:fpga-block-diagram} is given in the Section
+\ref{sec:impl} focusing on implementation. Overall, the initial design is nearly
+identical to the final implementation. The team made use of COBs packet encoding
+as promised in the blueprint and added a standard AXI Streaming protocol for the
+internal FPGA datapath.
+
 \subsection{Software} % Eric
 
-\section{Implementation}
+\section{Implementation} \label{sec:impl}
 %% Describe how the solution was implemented – this may involve a description of
 %% major code blocks, schematics, photographs, CAD drawings, etc. The reader
 %% should understand the materials and operation of your implemented project,
