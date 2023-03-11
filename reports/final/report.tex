@@ -1,4 +1,4 @@
-\documentclass[letterpaper,12pt]{article}
+\documentclass[letterpaper,11pt]{article}
 \usepackage[parfill]{parskip} % Remove paragraph indentation
 \usepackage{amsmath}
 \usepackage{float}
@@ -76,7 +76,7 @@ EXEC SUMMARY HERE
 % papers, patents, books, corporate technical and annual reports, application
 % notes. Use the standard IEEE citation format. Website URLs are not archival
 
-\subsection{Design}
+\section{Design}
 %% Design – describe your functional requirements and constraints; provide
 %% technical details about your design process for meeting the project goals;
 %% this might include identifying subsystems, analysis, modeling, and key
@@ -143,7 +143,7 @@ to each subsystem. Each section describes the subsystem's top level design, and
 key design decisions made to comply with system requirements.
 
 % INCLUDE THE BLOCK DIAGRAMS FOR EACH OF THESE
-% NEED TO ALSO FIT spec tables from the blueprint that we can refer to later on
+% Talk about old design (from blueprint)
 \subsection{Hardware} % Ethan
 The primary design driving requirements for the Printed Circuit Board (PCB) are
 the bandwidth and sample rate of the data acquisition channels. Bandwidth and
@@ -213,7 +213,7 @@ as promised in the blueprint and added a standard AXI Streaming protocol for the
 internal FPGA datapath.
 
 \subsection{Software} % Eric
-
+% Tauri, two threaded one buffer guarded with mutex
 \section{Implementation} \label{sec:impl}
 %% Describe how the solution was implemented – this may involve a description of
 %% major code blocks, schematics, photographs, CAD drawings, etc. The reader
@@ -229,6 +229,7 @@ internal FPGA datapath.
 \subsection{Hardware} % ETHAN
 \subsection{FPGA} % ETHAN
 \subsection{Software} % ERIC
+% Basically everything from poster with more detail
 
 \section{Testing, Evaluation \& Verification} \label{sec:testing}
 The following tables outline the target hardware and software specifications of
@@ -243,6 +244,8 @@ this project.
 % This subsection should include some notes on time spent in the lab running all
 % three HW, FPGA and SW components integrated together. Also comparing our
 % output against that of a real scope connected to the same signal
+
+\section{Project Planning and Budgeting} % ERIC
 
 \section{Stakeholder Needs} % John / Tim
 %% Describe how you considered stakeholder needs in your design, and how factors
