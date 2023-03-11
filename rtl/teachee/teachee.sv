@@ -124,7 +124,7 @@ module teachee (
 
         // Programmer AXIS Interface
         // CHANGE THIS BASED ON WHETHER YOU WANT TO USE XADC OR HSADC
-        .sys_axis(hsadc_usb_axis.Sink)
+        .sys_axis(xadc_usb_axis.Sink)
     );
 
     xadc_drp_addr_t xadc_daddr;
@@ -209,11 +209,11 @@ module teachee (
 
     always_comb begin
         // Set one of these depending on which stream is being sent
-        xadc_sample_channel.tready = 1;
-        xadc_usb_axis.tready = 1;
+        // xadc_sample_channel.tready = 1;
+        // xadc_usb_axis.tready = 1;
 
-        // hsadc_sample_channel.tready = 1;
-        // hsadc_usb_axis.tready = 1;
+        hsadc_sample_channel.tready = 1;
+        hsadc_usb_axis.tready = 1;
 
     end
 
