@@ -226,7 +226,37 @@ internal FPGA datapath.
 % Ethan will also include snippet of the top level SystemVerilog Module.
 % I will pull in full schematics, layout and code into the appendices
 
+The implementation is broken up into three subsections corresponding to each
+subsystem.
+
 \subsection{Hardware} % ETHAN
+The hardware solution for the TeachEE is implemented in the form of a four-layer
+PCB. The PCB is designed using the EDA CAD software Altium Designer. Altium is
+the industry standard tool for PCB design. Our design takes advantage of
+Altium's hierarchical schematics. This allows the schematic to be broken up into
+multiple pages with interconnects between the different sub-circuits. The
+TeachEE's top level schematic is an interconnect between all the sub-circuits of
+the PCB. The top level schematic is shown in Figure
+\ref{fig:hw-top-level-sheet}. It should be noted that all 8 pages of the
+schematic are provided in Appendix \ref{appendix:schematic}.
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=\textwidth]{figures/altium-top-level.png}
+  \caption{TeachEE PCB Top Level Schematic}
+  \label{fig:hw-top-level-sheet}
+\end{figure}
+
+The following subsections break down each sub-circuit sheet entry in Figure
+\ref{fig:hw-top-level-sheet}.
+
+\subsubsection{Power}
+\subsubsection{USB FIFO}
+\subsubsection{Current Monitor}
+\subsubsection{ADC}
+\subsubsection{Analog Front End (AFE)}
+\subsubsection{FPGA Module}
+
 \subsection{FPGA} % ETHAN
 \subsection{Software} % ERIC
 % Basically everything from poster with more detail
