@@ -4,12 +4,12 @@
 import xadc_drp_package::*;
 
 module teachee (
-    input var logic cmod_osc, // 12 MHz provided on the CMOD
-    input var logic ftdi_clk, // 60 MHz provided by the FTDI
+    input  var logic cmod_osc, // 12 MHz provided on the CMOD
+    input  var logic ftdi_clk, // 60 MHz provided by the FTDI
 
     // FTDI Control Interface
-    input var logic ftdi_rxf_n,
-    input var logic ftdi_txe_n,
+    input  var logic ftdi_rxf_n,
+    input  var logic ftdi_txe_n,
 
     output var logic ftdi_rd_n,
     output var logic ftdi_wr_n,
@@ -17,6 +17,13 @@ module teachee (
     output var logic ftdi_oe_n,
 
     output var logic[7:0] ftdi_data,
+
+    // High Speed ADC IO Interface
+    output var logic hsadc_a_enc,
+    input var logic[7:0] hsadc_a,
+
+    output var logic hsadc_b_enc,
+    input var logic[7:0] hsadc_b,
 
     // CMOD IO Declarations
     input var logic[1:0] btn,
@@ -26,8 +33,12 @@ module teachee (
     input var logic[1:0] xa_p,
 
     // TeachEE IO Declarations
-    output var logic[1:0] teachee_led
+    output var logic[1:0] teachee_led,
+    inout wire[5:0] spare_pin
 );
+    // Spare pin 0 = s1
+    // spare pin 1 = s2
+    // spare pin 4 = dfs
 
     var logic locked;
     var logic sys_clk;
@@ -59,6 +70,17 @@ module teachee (
         .cmod_osc(cmod_osc)      // input cmod_osc
     );
 
+    hsadc_interface hsadc_ctrl ();
+    assign hsadc_a_enc = hsadc_ctrl.channel_a_enc;
+    assign hsadc_ctrl.channel_a = hsadc_a;
+
+    assign hsadc_b_enc = hsadc_ctrl.channel_b_enc;
+    assign hsadc_ctrl.channel_b = hsadc_b;
+
+    assign hsadc_ctrl.s1 = spare_pin[0];
+    assign hsadc_ctrl.s2 = spare_pin[1];
+    assign hsadc_ctrl.dfs = spare_pin[4];
+
     axis_interface #(
         .DATA_WIDTH(2 * XADC_DRP_DATA_WIDTH)
     ) xadc_sample_channel (
@@ -67,8 +89,22 @@ module teachee (
     );
 
     axis_interface #(
+        .DATA_WIDTH(16)
+    ) hsadc_sample_channel (
+        .clk(sys_clk),
+        .rst(reset)
+    );
+
+    axis_interface #(
         .DATA_WIDTH(8)
-    ) sys_axis (
+    ) hsadc_usb_axis (
+        .clk(sys_clk),
+        .rst(reset)
+    );
+
+    axis_interface #(
+        .DATA_WIDTH(8)
+    ) xadc_usb_axis (
         .clk(sys_clk),
         .rst(reset)
     );
@@ -87,7 +123,8 @@ module teachee (
         .ftdi_adbus(ftdi_data),
 
         // Programmer AXIS Interface
-        .sys_axis(sys_axis.Sink)
+        // CHANGE THIS BASED ON WHETHER YOU WANT TO USE XADC OR HSADC
+        .sys_axis(xadc_usb_axis.Sink)
     );
 
     xadc_drp_addr_t xadc_daddr;
@@ -111,7 +148,6 @@ module teachee (
 
         .sample_stream(xadc_sample_channel.Source)
     );
-
 
     xadc_teachee xadc_teachee_inst (
         // Clock and Reset
@@ -145,13 +181,41 @@ module teachee (
         .busy_out()        // output wire busy_out
     );
 
+    // Configure HSADC AXI Streamer
+    hsadc_axis_wrapper hsadc (
+        .sample_clk(clk_10),
+        .stream_clk(sys_clk),
+        .reset(reset),
+
+        .hsadc_ctrl_signals(hsadc_ctrl.Sink),
+        .sample_stream(hsadc_sample_channel.Source)
+    );
+
+    cobs_axis_adapter_wrapper #(
+        .S_DATA_WIDTH(16),
+        .M_DATA_WIDTH(8)
+    ) hsadc_packetizer (
+        .original_data(hsadc_sample_channel.Sink),
+        .encoded_data(hsadc_usb_axis.Source)
+    );
+
     cobs_axis_adapter_wrapper #(
         .S_DATA_WIDTH(2 * XADC_DRP_DATA_WIDTH),
         .M_DATA_WIDTH(8)
-    ) packetizer (
+    ) xadc_packetizer (
         .original_data(xadc_sample_channel.Sink),
-        .encoded_data(sys_axis.Source)
+        .encoded_data(xadc_usb_axis.Source)
     );
+
+    always_comb begin
+        // Set one of these depending on which stream is being sent
+        // xadc_sample_channel.tready = 1;
+        // xadc_usb_axis.tready = 1;
+
+        hsadc_sample_channel.tready = 1;
+        hsadc_usb_axis.tready = 1;
+
+    end
 
 endmodule
 

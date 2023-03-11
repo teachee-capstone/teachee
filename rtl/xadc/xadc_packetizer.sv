@@ -9,9 +9,6 @@ import xadc_drp_package::*;
 // This stream will then be fed into a COBS encoder module which will feed the
 // 8-bit USB fifo.
 
-// packets will be 16 bits
-// upper 4 bits are a header
-
 module xadc_packetizer (
     // NOTE: this module expects that both input streams share a clock since
     // they come from the same XADC
