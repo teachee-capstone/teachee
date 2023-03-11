@@ -1,10 +1,17 @@
 use std::{
+    error::Error,
     fmt,
+    fs::File,
     ops::RangeInclusive,
     sync::{Arc, RwLock},
+    thread,
 };
 
+use csv::Writer;
+
 use eframe::egui::*;
+use native_dialog::MessageDialog;
+use std::time::{SystemTime, UNIX_EPOCH};
 
 use crate::controller::{AppData, BufferState};
 
@@ -187,8 +194,59 @@ impl eframe::App for App {
                 ui.separator();
                 ui.menu_button("File", |ui| {
                     if ui.button("Export to CSV").clicked() {
-                        todo!("Exporting to CSV");
+                        let epoch_time = SystemTime::now()
+                            .duration_since(UNIX_EPOCH)
+                            .unwrap()
+                            .as_secs();
+                        let pid = std::process::id();
+                        let file_name = format!("{}-{}-{}", epoch_time, pid, "teachee.csv");
+                        let file = match File::create(file_name.clone()) {
+                            Ok(a) => a,
+                            Err(_) => {
+                                let err_msg = format!("Unable to open file: {}", file_name);
+                                thread::spawn(move || {
+                                    MessageDialog::new()
+                                        .set_text(&err_msg)
+                                        .show_alert()
+                                        .unwrap();
+                                });
+                                return;
+                            }
+                        };
+                        let mut writer = Writer::from_writer(file);
+                        let (condvar, mutex) = &*data.bufs[*buf_idx];
+                        let mut buf_state = condvar
+                            .wait_while(mutex.lock().unwrap(), |buf_state| buf_state.is_empty())
+                            .unwrap();
+                        let (channels, num_samples) = buf_state.unwrap();
+
+                        let v_strs = channels.voltage1[0..num_samples]
+                            .iter()
+                            .map(|e| e.to_string());
+
+                        let c_strs = channels.current1[0..num_samples]
+                            .iter()
+                            .map(|e| e.to_string());
+                        let do_writing = move || -> Result<(), Box<dyn Error>> {
+                            writer.write_field("Channel1")?;
+                            writer.write_record(v_strs)?;
+                            writer.write_field("Channel2")?;
+                            writer.write_record(c_strs)?;
+                            Ok(())
+                        };
+
+                        match do_writing() {
+                            Ok(_) => {}
+                            Err(e) => {
+                                let err = format!("Error writing csv output: {e}");
+                                thread::spawn(move || {
+                                    MessageDialog::new().set_text(&err).show_alert().unwrap();
+                                });
+                                return;
+                            }
+                        };
                     }
+
                     if ui.button("Exit").clicked() {
                         frame.close();
                     }
