@@ -52,7 +52,6 @@
 %% - Talking about how you would do it differently, each person should talk about something
 %% - John talks about Market size commercialization etc. (can try copying from blueprint)
 
-
 \begin{document}
 
 \begin{titlepage}
@@ -121,9 +120,65 @@ EXEC SUMMARY HERE
 % we parallelized much of the work by modelling the data as a byte stream.
 % allowing for significant dev work without physical HW in house.
 
+The TeachEE design is derived from the system requirements set in the blueprint
+report. Given in Table \ref{tab:hw-reqs} and \ref{tab:sw-reqs} are the hardware
+and software requirements respectively. It should also be noted that the FPGA
+shares responsibility with the desktop application for fulfilling software
+requirements.
+
+\begin{table}[H]
+    \caption{Hardware Requirements}
+    \begin{tabularx}{\textwidth}{l|l|l|l}
+          & Specification & Target Value & Tolerance \\
+        \hline
+        1 &Voltage Input Bandwidth&\SI{100}{\kilo\hertz}& $\pm \SI{1}{\kilo\hertz}$ \\
+        2 &Current Input Bandwidth&\SI{100}{\kilo\hertz}& $\pm \SI{1}{\kilo\hertz}$ \\
+        3 &Measureable Current Range&\SI{-15}{\ampere} to \SI{+15}{\ampere}& $\pm \SI{5}{\ampere}$ \\
+        4 &Measureable Voltage Range&\SI{0}{\volt} to \SI{3.3}{\volt}& $\pm \SI{200}{\milli\volt}$ \\
+        5 &Number of Current Input Channels& $1$ & $0$ \\ 
+        6 &Number of Voltage Input Channels& $1$ & $+2$ \\
+        7 &Power Input Voltage Rating& \SI{5}{\volt} & $\pm \SI{500}{\milli\volt}$ \\
+        8 &Power Current Consumption Rating& \SI{500}{\milli\ampere} & $\pm \SI{250}{\milli\ampere}$ \\
+        9 &Voltage Sample Rate& \SI{1}{\mega\samplepersec} & \SI{0}{\mega\samplepersec}\\
+        10 &Current Sample Rate& \SI{1}{\mega\samplepersec} & \SI{0}{\mega\samplepersec} \\
+        11 &PCB Thickness& \SI{1.6}{\milli\metre} & $\pm \SI{0.1}{\milli\metre}$ \\
+        12 &PCB Dimensions& \SI{0.04}{\meter\squared} & $\pm \SI{400}{\milli\metre\squared}$ \\
+        13 &Voltage Sample Error against commercial scope & N/A & $\pm \SI{20}{\percent}$ \\
+        14 &Current Sample Error against commercial meter& N/A & $\pm \SI{20}{\percent}$
+    \end{tabularx} 
+\label{tab:hw-reqs}
+\end{table}
+
+\begin{table}[H]
+  \caption{Software Requirements}
+  \begin{tabularx}{\textwidth}{l|l}
+    \textbf{1} & \textbf{Functional Requirements}\\
+    \hline
+    1.1 & The software shall be able to modify the horizontal and vertical scales of the plot. \\
+    1.2 & The software shall be able to modify the trigger voltage. \\
+    1.3 & The application shall be deployable to Windows, macOS, and Linux. \\
+    \hline
+    \textbf{2} & \textbf{Interface Requirements} \\
+    \hline
+    2.1 & The software shall be able to capture voltage samples and export them to a CSV file. \\
+    2.2 & The software shall receive samples via the FTDI 232 in synchronous mode. \\
+    \hline
+    \textbf{3} & \textbf{Performance Requirements} \\
+    \hline
+    3.1 & The software shall be able to render waveforms at a rate of \SI{30}{\hertz} on screen.
+  \end{tabularx} 
+  \label{tab:sw-reqs}
+\end{table}
+
+Based on the system requirements, the project is broken up into three
+subsystems; hardware, FPGA, and software. The following subsections correspond
+to each subsystem. Each section describes the subsystem's top level design, and
+key design decisions made to comply with system requirements.
+
 % INCLUDE THE BLOCK DIAGRAMS FOR EACH OF THESE
 % NEED TO ALSO FIT spec tables from the blueprint that we can refer to later on
 \subsection{Hardware} % Ethan
+
 \subsection{FPGA} % Ethan
 \subsection{Software} % Eric
 
