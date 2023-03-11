@@ -227,6 +227,9 @@ impl eframe::App for App {
                         let c_strs = channels.current1[0..num_samples]
                             .iter()
                             .map(|e| e.to_string());
+
+                        drop(buf_state);
+
                         let do_writing = move || -> Result<(), Box<dyn Error>> {
                             writer.write_field("Channel1")?;
                             writer.write_record(v_strs)?;
@@ -393,6 +396,7 @@ impl eframe::App for App {
             *buf_idx ^= 0x1;
             *buf_state = BufferState::Empty(channels);
             condvar.notify_one();
+            drop(buf_state);
 
             plot::Plot::new("plot")
                 .legend(plot::Legend::default())
