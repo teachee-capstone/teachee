@@ -449,17 +449,11 @@ on all aspects of the project.
 \bibliography{report}
 
 \newpage
+\setstretch{1}
+
 \pagestyle{empty}
 
     \begin{appendices}
-        \section{PCB System Block Diagram}
-        \label{appendix:block-diagram}
-        \begin{figure}[H]
-            \centering
-            % \includegraphics[width=16cm]{../../misc/TeachEE-System-Diagram.drawio.png}
-            \caption{TeachEE PCB System Block Diagram}
-            \label{fig:pcb-block-diagram}
-        \end{figure}
         \begin{landscape}
         \section{Schematics}
         \label{appendix:schematic}
@@ -553,11 +547,18 @@ on all aspects of the project.
         \end{tabular}
     \end{table}
 
-        \section{TeachEE Desktop App Screenshots}
-    \begin{figure}[H]
-        \centering
-        % \includegraphics[width=\textwidth]{./schematics/sw-screenshot.png}
-        \caption{TeachEE Desktop App Displaying a Triangle Wave}
-    \end{figure}
+    \section{TeachEE SystemVerilog RTL Code} \label{appendix:rtl-code}
+    This appendix contains all the SystemVerilog RTL files in the TeachEE
+    project. Each subsection corresponds to the files in a particular folder of
+    the GitHub repository.
+
+    \subsection{AXIS} \label{appendix:axis}
+    \subsubsection{axis\_adapter\_wrapper.sv}
+    \inputminted{systemverilog}{../../rtl/axis/axis_adapter_wrapper.sv}
+    \subsubsection{axis\_async\_fifo\_wrapper.sv}
+    \inputminted{systemverilog}{../../rtl/axis/axis_async_fifo_wrapper.sv}
+    \subsubsection{axis\_interface.sv}
+    \inputminted{systemverilog}{../../rtl/axis/axis_interface.sv}
+    
     \end{appendices}
 \end{document}
