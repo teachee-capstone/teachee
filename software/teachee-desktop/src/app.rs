@@ -1,16 +1,14 @@
 use std::{
     error::Error,
     fmt,
-    fs::File,
+    fs::{remove_file, File},
     ops::RangeInclusive,
     sync::{Arc, RwLock},
-    thread,
 };
 
 use csv::Writer;
 
 use eframe::egui::*;
-use native_dialog::MessageDialog;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use crate::controller::{AppData, BufferState};
@@ -31,6 +29,7 @@ impl fmt::Display for TriggerControl {
 
 const GROUP_SPACING: f32 = 3.0;
 const BUTTON_HEIGHT: f32 = 25.0;
+const ERROR_COLOUR: Color32 = Color32::LIGHT_RED;
 
 // 1 MSPS
 const SAMPLE_PERIOD: f64 = 1e-6;
@@ -55,6 +54,7 @@ struct UIControls {
     c_trigger_button_text: TriggerControl,
     c_trigger_threshold_text: String,
     c_trigger_format_wrong: bool,
+    export_error_string: String,
 }
 
 impl Default for UIControls {
@@ -67,11 +67,12 @@ impl Default for UIControls {
             channel2_v_offset: 0.0,
             channel2_v_scale: 1.0,
             v_trigger_button_text: TriggerControl::default(),
-            v_trigger_threshold_text: "".to_string(),
+            v_trigger_threshold_text: String::new(),
             v_trigger_format_wrong: false,
             c_trigger_button_text: TriggerControl::default(),
-            c_trigger_threshold_text: "".to_string(),
+            c_trigger_threshold_text: String::new(),
             c_trigger_format_wrong: false,
+            export_error_string: String::new(),
         }
     }
 }
@@ -106,7 +107,7 @@ fn update_trigger(
         Layout::top_down(Align::Center).with_cross_align(Align::Min),
         |ui| {
             if *format_wrong {
-                ui.style_mut().visuals.extreme_bg_color = Color32::LIGHT_RED;
+                ui.style_mut().visuals.extreme_bg_color = ERROR_COLOUR;
             }
             let re = ui.add(
                 TextEdit::singleline(textedit_text)
@@ -193,7 +194,16 @@ impl eframe::App for App {
                 widgets::global_dark_light_mode_switch(ui);
                 ui.separator();
                 ui.menu_button("File", |ui| {
-                    if ui.button("Export to CSV").clicked() {
+                    let mut export_button = Button::new("Export to CSV");
+                    if !ui_controls.export_error_string.is_empty() {
+                        export_button = export_button.fill(ERROR_COLOUR);
+                    }
+                    let mut re = ui.add(export_button);
+                    if !ui_controls.export_error_string.is_empty() {
+                        re = re.on_hover_text(&ui_controls.export_error_string);
+                    }
+
+                    if re.clicked() {
                         let epoch_time = SystemTime::now()
                             .duration_since(UNIX_EPOCH)
                             .unwrap()
@@ -203,13 +213,8 @@ impl eframe::App for App {
                         let file = match File::create(file_name.clone()) {
                             Ok(a) => a,
                             Err(_) => {
-                                let err_msg = format!("Unable to open file: {}", file_name);
-                                thread::spawn(move || {
-                                    MessageDialog::new()
-                                        .set_text(&err_msg)
-                                        .show_alert()
-                                        .unwrap();
-                                });
+                                ui_controls.export_error_string =
+                                    format!("Unable to open file: {}", file_name);
                                 return;
                             }
                         };
@@ -235,16 +240,14 @@ impl eframe::App for App {
                             Ok(())
                         };
 
-                        match do_writing() {
-                            Ok(_) => {}
-                            Err(e) => {
-                                let err = format!("Error writing csv output: {e}");
-                                thread::spawn(move || {
-                                    MessageDialog::new().set_text(&err).show_alert().unwrap();
-                                });
-                                return;
-                            }
-                        };
+                        if let Err(e) = do_writing() {
+                            ui_controls.export_error_string =
+                                format!("Error writing csv output: {e}");
+                            _ = remove_file(file_name);
+                            return;
+                        }
+
+                        ui_controls.export_error_string.clear();
                     }
 
                     if ui.button("Exit").clicked() {
