@@ -336,8 +336,25 @@ sub-circuit contains 0-ohm bypass resistors that can be optionally soldered to
 send the unclamped signal directly to the ADC.
 
 \subsubsection{FPGA Module}
-% all control signals terminate here.
-% FPGA collects and packetizes all the data
+The FPGA module is implemented using a CMOD A7-35T Xilinx Spartan 7 Breakout
+Board. the module is connected to the PCB via two 28-pin headers. Two pins are
+used for power and ground while the rest are used for FPGA IO pins. The USB FIFO
+and ADC control pins are connected to the FPGA IO. There also two special IO,
+which can be used as ADCs. These two pins are used to implement the current and
+voltage channels at 1MSPS. The current sensor output is wired to one of the
+channels and a BNC connector is connected to the other through a low pass filter
+for voltage sampling.
+
+The FPGA module schematic had one mistake that was not discovered until the
+physical PCBs had already been manufactured and delivered. In order to use the
+parallel-bus interface of the FT232HQ to send data, the FPGA must lock to a 60
+MHz output clock from the FT232HQ. During the layout, the FPGA pin wired to this
+clock was swapped to a normal GPIO pin rather than an MRCC dedicated clock pin.
+As a result, the FPGA place and route was failing during compilation as the FPGA
+could not route this clock from a standard GPIO pin. This issue was resolved by
+waiving the warnings and optimizing the SystemVerilog code to still pass timing
+without a proper clock route for the 60 MHz signal. Further information on this
+process is given in Section \ref{sec:fpga-impl} on the FPGA implementation.
 
 \subsubsection{Connectors}
 % Talk about LPFs and BNC connectors 
@@ -348,7 +365,7 @@ connectors are connected to the appropriate ADC input or AFE. Also, each
 connectors has the appropriate low pass filters to satisfy nyquist theorem. Each
 connector also includes all the standard capacitors and resistors needed to
 connect an oscilloscope probe from the lab kit sold at the Queen's bookstore.
-\subsection{FPGA} % ETHAN
+\subsection{FPGA} \label{sec:fpga-impl} % ETHAN
 % Refer to system block diagram and go module by module.
 % put in the top level module code and some critical state machines
 % Talk about AXIS as a standard protocol. Also the extensible to ARM SOCs it
