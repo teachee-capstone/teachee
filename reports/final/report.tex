@@ -77,6 +77,24 @@ EXEC SUMMARY HERE
 % references. Examples of archival references include: journal papers, conference
 % papers, patents, books, corporate technical and annual reports, application
 % notes. Use the standard IEEE citation format. Website URLs are not archival
+During the Covid-19 pandemic, many universities abruptly switched to remote
+learning as campuses were shut down. This sudden change exposed the lack of
+support for more digital learning models \cite{online_learning}. Although the
+pandemic has since passed, forward-thinking institutions are starting to invest
+in online programs, for example, by leveraging AI chatbots and teaching assistants.
+Additionally, online course providers such as Udemy have recently risen in popularity
+as a cheap alternative to traditional postsecondary education. With this trend of
+remote higher education, engineering students will need their own lab equipment to
+complete their learning requirements.
+
+TeachEE is a user friendly general purpose electronics measurement instrument
+designed for remotely delivered engineering labs. It acts as both a
+USB oscilloscope and current monitor. Currently, there are few instrumentation
+options for students completing their labs remotely. The oscilloscopes used for
+onsite learning are bulky and difficult to use. TeachEE bundles
+together the functionality most commonly required for electrical engineering
+labs and packages it with portable software that can run on lower end computers
+with any operating system.
 
 \section{Design}
 %% Design – describe your functional requirements and constraints; provide
@@ -214,8 +232,9 @@ identical to the final implementation. The team made use of COBs packet encoding
 as promised in the blueprint and added a standard AXI Streaming protocol for the
 internal FPGA datapath.
 
-\subsection{Software} % Eric
+\subsection{Software} % Tim
 % Tauri, two threaded one buffer guarded with mutex
+
 \section{Implementation} \label{sec:impl}
 %% Describe how the solution was implemented – this may involve a description of
 %% major code blocks, schematics, photographs, CAD drawings, etc. The reader
