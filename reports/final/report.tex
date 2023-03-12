@@ -16,6 +16,7 @@
 \usepackage{pdfpages}
 \usepackage{longtable}
 \usepackage{tikz}
+\usepackage{hyperref}
 
 \DeclareSIUnit{\samplepersec}{SPS}
 
@@ -226,8 +227,156 @@ internal FPGA datapath.
 % Ethan will also include snippet of the top level SystemVerilog Module.
 % I will pull in full schematics, layout and code into the appendices
 
+The implementation is broken up into three subsections corresponding to each
+subsystem.
+
 \subsection{Hardware} % ETHAN
-\subsection{FPGA} % ETHAN
+The hardware solution for the TeachEE is implemented in the form of a four-layer
+PCB. The PCB is designed using the EDA CAD software Altium Designer. Altium is
+the industry standard tool for PCB design. Our design takes advantage of
+Altium's hierarchical schematics. This allows the schematic to be broken up into
+multiple pages with interconnects between the different sub-circuits. The
+TeachEE's top level schematic is an interconnect between all the sub-circuits of
+the PCB. The top level schematic is shown in Figure
+\ref{fig:hw-top-level-sheet}. It should be noted that all 8 pages of the
+schematic are provided in Appendix \ref{appendix:schematic}.
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=\textwidth]{figures/altium-top-level.png}
+  \caption{TeachEE PCB Top Level Schematic}
+  \label{fig:hw-top-level-sheet}
+\end{figure}
+
+The following subsections break down each sub-circuit sheet entry in Figure
+\ref{fig:hw-top-level-sheet}.
+
+\subsubsection{Power}
+The power schematic sheet contains a single LD1117V33C linear voltage regulator.
+The regulator takes the 5V VBUS supply from the USB connection and provides a
+3.3V power output. A linear voltage regulator is employed over a switching buck
+converter for the following reasons.
+  \begin{enumerate}
+    \item The analog to digital converters require clean voltage references to
+      produce accurate readings and function correctly. Buck converters are
+      typically have more noisy outputs that could harm performance.
+    \item The linear voltage regulator requires less components to implement
+      easing chip shortage concerns.
+    \item The significantly lower efficiency of a linear regulator is not an
+      issue as this regulator has a capacity of 1A which is more than enough to
+      run the devices on-board.
+  \end{enumerate}
+\subsubsection{USB FIFO}
+The USB FIFO is a queue that sends data out to the laptop over USB 2.0 Full
+Speed (FS). USB 2.0 FS is capable of up to 480 Mpbs. This circuit takes a
+parallel byte stream from the FPGA and converts it to a USB 2.0 data stream. The
+FT232HQ USB FIFO made by FTDI is used to implement this functionality. This chip
+was selected over other USB Interface ICs for the following reasons.
+  \begin{enumerate}
+    \item Availability. USB Interfaces are one of many ICs in short supply
+      in the ongoing chip shortage. In fact, this IC was ordered for the
+      project after ELEC390 in July 2021 and only received in August 2022.
+    \item Extensive pre-existing software tooling. FTDI provides a driver and
+      configuration utility for extracting data from their USB interfaces. This
+      significantly reduces the software development work required to build a
+      sample streaming interface. This ease of use is critical in a project with
+      such a short timeline.
+  \end{enumerate}
+
+For debugging and circuit visibility, all digital control signals on the
+FT232HQ are connected to testpoints. The schematic sheet also contains some
+surrounding circuitry in the form of power filtering, a clock oscillator, and
+configuration EEPROM.
+
+\subsubsection{Current Monitor}
+The current monitor page contains a hall effect current sensor circuit. The
+circuit makes use of the ACS720KLATR current sensor. This sensor was chosen due
+to its supply chain availability and the fact that it reports its reading
+through a voltage output. The voltage output is linearly proportional to the
+current flowing through the sensor plus a DC offset. This is a preferred
+interface as it can be simply connected to a ADC channel without having to write
+a whole new driver for the specific sensor on the FPGA. As such, the output of
+the current sensor is connected FPGA\_ADC0, which is one of two ADC channels
+available on the FPGA module.
+
+\subsubsection{ADC}
+The TeachEE ADC schematic sheet contains AD9288BSTZ dual channel 40MSPS ADC.
+This chip provides two additional high-speed voltage channels on top of the ADC
+channels provided directly on board the FPGA module. The data outputs for both
+channels A and B are sent to the FPGA along with the sample clocks. This ADC was
+selected for its FPGA friendly control interface. Since the control consists of
+only a data bus and sample clock, it is trivial to write an FPGA module to
+collect the data in comparison to other SPI and I2C based converters on the
+market.
+
+Bypass capacitors and ferrite beads are used to power the ADC for the cleanest
+reference voltage possible. Additionally, the PCB contains non-populated
+footprints for low pass filters, and filter bypasses to simplify testing and
+debugging. For the digital side, all data bus and clocks have test points so a
+multimeter or oscilloscope can be connected to debug the FPGA control signals.
+
+\subsubsection{Analog Front End (AFE)}
+The Analog Front End (AFE) sits in front of the inputs of the high-speed ADC. As
+a result, the sub-circuit is duplicated twice in the top level sheet shown in Figure
+\ref{fig:hw-top-level-sheet} to cover both channels. The AFE serves the following
+purposes in the data acquisition hardware.
+
+\begin{enumerate}
+  \item Protect the ADC from over-voltage conditions. The front-end must clamp
+    any voltages that would otherwise destroy the ADC.
+  \item Convert the signal from single ended to differential. The ADC takes in a
+    differential input, so the AFE must convert the input voltage observed at
+    the connector to a differential signal of equivalent magnitude.
+\end{enumerate}
+
+This functionality is implemented in hardware using an AD8138 differential ADC
+driver. This ``all-in-one'' component takes care of voltage clamping and
+single to differential conversion. Moreover, it has sufficient analog bandwidth
+to avoid reducing the effective bandwidth of the ADC. For debugging, the
+sub-circuit contains 0-ohm bypass resistors that can be optionally soldered to
+send the unclamped signal directly to the ADC.
+
+\subsubsection{FPGA Module}
+The FPGA module is implemented using a CMOD A7-35T Xilinx Spartan 7 Breakout
+Board. the module is connected to the PCB via two 28-pin headers. Two pins are
+used for power and ground while the rest are used for FPGA IO pins. The USB FIFO
+and ADC control pins are connected to the FPGA IO. There also two special IO,
+which can be used as ADCs. These two pins are used to implement the current and
+voltage channels at 1MSPS. The current sensor output is wired to one of the
+channels and a BNC connector is connected to the other through a low pass filter
+for voltage sampling.
+
+The FPGA module schematic had one mistake that was not discovered until the
+physical PCBs had already been manufactured and delivered. In order to use the
+parallel-bus interface of the FT232HQ to send data, the FPGA must lock to a 60
+MHz output clock from the FT232HQ. During the layout, the FPGA pin wired to this
+clock was swapped to a normal GPIO pin rather than an MRCC dedicated clock pin.
+As a result, the FPGA place and route was failing during compilation as the FPGA
+could not route this clock from a standard GPIO pin. This issue was resolved by
+waiving the warnings and optimizing the SystemVerilog code to still pass timing
+without a proper clock route for the 60 MHz signal. Further information on this
+process is given in Section \ref{sec:fpga-impl} on the FPGA implementation.
+
+\subsubsection{Connectors}
+% Talk about LPFs and BNC connectors 
+The connectors page contains all the external IO connections for TeachEE.
+Specifically, the USB mini connector for data and three BNC connectors for scope
+probes. The current sensor is exposed on its own separate pin header. The BNC
+connectors are connected to the appropriate ADC input or AFE. Also, each
+connectors has the appropriate low pass filters to satisfy nyquist theorem. Each
+connector also includes all the standard capacitors and resistors needed to
+connect an oscilloscope probe from the lab kit sold at the Queen's bookstore.
+\subsection{FPGA} \label{sec:fpga-impl} % ETHAN
+% Refer to system block diagram and go module by module.
+% put in the top level module code and some critical state machines
+% Talk about AXIS as a standard protocol. Also the extensible to ARM SOCs it
+% provides
+
+The FPGA datapath and implementation can be best summarized by examining the
+interconnections between modules in the top-level SystemVerilog module.
+
+
+
 \subsection{Software} % ERIC
 % Basically everything from poster with more detail
 
