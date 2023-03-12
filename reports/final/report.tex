@@ -17,6 +17,7 @@
 \usepackage{longtable}
 \usepackage{tikz}
 \usepackage{hyperref}
+\usepackage{minted}
 
 \DeclareSIUnit{\samplepersec}{SPS}
 
@@ -373,9 +374,9 @@ connect an oscilloscope probe from the lab kit sold at the Queen's bookstore.
 % provides
 
 The FPGA datapath and implementation can be best summarized by examining the
-interconnections between modules in the top-level SystemVerilog module.
-
-
+interconnections between modules in the top-level SystemVerilog module. The code
+for the top level module of TeachEE is given below. The entire RTL codebase can
+be viewed in Appendix \ref{appendix:rtl-code}.
 
 \subsection{Software} % ERIC
 % Basically everything from poster with more detail
