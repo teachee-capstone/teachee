@@ -699,15 +699,20 @@ often being manipulated during data transmission \cite{axis_spec}. Figure
 \begin{figure}[h]
   \centering
   % TODO: Make the timing diagram
+  \includegraphics[width=\textwidth]{figures/axis_read.png}
+  \includegraphics[width=\textwidth]{figures/axis_write.png}
   % \includegraphics[width=\textwidth]{../../misc/TeachEE-System-Diagram-Hardware.png}
   \caption{AXIS Read/Write Transaction Timing Diagram}
   \label{fig:axis-transaction}
 \end{figure}
 
-In addition to the simple protocol, there is significant library support for AXI
-streams. In the case of TeachEE, the \code{verilog-axis} library is used
+% TODO explain the timing diagrams here
+
+In addition to the simplicity protocol, there is significant library support for
+AXI streams. In the case of TeachEE, the \code{verilog-axis} library is used
 \cite{verilog_axis_lib}.
 
+% TODO
 % Also cite the GitHub page of the axis tool library.
 % talk about why AXIS is great and the extensibility of the codebase as a
 % a result
