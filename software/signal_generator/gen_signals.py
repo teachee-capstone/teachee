@@ -23,12 +23,12 @@ FUNCS = [sin, triangle, square]
 
 NUM_FUNCS=len(FUNCS)
 NUM_AMPLITUDES=2**6
-NUM_TIMES=2**8
+NUM_TIMES=2**4
 
 signals = np.zeros((NUM_FUNCS, NUM_AMPLITUDES, NUM_TIMES), dtype=np.int32)
 
-amplitudes = np.linspace(0, DAC_MAX, num=2**6)
-times = np.linspace(0, 1, num=2**8)
+amplitudes = np.linspace(0, DAC_MAX, num=NUM_AMPLITUDES)
+times = np.linspace(0, 1, num=NUM_TIMES)
 
 for i, f in enumerate(FUNCS):
     for j, a in enumerate(amplitudes):
