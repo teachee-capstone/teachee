@@ -885,6 +885,7 @@ and functional testing. The PCBs were both fabricated and assembled by an
 external vendor. Upon receiving the fully assembled TeachEE units, the following
 physical inspection steps were taken.
 
+\subsubsection{Physical Inspection and Acceptance Testing}
 \begin{enumerate}
   \item Microscope examination of the PCB. Looking at each solder joint to
     identify any cold or weak links, tombstoning etc.
@@ -898,8 +899,36 @@ physical inspection steps were taken.
     Check for heat around the board indicating a possible short circuit.
 \end{enumerate}
 
+Figures \ref{fig:pcb-front} and \ref{fig:pcb-back} are the front and back of the
+PCB respectively. These photos were provided by the vendor and provide a clear
+picture of the boards at the point of delivery and inspection. Figure
+\ref{fig:area-around-fifo} is a closeup of the area around the USB FIFO as this
+was a high density area in the PCB layout.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{figures/pcb-front.JPG}
+  \caption{PCB Front Side After Delivery}
+  \label{fig:pcb-front}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{figures/pcb-back.JPG}
+  \caption{PCB Back Side After Delivery}
+  \label{fig:pcb-back}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  % \includegraphics[width=\textwidth]{../../misc/TeachEE-System-Diagram-Hardware.png}
+  \caption{Close up of the FIFO on the PCB}
+  \label{fig:area-around-fifo}
+\end{figure}
+
 % TODO: but a figure of the received PCBs from Bittele here
 
+\subsubsection{Functional Testing}
 All three assembled PCBs passed these inspection checks. Next, functional
 testing was done on the three units. The functional tests are as follows.
 
