@@ -11,7 +11,7 @@ use csv::Writer;
 use eframe::egui::*;
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use crate::{controller::{AppData, BufferState, SAMPLE_RATE_PER_CHANNEL}};
+use crate::controller::{AppData, BufferState, SAMPLE_RATE_PER_CHANNEL};
 
 #[derive(Debug, Default)]
 enum TriggerControl {
@@ -371,6 +371,7 @@ impl eframe::App for App {
                                 *ui_controls = UIControls::default();
                                 *data.voltage_trigger_threshold.write().unwrap() = f64::INFINITY;
                                 *data.current_trigger_threshold.write().unwrap() = f64::INFINITY;
+                                *data.fft.write().unwrap() = false;
                             }
                         });
                     })
@@ -439,17 +440,15 @@ impl eframe::App for App {
             drop(buf_state);
 
             let plot_height = (frame.info().window_info.size.y - 42.0) / 2.0;
-            let mut time_plot = plot::Plot::new("plot")
-                .legend(plot::Legend::default());
+            let mut time_plot = plot::Plot::new("plot").legend(plot::Legend::default());
             if ui_controls.fft {
                 time_plot = time_plot.height(plot_height);
             }
 
-            time_plot
-                .show(ui, |ui| {
-                    ui.line(voltage);
-                    ui.line(current);
-                });
+            time_plot.show(ui, |ui| {
+                ui.line(voltage);
+                ui.line(current);
+            });
 
             if ui_controls.fft {
                 plot::Plot::new("fft")

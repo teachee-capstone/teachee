@@ -3,7 +3,7 @@
 
 use std::thread;
 
-use eframe::{self, epaint::Vec2, NativeOptions, Theme};
+use eframe::{self, NativeOptions, Theme};
 
 use structopt::StructOpt;
 use teachee_desktop::{

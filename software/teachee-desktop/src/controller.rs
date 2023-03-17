@@ -4,9 +4,12 @@ use std::{
     sync::{Arc, Condvar, Mutex, RwLock},
 };
 
-use spectrum_analyzer::{samples_fft_to_spectrum, FrequencyLimit, scaling::divide_by_N_sqrt, FrequencySpectrum};
+use spectrum_analyzer::{
+    samples_fft_to_spectrum, scaling::divide_by_N_sqrt, FrequencyLimit, FrequencySpectrum,
+};
 
 pub const SAMPLE_RATE_PER_CHANNEL: usize = 500_000;
+const MAX_FFT_SAMPLES_INPUT: usize = 0x4000;
 
 // Number of samples in each channel's buffer
 pub const BUF_SIZE: usize = 20000;
@@ -147,13 +150,18 @@ impl Controller {
                 );
 
                 if *self.app_data.fft.read().unwrap() {
-                    let mut temp: [f32; BUF_SIZE * 2] = [0.0; BUF_SIZE * 2];
-                    for i in 0..num_remaining {
+                    let mut temp: [f32; MAX_FFT_SAMPLES_INPUT] = [0.0; MAX_FFT_SAMPLES_INPUT];
+                    for i in 0..min(temp.len(), num_remaining) {
                         temp[i] = dst.voltage1[i] as f32;
                     }
 
-                    // TODO
-                    dst.fft1 = samples_fft_to_spectrum(&temp[..min(num_remaining.next_power_of_two(), 2_usize.pow(14))], SAMPLE_RATE_PER_CHANNEL as u32, FrequencyLimit::Range(1000.0, 100_000.0), Some(&divide_by_N_sqrt)).unwrap();
+                    dst.fft1 = samples_fft_to_spectrum(
+                        &temp[..min(temp.len(), num_remaining.next_power_of_two())],
+                        SAMPLE_RATE_PER_CHANNEL as u32,
+                        FrequencyLimit::Range(1000.0, 100_000.0),
+                        Some(&divide_by_N_sqrt),
+                    )
+                    .unwrap();
                 }
 
                 *data_state = BufferState::Empty(src);
