@@ -814,9 +814,105 @@ is Keysight's MegaZoom ASIC \cite{keysight_megazoom}.
 
 \section{Testing, Evaluation \& Verification} \label{sec:testing}
 The following tables outline the target hardware and software specifications of
-this project.
+this project. This specifications table differs from the design section as it
+states what specifications were and were not achieved in the final
+implementation. The hardware and software specification evaluations are given in
+Tables \ref{tab:hw-spec-eval} and \ref{tab:sw-spec-eval} respectively.
+
+\begin{table}[H]
+    \caption{Hardware Specification Evaluation}
+    \begin{tabularx}{\textwidth}{c|c|c|p{5cm}}
+        Specification & Target Value & Achieved? & Comments \\
+        \hline
+      Voltage Input Bandwidth&\SI{100}{\kilo\hertz}& Yes & Ultimately \SI{500}{\kilo\hertz} of bandwidth was achieved through the low speed ADC and \SI{20}{\mega\hertz} through the high speed ADC.\\
+        \hline
+        Current Input Bandwidth&\SI{100}{\kilo\hertz}& Yes & N/A. This bandwidth matches the hall effect sensor.\\
+        \hline 
+        Measureable Current Range&\SI{-15}{\ampere} to \SI{+15}{\ampere}& Yes & Matches the specification of the sensor.\\
+        \hline
+        Measureable Voltage Range& \SI{0}{\volt} to \SI{3.3}{\volt} & Yes & This was achieved in both XADC and HSADC channels.\\
+        \hline
+        Number of Current Input Channels& $1$ & Yes & N/A\\
+        \hline
+        Number of Voltage Input Channels& $1$ & Yes & Two additional voltage channels were added using the HSADC.\\
+        \hline
+        Power Input Voltage Rating& \SI{5}{\volt} & Yes & USB voltage is used as supply and the regulator is tolerant up to \SI{12}{\volt}\\
+        \hline
+        Power Current Consumption Rating& \SI{500}{\milli\ampere} & Yes & Current draw has not exceeded \SI{500}{\milli\ampere} in any operation setting.\\
+        \hline
+        Voltage Sample Rate& \SI{1}{\mega\samplepersec} & Yes & The XADC can sample at \SI{1}{\mega\samplepersec} and HSADC can sample at \SI{40}{\mega\samplepersec}\\
+        \hline
+        Current Sample Rate& \SI{1}{\mega\samplepersec} & Yes & N/A \\
+        \hline
+        PCB Thickness& \SI{1.6}{\milli\metre} & Yes & Thickness was exactly 1.6mm in a four-layer stackup. \\
+        \hline
+        PCB Dimensions& $\pm \SI{400}{\milli\metre\squared}$ & Yes & the tolerance given is less than the final size of the PCB.\\
+        \hline
+        Voltage Sample Error & $\pm \SI{20}{\percent}$ & Yes & values match almost exactly to the Rigol scope in the Sci '65 lab through empirical testing.\\
+        \hline
+        Current Sample Error & $\pm \SI{20}{\percent}$ & Yes & current readings match a DMM within this tolerance.\\
+        \hline
+    \end{tabularx} 
+\label{tab:hw-spec-eval}
+\end{table}
+
+As shown above, the hardware prototype meets all specifications originally
+defined in the project blueprint. The TeachEE hardware also exceeds expectations
+in the sample rate, bandwidth, and channel count specifications.
+
+\begin{table}[H]
+  \caption{Software Specification Evaluation}
+  \begin{tabularx}{\textwidth}{l|l|p{5cm}}
+    Specification & Achieved? & Comments\\
+    \hline
+    The software shall be able to modify the horizontal and vertical scales of the plot. & Yes & \\
+    The software shall be able to modify the trigger voltage. & Yes & \\
+    The application shall be deployable to Windows, macOS, and Linux. & Yes & \\
+    \hline
+    The software shall be able to capture voltage samples and export them to a CSV file. & Yes & \\
+    The software shall receive samples via the FTDI 232 in synchronous mode. & Yes & \\
+    \hline
+    The software shall be able to render waveforms at a rate of \SI{30}{\hertz} on screen. & Yes & \\
+    \hline
+  \end{tabularx} 
+  \label{tab:sw-spec-eval}
+\end{table}
+
 \subsection{PCB Verification} % ETHAN
 % Hardware tests
+The PCB verification process was broken up into physical inspection of the board
+and functional testing. The PCBs were both fabricated and assembled by an
+external vendor. Upon receiving the fully assembled TeachEE units, the following
+physical inspection steps were taken.
+
+\begin{enumerate}
+  \item Microscope examination of the PCB. Looking at each solder joint to
+    identify any cold or weak links, tombstoning etc.
+  \item Assembly BOM check. Examine the components populated on the board.
+    Ensure nothing was missed and make sure that components that were not
+    supposed to be populated are left blank per the instructions to the vendor.
+  \item Basic electrical check. Use a DMM to check for any short circuits
+    between the power rails and ground.
+  \item Power on the TeachEE via the USB Mini port. Verify that the LEDs all
+    turn on and that the voltage regulator is outputting the correct voltage.
+    Check for heat around the board indicating a possible short circuit.
+\end{enumerate}
+
+% TODO: but a figure of the received PCBs from Bittele here
+
+All three assembled PCBs passed these inspection checks. Next, functional
+testing was done on the three units. The functional tests are as follows.
+
+\begin{enumerate}
+  \item Plug the TeachEE to a computer via the USB Mini connector.
+\end{enumerate}
+
+% write a little blurb about doing final assembly
+
+% Then also add a figure of what the board looked like after the final assembly
+% steps and population of the FPGA module
+
+
 \subsection{FPGA Verification} % ETHAN
 % Talk about FPGA automated sims, testbenches CI ETC
 \subsection{Software Verification} % ERIC
