@@ -4,14 +4,22 @@ use std::{
     sync::{Arc, Condvar, Mutex, RwLock},
 };
 
+use spectrum_analyzer::{
+    samples_fft_to_spectrum, scaling::divide_by_N_sqrt, FrequencyLimit, FrequencySpectrum,
+};
+
+pub const SAMPLE_RATE_PER_CHANNEL: usize = 500_000;
+const MAX_FFT_SAMPLES_INPUT: usize = 0x4000;
+
 // Number of samples in each channel's buffer
-const BUF_SIZE: usize = 10000;
+pub const BUF_SIZE: usize = 20000;
 const NUM_BUFS: usize = 2;
 
 #[derive(Debug)]
 pub struct Channels {
     pub voltage1: Vec<f64>,
     pub current1: Vec<f64>,
+    pub fft1: FrequencySpectrum,
 }
 
 impl Default for Channels {
@@ -19,6 +27,7 @@ impl Default for Channels {
         Self {
             voltage1: vec![0.0; BUF_SIZE],
             current1: vec![0.0; BUF_SIZE],
+            fft1: FrequencySpectrum::default(),
         }
     }
 }
@@ -65,6 +74,7 @@ pub struct AppData {
     pub bufs: Vec<Arc<(Condvar, Mutex<BufferState>)>>,
     pub voltage_trigger_threshold: Arc<RwLock<f64>>,
     pub current_trigger_threshold: Arc<RwLock<f64>>,
+    pub fft: Arc<RwLock<bool>>,
 }
 
 fn generate_buffers() -> Vec<Arc<(Condvar, Mutex<BufferState>)>> {
@@ -92,6 +102,7 @@ impl Default for AppData {
             bufs: generate_buffers(),
             voltage_trigger_threshold: Arc::new(RwLock::new(0.0)),
             current_trigger_threshold: Arc::new(RwLock::new(0.0)),
+            fft: Arc::new(RwLock::new(false)),
         }
     }
 }
@@ -137,6 +148,21 @@ impl Controller {
                     *self.app_data.voltage_trigger_threshold.read().unwrap(),
                     *self.app_data.current_trigger_threshold.read().unwrap(),
                 );
+
+                if *self.app_data.fft.read().unwrap() {
+                    let mut temp: [f32; MAX_FFT_SAMPLES_INPUT] = [0.0; MAX_FFT_SAMPLES_INPUT];
+                    for i in 0..min(temp.len(), num_remaining) {
+                        temp[i] = dst.voltage1[i] as f32;
+                    }
+
+                    dst.fft1 = samples_fft_to_spectrum(
+                        &temp[..min(temp.len(), num_remaining.next_power_of_two())],
+                        SAMPLE_RATE_PER_CHANNEL as u32,
+                        FrequencyLimit::Range(1000.0, 100_000.0),
+                        Some(&divide_by_N_sqrt),
+                    )
+                    .unwrap();
+                }
 
                 *data_state = BufferState::Empty(src);
                 *app_state = BufferState::Full(dst, num_remaining);
