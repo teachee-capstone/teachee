@@ -20,6 +20,7 @@
 \usepackage{minted}
 
 \DeclareSIUnit{\samplepersec}{SPS}
+\newcommand{\code}[1]{\mintinline{systemverilog}{#1}}
 
 \begin{document}
 
@@ -393,9 +394,420 @@ connect an oscilloscope probe from the lab kit sold at the Queen's bookstore.
 % provides
 
 The FPGA datapath and implementation can be best summarized by examining the
-interconnections between modules in the top-level SystemVerilog module.
+interconnections between modules in the top-level SystemVerilog module. Below is
+each section of the top level TeachEE RTL module broken down and explained. The
+entire RTL codebase can be viewed in Appendix \ref{appendix:rtl-code}.
+
+\subsubsection{Top Level Module Interface}
+Given below is the interface to the top level module of the TeachEE RTL code.
+
+\setstretch{1}
+\begin{minted}{systemverilog}
+module teachee (
+  input  var logic cmod_osc, // 12 MHz provided on the CMOD
+  input  var logic ftdi_clk, // 60 MHz provided by the FTDI
+
+  // FTDI Control Interface
+  input  var logic ftdi_rxf_n,
+  input  var logic ftdi_txe_n,
+
+  output var logic ftdi_rd_n,
+  output var logic ftdi_wr_n,
+  output var logic ftdi_siwu_n,
+  output var logic ftdi_oe_n,
+
+  output var logic[7:0] ftdi_data,
+
+  // High Speed ADC IO Interface
+  output var logic hsadc_a_enc,
+  input var logic[7:0] hsadc_a,
+
+  output var logic hsadc_b_enc,
+  input var logic[7:0] hsadc_b,
+
+  // CMOD IO Declarations
+  input var logic[1:0] btn,
+  output var logic[1:0] led,
+
+  input var logic[1:0] xa_n,
+  input var logic[1:0] xa_p,
+
+  // TeachEE IO Declarations
+  output var logic[1:0] teachee_led,
+  inout wire[5:0] spare_pin
+);
+\end{minted}
+\setstretch{2}
+
+As shown above, the FPGA takes in one 12 MHz clock provided by an external
+oscillator and the 60 MHz clock from the FT232HQ. After the clocks, IO for the
+FT232HQ and AD9288BSTZ control signals are defined. At the end of the interface
+declaration are pins for the FPGA module analog channels and some debug buttons
+and LEDs on the TeachEE PCB.
+
+\subsubsection{PLL Clock Generation}
+After the module interface is declared, the PLL system clock generator is
+initialized. This is an IP core provided by the FPGA manufacturer Xilinx that
+takes the oscillator 12 MHz input and outputs a variety of useful clock signals
+for the rest of the design. Given below is the IP core module instantiation.
+
+\setstretch{1}
+\begin{minted}{systemverilog}
+    teachee_pll teachee_pll_ip_inst (
+        // Clock out ports
+        .clk_100(clk_100),     // output clk_100
+        .clk_50(clk_50),     // output clk_50
+        .clk_25(clk_25),     // output clk_25
+        .clk_20(clk_20),     // output clk_20
+        .clk_10(clk_10),     // output clk_10
+
+        // Status and control signals
+        .reset(0), // input reset
+        .locked(locked),       // output locked
+
+        // Clock in ports
+        .cmod_osc(cmod_osc)      // input cmod_osc
+    );
+\end{minted}
+\setstretch{2}
+
+The module takes the external oscillator clock as an input and outputs 100, 50,
+25, 20 and 10 MHz clocks. Different frequencies can be specified within the
+Xilinx Vivado IDE used to flash the FPGA. In the current implementation, only
+the 100 and 10 MHz clocks are used. 100 MHz is used throughout the top level
+system and 10 MHz is used as a sampling clock in the high speed ADC. One clock
+that is not covered by this PLL is the 60 MHz clock generated externally by the
+FT232HQ. The PLL also has a \code{locked} output. When driven high, this signal
+indicates that the PLL is locked to the input clock and the output clocks are
+functioning correctly. This signal is used to create a reset signal to all the
+modules holding them in reset until the PLL has locked and all clocks are up and
+running.
+
+\subsubsection{Interface Instantiations} \label{sec:interface-inst}
+
+Given below are the instantiations for the different interfaces used to make
+connections between the sub-modules. Interfaces in SystemVerilog can be thought
+of as groupings of wires that make managing inter-module connections easier as
+each wire does not need to be explicitly declared.
+
+\setstretch{1}
+\begin{minted}{systemverilog}
+    hsadc_interface hsadc_ctrl ();
+    assign hsadc_a_enc = hsadc_ctrl.channel_a_enc;
+    assign hsadc_ctrl.channel_a = hsadc_a;
+
+    assign hsadc_b_enc = hsadc_ctrl.channel_b_enc;
+    assign hsadc_ctrl.channel_b = hsadc_b;
+
+    assign hsadc_ctrl.s1 = spare_pin[0];
+    assign hsadc_ctrl.s2 = spare_pin[1];
+    assign hsadc_ctrl.dfs = spare_pin[4];
+
+    axis_interface #(
+        .DATA_WIDTH(2 * XADC_DRP_DATA_WIDTH)
+    ) xadc_sample_channel (
+        .clk(sys_clk),
+        .rst(reset)
+    );
+
+    axis_interface #(
+        .DATA_WIDTH(16)
+    ) hsadc_sample_channel (
+        .clk(sys_clk),
+        .rst(reset)
+    );
+
+    axis_interface #(
+        .DATA_WIDTH(8)
+    ) hsadc_usb_axis (
+        .clk(sys_clk),
+        .rst(reset)
+    );
+
+    axis_interface #(
+        .DATA_WIDTH(8)
+    ) xadc_usb_axis (
+        .clk(sys_clk),
+        .rst(reset)
+    );
+\end{minted}
+\setstretch{2}
+
+The first interface declared is for the AD8138ARZ high-speed ADC. External IO
+signals are assigned to the different control wires in the interface. Next, the
+various AXIS interfaces required to connect the modules are instantiated. The
+interface width is specified using the \code{DATA_WIDTH} parameter. 8-bit
+interfaces are used to connect the packet stream output for a given ADC to the
+FT232HQ wrapper module which adapts the AXI Stream to FT232HQ control signals.
+The remaining two interfaces hold the sample data from the XADC and high-speed
+ADC respectively. The XADC is the dual channel 16-bit ADC built into the FPGA.
+The two sample data interfaces \code{hsadc_sample_channel} and
+\code{xadc_sample_channel} are each connected to the outputs of adapter modules
+that adapt the native interface of the device to an AXI Stream. The AXI Stream
+interface used is a custom wrapper for all the standard signals found in an AXI
+stream. The interface definition can be found in Appendix
+\ref{appendix:axis-interface}.
+
+The AXIS Protocol, also known as AXI Stream is derived from ARM's AXI bus
+specification. Additional information on the AXI Stream protocol and the
+external libraries used to support it can be found in Section
+\ref{sec:external-fpga-libs}.
+
+\subsubsection{FT232HQ AXIS Wrapper}
+After instantiating the interfaces, they are used to make connections between
+the various sub-modules. Shown below is the \code{ft232h} module instance used
+to send data to the computer over USB.
+
+\setstretch{1}
+\begin{minted}{systemverilog}
+    ft232h usb_fifo (
+        .ftdi_clk(ftdi_clk),
+
+        .ftdi_rxf_n(ftdi_rxf_n),
+        .ftdi_txe_n(ftdi_txe_n),
+
+        .ftdi_rd_n(ftdi_rd_n),
+        .ftdi_wr_n(ftdi_wr_n),
+        .ftdi_siwu_n(ftdi_siwu_n),
+        .ftdi_oe_n(ftdi_oe_n),
+
+        .ftdi_adbus(ftdi_data),
+
+        // Programmer AXIS Interface
+        // CHANGE THIS BASED ON WHETHER YOU WANT TO USE XADC OR HSADC
+        .sys_axis(xadc_usb_axis.Sink)
+    );
+\end{minted}
+\setstretch{2}
+
+This module consists of a state machine that adapts the AXI Stream of sample
+packets to control signals of the FT232HQ. The input is the \code{sys_axis}
+stream and the output is all the \code{ftdi_*} control signals used to produce
+data over USB. Wrapping the FT232HQ interface in a standard AXI stream makes it
+trivial to interface with all the other modules in the TeachEE source code. The
+same design approach is used throughout the codebase to ensure compatibility
+between the various hardware interface modules. The state machine for the module
+is shown in Figure \ref{fig:ft232h-state-machine}.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth/3]{figures/ft232h-state-machine.png}
+  \caption{FT322H AXI Wrapper State Machine}
+  \label{fig:ft232h-state-machine}
+\end{figure}
+
+The state machine Waits for the AXI stream to have data available and for the
+FT232HQ to be ready for new data. When this condition is satisfied, the byte is
+sent out and the state machine automatically transitions back to the await
+state.
+
+It should also be noted that there is a comment in the code above indicating
+that the \code{sys_axis} stream input must be changed based on whether you want
+to use the XADC or high-speed ADC data. In this case, the XADC is used.
+
+\subsubsection{XADC IP Core}
+Shown below is the XADC IP core used to extract data from the internal XADC on
+the FPGA. This IP core is made custom using the XADC Wizard tool in Xilinx
+Vivado. The core is configured to only output the two FPGA ADC channels in use
+on the TeachEE PCB via a Dynamic Reconfiguration Port (DRP) interface. The DRP
+signals are then fed into an AXIS adapter module for interface standardization.
+
+\setstretch{1}
+\begin{minted}{systemverilog}
+    xadc_teachee xadc_teachee_inst (
+        // Clock and Reset
+        .dclk_in(sys_clk),          // input wire dclk_in
+        .reset_in(reset),        // input wire reset_in
+
+        // DRP interface
+        .di_in(0),              // input wire [15 : 0] di_in
+        .daddr_in(xadc_daddr),        // input wire [6 : 0] daddr_in
+        .den_in(xadc_den),            // input wire den_in
+        .dwe_in(0),            // input wire dwe_in
+        .drdy_out(xadc_drdy),        // output wire drdy_out
+        .do_out(xadc_do),            // output wire [15 : 0] do_out
+
+        // Dedicated analog input channel (we do not use this)
+        .vp_in(0),              // input wire vp_in
+        .vn_in(0),              // input wire vn_in
+
+        // analog input channels, vaux4 is pin 15 = VIOUT of current sensor
+        // vaux12 is pin 16 = low speed voltage channel.
+        .vauxp4(xa_p[0]),            // input wire vauxp4
+        .vauxn4(xa_n[0]),            // input wire vauxn4
+        .vauxp12(xa_p[1]),          // input wire vauxp12
+        .vauxn12(xa_n[1]),          // input wire vauxn12
+
+        // conversion status signals
+        .channel_out(),  // output wire [4 : 0] channel_out
+        .eoc_out(),          // output wire eoc_out
+        .alarm_out(),      // output wire alarm_out
+        .eos_out(xadc_eos),          // output wire eos_out
+        .busy_out()        // output wire busy_out
+    );
+\end{minted}
+\setstretch{2}
+
+\subsubsection{ADC AXIS Wrappers}
+Similarly to the \code{ft232h} module, both the XADC and high-speed ADC have
+AXIS wrapper modules. Both wrapper modules function in the same manner, they
+await new data from the ADC and place it in AXIS compliant FIFO queue. The
+\code{sample_stream} output is internally connected to this queue where samples
+can be consumed by the FT232HQ. Given below is the instantiation of both
+modules.
+\setstretch{1}
+\begin{minted}{systemverilog}
+    xadc_drp_addr_t xadc_daddr;
+    var logic xadc_den;
+
+    var logic xadc_drdy;
+    var logic[XADC_DRP_DATA_WIDTH-1:0] xadc_do;
+    var logic xadc_eos;
+
+    xadc_drp_axis_single_stream xadc_drp_axis_adapter_inst (
+        .xadc_dclk(sys_clk),
+        .xadc_reset(reset),
+
+        // DRP and Conversion Signals
+        .xadc_daddr(xadc_daddr),
+        .xadc_den(xadc_den),
+        .xadc_drdy(xadc_drdy),
+        .xadc_do(xadc_do),
+
+        .xadc_eos(xadc_eos),
+
+        .sample_stream(xadc_sample_channel.Source)
+    );
+
+    hsadc_axis_wrapper hsadc (
+        .sample_clk(clk_10),
+        .stream_clk(sys_clk),
+        .reset(reset),
+
+        .hsadc_ctrl_signals(hsadc_ctrl.sink),
+        .sample_stream(hsadc_sample_channel.source)
+    );
+
+\end{minted}
+\setstretch{2}
+
+The XADC wrapper takes in the DRP control signals from the XADC IP core and the
+high-speed ADC wrapper gets all the control signals from a single interface
+declared earlier in the file.
 
 
+\subsubsection{AXIS and Verilog AXIS} \label{sec:external-fpga-libs} AXIS, also
+referred to as AXI Stream is the standard protocol used throughout the FPGA
+datapath. While there are many signals in an AXI interface, the primary signals
+are called \code{tdata}, \code{tready}, \code{tvalid}. Only when \code{tready}
+and \code{tvalid} are asserted can you consume data from the \code{tdata} bus.
+\code{tready} is controlled by the receiver so it can regulate the rate at which
+it consumes data while \code{tvalid} is controlled by the sender to tell the
+receiver when new data is ready on the \code{tdata} lines. The full
+specification contains many additional signals but these are the three that most
+often being manipulated during data transmission \cite{axis_spec}. Figures
+\ref{fig:axis-read} \ref{fig:axis-write} show the AXIS read and write timing
+diagrams respectively.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{figures/axis_read.png}
+  \caption{AXIS Read Transaction Timing Diagram}
+  \label{fig:axis-read}
+\end{figure}
+
+In AXIS read and write transactions, the producer is responsible for
+\code{tdata} and \code{tvalid} signals while the consumer toggles \code{tready}.
+This allows the consumer to know when new data becomes available and it is able
+to signal to the producer when it is ready to accept it via \code{tready}. All
+three signals should only be asserted or deasserted in synchronization with the
+system clock per the specification. As shown in Figure \ref{fig:axis-read},
+\code{tvalid} is asserted on the same rising edge as the new data coming onto
+the \code{tdata} bus. The consumer sees this and asserts tready on the next
+rising edge consuming the data. In the case where multiple words of data are
+queued by the producer, the \code{tdata} value will advance to the next byte
+available after each cycle where both \code{tvalid \&\& tready} is true. This
+allows a new read to take place every cycle if the producer has the data and the
+consumer is ready for it. This simple protocol yields strong performance and
+flexibility with minimal FPGA LUT resources used. It should be noted that for
+any AXIS transaction to take place \code{tready \&\& tvalid} must be true.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{figures/axis_write.png}
+  \caption{AXIS Write Transaction Timing Diagram}
+  \label{fig:axis-write}
+\end{figure}
+
+In the AXIS write case shown in Figure \ref{fig:axis-write}, the consumer first
+asserts \code{tready}, which tells the producer that it can accept new data.
+Once the producer has data, it asserts the value on \code{tdata} and drives
+\code{tvalid} high on the same rising edge. Since \code{tready \&\& tvalid} is
+true, the data is written to the consumer successfully. This design pattern is
+replicated repeatedly throughout the FPGA codebase provided in Appendix
+\ref{appendix:rtl-code}.
+
+In addition to the simplicity protocol, there is significant library support for
+AXI streams. In the case of TeachEE, the \code{verilog-axis} library is used
+\cite{verilog_axis_lib}. This library contains a variety of useful verilog
+modules, all of which expose an AXIS interface at their inputs and outputs. The
+standard interface across all modules makes connecting up the library modules
+with TeachEE modules trivial. The only modification made to these library
+modules was to wrap them in another more ergonomic module. Since the library is
+written in Verilog, it does not have access to interfaces, which are a feature
+of SystemVerilog only. As a result, each AXIS signal is written out individually
+making instanciating and connecting the modules unwieldy. In order to bundle all
+these signals into one module port, the \code{axis_interface} is used. For each
+module in the \code{verilog-axis} library used by TeachEE, a wrapper module is
+written that places all the signals for the AXI streams in AXIS interfaces
+making module connectivity far simpler thanks to SystemVerilog. This is possible
+due to the Xilinx Vivado project build configuration that cross compiles both
+Verilog and SystemVerilog. The interface is also designed to seamlessly handle
+the producer and consumer cases discussed above using modports. The
+\code{Source} modport can be used on producer stream interfaces and the
+\code{Sink} modport can be used for consumers. The modports switch the direction
+of the signals from \code{input} to \code{output} depending on the use case.
+
+\code{verilog-axis} contains many modules but there are three that were employed
+when writing the RTL code for TeachEE. 
+
+The first module is \code{axis_async_fifo}, which is wrapped by
+\code{axis_async_fifo_wrapper}. This module constructs a First-In-First-Out
+(FIFO) Queue and is used repeatedly throughout the code. The first and foremost
+purpose of the Queue is to provide sample memory to ensure samples are not
+dropped when the rate of production deviates from the rate of consumption.
+Secondly the FIFO is asynchronous, meaning it can use different clock signals
+for its input and output. The module has internal synchronization logic to bring
+data across clock domains. This functionality was critical in the TeachEE RTL
+design as we had multiple clock domains and needed to transfer data between them
+efficiently. The top-level system, USB FIFO, HSADC, and XADC all had different
+clock signals and had their data inputs buffered by asynchronous FIFOs.
+
+The second key module is the \code{axis_adapter}, which is wrapped by
+\code{axis_adapter_wrapper}. This module takes an AXI Stream, and adapts it to a
+smaller width specified as a parameter in the module instantiation. This module
+was critical in getting the 32-bit sample stream from the XADC to fit the 8-bit
+stream accepted by the USB FIFO.
+
+The final module used from the library was the \code{cobs_encode}, which is
+wrapped by \code{cobs_encode_wrapper}. This module takes an 8-bit input stream
+and outputs the same data encoded using Consistent Overhead Byte Stuffing
+(COBS). The COBS encoder is highly efficient and only creates two additional
+bytes of overhead ensuring the USB link bandwidth is not wasted \cite{cobs}.
+In order to transmit samples to the computer, the 32-bit stream from the XADC
+(or 16-bit from the HSADC) is adapted to 8 bits using \code{axis_adapter}. The
+resulting 8-bit stream is fed into the COBS encoder, whose output is connected
+to the USB FIFO. These two modules make up the packet encoding stack.
+
+Perhaps the most important benefit of AXIS over other streaming interfaces is
+its direct compatibility with the more fully-featured AXI bus. AXI is a standard
+memory-mapped bus interface used in ARM processors \cite{axi_spec}. Since all
+modules in TeachEE's FPGA codebase use AXI streams, the platform is highly
+extensible and can be connected to ARM coprocessors with minimal effort. Such a
+design extension would make TeachEE similar architecturally to more expensive
+benchtop oscilloscopes that make use of both an ASIC and traditional processor
+through a high-speed interconnection protocol. An example of this architecture
+is Keysight's MegaZoom ASIC \cite{keysight_megazoom}.
 
 \subsection{Software} % ERIC
 % Basically everything from poster with more detail
@@ -566,18 +978,106 @@ on all aspects of the project.
         \end{tabular}
     \end{table}
 
+    % TODO: needs smaller font size or line wrapping
     \section{TeachEE SystemVerilog RTL Code} \label{appendix:rtl-code}
     This appendix contains all the SystemVerilog RTL files in the TeachEE
     project. Each subsection corresponds to the files in a particular folder of
     the GitHub repository.
 
+    \subsubsection{TeachEE Main Project Top Level Module}
+    \inputminted[linenos,breaklines]{systemverilog}{../../rtl/teachee/teachee.sv}
+
     \subsection{AXIS} \label{appendix:axis}
     \subsubsection{axis\_adapter\_wrapper.sv}
-    \inputminted{systemverilog}{../../rtl/axis/axis_adapter_wrapper.sv}
+    \inputminted[linenos,breaklines]{systemverilog}{../../rtl/axis/axis_adapter_wrapper.sv}
     \subsubsection{axis\_async\_fifo\_wrapper.sv}
-    \inputminted{systemverilog}{../../rtl/axis/axis_async_fifo_wrapper.sv}
-    \subsubsection{axis\_interface.sv}
-    \inputminted{systemverilog}{../../rtl/axis/axis_interface.sv}
-    
+    \inputminted[linenos,breaklines]{systemverilog}{../../rtl/axis/axis_async_fifo_wrapper.sv}
+    \subsubsection{axis\_interface.sv} \label{appendix:axis-interface}
+    \inputminted[linenos,breaklines]{systemverilog}{../../rtl/axis/axis_interface.sv}
+
+    \subsection{COBS}
+    \subsubsection{cobs\_axis\_adapter\_wrapper.sv}
+    \inputminted[linenos,breaklines]{systemverilog}{../../rtl/cobs/cobs_axis_adapter_wrapper.sv}
+    \subsubsection{cobs\_encode\_wrapper.sv}
+    \inputminted[linenos,breaklines]{systemverilog}{../../rtl/cobs/cobs_encode_wrapper.sv}
+
+    \subsection{FT232H}
+    \subsubsection{ft232h.sv}
+    \inputminted[linenos,breaklines]{systemverilog}{../../rtl/ft232h/ft232h.sv}
+    \subsubsection{ft232h\_bfm.sv}
+    \inputminted[linenos,breaklines]{systemverilog}{../../rtl/ft232h/ft232h_bfm.sv}
+    \subsubsection{ft232h\_package.sv}
+    \inputminted[linenos,breaklines]{systemverilog}{../../rtl/ft232h/ft232h_package.sv}
+
+    \subsection{HSADC}
+    \subsubsection{hsadc\_axis\_wrapper.sv}
+    \inputminted[linenos,breaklines]{systemverilog}{../../rtl/hsadc/hsadc_axis_wrapper.sv}
+    \subsubsection{hsadc\_bfm.sv}
+    \inputminted[linenos,breaklines]{systemverilog}{../../rtl/hsadc/hsadc_bfm.sv}
+    \subsubsection{hsadc\_interface.sv}
+    \inputminted[linenos,breaklines]{systemverilog}{../../rtl/hsadc/hsadc_interface.sv}
+
+    \subsection{Xilinx XADC}
+    \subsubsection{xadc\_bfm.sv}
+    \inputminted[linenos,breaklines]{systemverilog}{../../rtl/xadc/xadc_bfm.sv}
+    \subsubsection{xadc\_drp\_axis\_adapter.sv}
+    \inputminted[linenos,breaklines]{systemverilog}{../../rtl/xadc/xadc_drp_axis_adapter.sv}
+    \subsubsection{xadc\_drp\_axis\_single\_stream.sv}
+    \inputminted[linenos,breaklines]{systemverilog}{../../rtl/xadc/xadc_drp_axis_single_stream.sv}
+    \subsubsection{xadc\_drp\_package.sv}
+    \inputminted[linenos,breaklines]{systemverilog}{../../rtl/xadc/xadc_drp_package.sv}
+    \subsubsection{xadc\_packetizer.sv}
+    \inputminted[linenos,breaklines]{systemverilog}{../../rtl/xadc/xadc_packetizer.sv}
+
+    \subsection{Legacy Non-VUnit Testbenches}
+    \subsubsection{ft232h\_bfm\_tb.sv}
+    \inputminted[linenos,breaklines]{systemverilog}{../../rtl/testbenches/legacy/ft232h_bfm_tb.sv}
+    \subsubsection{ft232h\_tb.sv}
+    \inputminted[linenos,breaklines]{systemverilog}{../../rtl/testbenches/legacy/ft232h_tb.sv}
+    \subsubsection{xadc\_bfm\_tb.sv}
+    \inputminted[linenos,breaklines]{systemverilog}{../../rtl/testbenches/legacy/xadc_bfm_tb.sv}
+    \subsubsection{xadc\_drp\_axis\_adapter\_tb.sv}
+    \inputminted[linenos,breaklines]{systemverilog}{../../rtl/testbenches/legacy/xadc_drp_axis_adapter_tb.sv}
+
+    \subsection{VUnit Testbenches}
+    \subsubsection{axis\_adapter\_wrapper\_tb.sv}
+    \inputminted[linenos,breaklines]{systemverilog}{../../rtl/testbenches/axis_adapter_wrapper_tb.sv}
+    \subsubsection{cobs\_axis\_adapter\_wrapper\_tb.sv}
+    \inputminted[linenos,breaklines]{systemverilog}{../../rtl/testbenches/cobs_axis_adapter_wrapper_tb.sv}
+    \subsubsection{cobs\_encode\_wrapper\_tb.sv}
+    \inputminted[linenos,breaklines]{systemverilog}{../../rtl/testbenches/cobs_encode_wrapper_tb.sv}
+    \subsubsection{hsadc\_axis\_wrapper\_tb.sv}
+    \inputminted[linenos,breaklines]{systemverilog}{../../rtl/testbenches/hsadc_axis_wrapper_tb.sv}
+    \subsubsection{xadc\_packetizer\_tb.sv}
+    \inputminted[linenos,breaklines]{systemverilog}{../../rtl/testbenches/xadc_packetizer_tb.sv}
+
+    \subsection{Example Projects}
+    \subsubsection{blink}
+    \inputminted[linenos,breaklines]{systemverilog}{../../rtl/examples/blink/blink.sv}
+    \subsubsection{ftdi\_sync}
+    \inputminted[linenos,breaklines]{systemverilog}{../../rtl/examples/ftdi_sync/ftdi_sync.sv}
+    \subsubsection{pll\_blink}
+    \inputminted[linenos,breaklines]{systemverilog}{../../rtl/examples/pll_blink/pll_blink.sv}
+    \subsubsection{xadc\_axis}
+    \inputminted[linenos,breaklines]{systemverilog}{../../rtl/examples/xadc_axis/xadc_axis.sv}
+
+    \section{FPGA GitHub Actions Script} \label{appendix:github-action-script}
+    \inputminted[linenos,breaklines]{yaml}{../../.github/workflows/rtl.yml}
+
+    \section{Python VUnit Testbenches} \label{appendix:python-vunit-tb}
+    \subsection{axis\_adapter\_wrapper\_tb.py}
+    \inputminted[linenos,breaklines]{python}{../../rtl/python/axis_adapter_wrapper_tb.py}
+    \subsection{cobs\_axis\_adapter\_wrapper\_tb.py}
+    \inputminted[linenos,breaklines]{python}{../../rtl/python/cobs_axis_adapter_wrapper_tb.py}
+    \subsection{cobs\_encode\_wrapper\_tb.py}
+    \inputminted[linenos,breaklines]{python}{../../rtl/python/cobs_encode_wrapper_tb.py}
+    \subsection{hsadc\_axis\_wrapper\_tb.py}
+    \inputminted[linenos,breaklines]{python}{../../rtl/python/hsadc_axis_wrapper_tb.py}
+    \subsection{xadc\_packetizer\_tb.py}
+    \inputminted[linenos,breaklines]{python}{../../rtl/python/xadc_packetizer_tb.py}
+
+    \section{Python Packet Integrity Test Script}
+    \inputminted[linenos,breaklines]{python}{../../rtl/teachee/reader.py}
+
     \end{appendices}
 \end{document}
