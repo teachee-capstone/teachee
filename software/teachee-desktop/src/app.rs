@@ -269,9 +269,7 @@ impl eframe::App for App {
                         ui.add_space(GROUP_SPACING);
                         ui.label(RichText::new("Channel scaling").size(14.0));
 
-                        ui.add_space(GROUP_SPACING);
-                        ui.separator();
-                        ui.add_space(GROUP_SPACING);
+                        ui.add(Separator::default().spacing(GROUP_SPACING * 2.0));
 
                         ui.label("Horizontal");
                         ui.add_space(GROUP_SPACING);
@@ -283,9 +281,7 @@ impl eframe::App for App {
                             H_SCALE_RANGE,
                         );
 
-                        ui.add_space(GROUP_SPACING);
-                        ui.separator();
-                        ui.add_space(GROUP_SPACING);
+                        ui.add(Separator::default().spacing(GROUP_SPACING * 2.0));
 
                         ui.label("Channel 1 Vertical");
                         ui.add_space(GROUP_SPACING);
@@ -315,9 +311,9 @@ impl eframe::App for App {
                     ui.group(|ui| {
                         ui.add_space(GROUP_SPACING);
                         ui.label(RichText::new("Triggers").size(14.0));
-                        ui.add_space(GROUP_SPACING);
-                        ui.separator();
-                        ui.add_space(GROUP_SPACING);
+
+                        ui.add(Separator::default().spacing(GROUP_SPACING * 2.0));
+
                         ui.vertical_centered_justified(|ui| {
                             update_trigger(
                                 ui,
@@ -345,9 +341,9 @@ impl eframe::App for App {
                     ui.group(|ui| {
                         ui.add_space(GROUP_SPACING);
                         ui.label(RichText::new("FFT").size(14.0));
-                        ui.add_space(GROUP_SPACING);
-                        ui.separator();
-                        ui.add_space(GROUP_SPACING);
+
+                        ui.add(Separator::default().spacing(GROUP_SPACING * 2.0));
+
                         ui.vertical_centered_justified(|ui| {
                             if ui.toggle_value(&mut ui_controls.fft, "Channel 1").clicked() {
                                 *data.fft.write().unwrap() = ui_controls.fft;
@@ -360,9 +356,9 @@ impl eframe::App for App {
                     ui.group(|ui| {
                         ui.add_space(GROUP_SPACING);
                         ui.label(RichText::new("Reset All Configurations").size(14.0));
-                        ui.add_space(GROUP_SPACING);
-                        ui.separator();
-                        ui.add_space(GROUP_SPACING);
+
+                        ui.add(Separator::default().spacing(GROUP_SPACING * 2.0));
+
                         ui.vertical_centered_justified(|ui| {
                             if ui
                                 .add(Button::new("Reset").min_size((0.0, BUTTON_HEIGHT).into()))
