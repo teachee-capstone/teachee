@@ -940,6 +940,7 @@ on all aspects of the project.
         \end{tabular}
     \end{table}
 
+    % TODO: needs smaller font size or line wrapping
     \section{TeachEE SystemVerilog RTL Code} \label{appendix:rtl-code}
     This appendix contains all the SystemVerilog RTL files in the TeachEE
     project. Each subsection corresponds to the files in a particular folder of
@@ -966,6 +967,38 @@ on all aspects of the project.
     \inputminted{systemverilog}{../../rtl/ft232h/ft232h_bfm.sv}
     \subsubsection{ft232h\_package.sv}
     \inputminted{systemverilog}{../../rtl/ft232h/ft232h_package.sv}
-    
+
+    \subsection{HSADC}
+    \subsubsection{hsadc\_axis\_wrapper.sv}
+    \inputminted{systemverilog}{../../rtl/hsadc/hsadc_axis_wrapper.sv}
+    \subsubsection{hsadc\_bfm.sv}
+    \inputminted{systemverilog}{../../rtl/hsadc/hsadc_bfm.sv}
+    \subsubsection{hsadc\_interface.sv}
+    \inputminted{systemverilog}{../../rtl/hsadc/hsadc_interface.sv}
+
+    \subsection{Legacy Non-VUnit Testbenches}
+    \subsubsection{ft232h\_bfm\_tb.sv}
+    \inputminted{systemverilog}{../../rtl/testbenches/legacy/ft232h_bfm_tb.sv}
+    \subsubsection{ft232h\_tb.sv}
+    \inputminted{systemverilog}{../../rtl/testbenches/legacy/ft232h_tb.sv}
+    \subsubsection{xadc\_bfm\_tb.sv}
+    \inputminted{systemverilog}{../../rtl/testbenches/legacy/xadc_bfm_tb.sv}
+    \subsubsection{xadc\_drp\_axis\_adapter\_tb.sv}
+    \inputminted{systemverilog}{../../rtl/testbenches/legacy/xadc_drp_axis_adapter_tb.sv}
+
+    \subsection{VUnit Testbenches}
+    \subsubsection{axis\_adapter\_wrapper\_tb.sv}
+    \inputminted{systemverilog}{../../rtl/testbenches/axis_adapter_wrapper_tb.sv}
+    \subsubsection{cobs\_axis\_adapter\_wrapper\_tb.sv}
+    \inputminted{systemverilog}{../../rtl/testbenches/cobs_axis_adapter_wrapper_tb.sv}
+    \subsubsection{cobs\_encode\_wrapper\_tb.sv}
+    \inputminted{systemverilog}{../../rtl/testbenches/cobs_encode_wrapper_tb.sv}
+    \subsubsection{hsadc\_axis\_wrapper\_tb.sv}
+    \inputminted{systemverilog}{../../rtl/testbenches/hsadc_axis_wrapper_tb.sv}
+    \subsubsection{xadc\_packetizer\_tb.sv}
+    \inputminted{systemverilog}{../../rtl/testbenches/xadc_packetizer_tb.sv}
+
+    \section{FPGA GitHub Actions Script}
+    % TODO
     \end{appendices}
 \end{document}
