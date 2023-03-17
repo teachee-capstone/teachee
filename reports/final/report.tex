@@ -756,6 +756,11 @@ the producer and consumer cases discussed above using modports. The
 \code{Sink} modport can be used for consumers. The modports switch the direction
 of the signals from \code{input} to \code{output} depending on the use case.
 
+% TODO: talk about most useful modules from the library
+% COBS
+% FIFO QUEUES
+% Width adapters
+
 Perhaps the most important benefit of AXIS over other streaming interfaces is
 its direct compatibility with the more fully-featured AXI bus. AXI is a standard
 memory-mapped bus interface used in ARM processors \cite{axi_spec}. Since all
@@ -947,6 +952,20 @@ on all aspects of the project.
     \inputminted{systemverilog}{../../rtl/axis/axis_async_fifo_wrapper.sv}
     \subsubsection{axis\_interface.sv} \label{appendix:axis-interface}
     \inputminted{systemverilog}{../../rtl/axis/axis_interface.sv}
+
+    \subsection{COBS}
+    \subsubsection{cobs\_axis\_adapter\_wrapper.sv}
+    \inputminted{systemverilog}{../../rtl/cobs/cobs_axis_adapter_wrapper.sv}
+    \subsubsection{cobs\_encode\_wrapper.sv}
+    \inputminted{systemverilog}{../../rtl/cobs/cobs_encode_wrapper.sv}
+
+    \subsection{FT232H}
+    \subsubsection{ft232h.sv}
+    \inputminted{systemverilog}{../../rtl/ft232h/ft232h.sv}
+    \subsubsection{ft232h\_bfm.sv}
+    \inputminted{systemverilog}{../../rtl/ft232h/ft232h_bfm.sv}
+    \subsubsection{ft232h\_package.sv}
+    \inputminted{systemverilog}{../../rtl/ft232h/ft232h_package.sv}
     
     \end{appendices}
 \end{document}
