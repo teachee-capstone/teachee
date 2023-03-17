@@ -151,7 +151,7 @@ impl Controller {
                     }
 
                     // TODO
-                    dst.fft1 = samples_fft_to_spectrum(&temp[..num_remaining.next_power_of_two()], 1000000, FrequencyLimit::All, Some(&divide_by_N_sqrt)).unwrap();
+                    dst.fft1 = samples_fft_to_spectrum(&temp[..num_remaining.next_power_of_two()], 1000000, FrequencyLimit::Range(1000.0, 500_000.0), Some(&divide_by_N_sqrt)).unwrap();
                 }
 
                 *data_state = BufferState::Empty(src);
