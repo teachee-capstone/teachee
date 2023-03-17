@@ -892,6 +892,9 @@ physical inspection steps were taken.
   \item Assembly BOM check. Examine the components populated on the board.
     Ensure nothing was missed and make sure that components that were not
     supposed to be populated are left blank per the instructions to the vendor.
+  \item Solder the linear voltage regulator in for power on testing. This is not
+    populated initially because it is through-hole. Through-hole components
+    drive assembly costs upwards so they are done by hand for this project.
   \item Basic electrical check. Use a DMM to check for any short circuits
     between the power rails and ground.
   \item Power on the TeachEE via the USB Mini port. Verify that the LEDs all
@@ -921,12 +924,10 @@ was a high density area in the PCB layout.
 
 \begin{figure}[H]
   \centering
-  % \includegraphics[width=\textwidth]{../../misc/TeachEE-System-Diagram-Hardware.png}
+  \includegraphics[width=\textwidth]{figures/pcb-closeup.JPG}
   \caption{Close up of the FIFO on the PCB}
   \label{fig:area-around-fifo}
 \end{figure}
-
-% TODO: but a figure of the received PCBs from Bittele here
 
 \subsubsection{Functional Testing}
 All three assembled PCBs passed these inspection checks. Next, functional
@@ -946,20 +947,47 @@ testing was done on the three units. The functional tests are as follows.
     transmission mode 40.
   \item After setting the device to synchronous mode, connect an oscilloscope to
     the FT232HQ clock testpoint on the PCB. Verify that a \SI{60}{\mega\hertz}
-    clock is supplied to the FPGA. The waveform should be a triangle wave. ADD
-    FIGURE REFERENCE HERE
-  \item Check the output voltage of the hall effect current sensor by probing
-    the \code{VIOUT} pin with a DMM. This voltage should be approximately
-    \SI{1.7}{\volt}, which represents a reading of \SI{0}{\ampere}.
+    clock is supplied to the FPGA. The waveform should be a triangle wave. A
+    screen capture of the clock waveform is given in Figure \ref{fig:ftdi-clk}.
+    The triangle wave is not ideal but the FPGA locks to it successfully
+    nonetheless.
+
+  % \item Check the output voltage of the hall effect current sensor by probing
+  %   the \code{VIOUT} pin with a DMM. This voltage should be approximately
+  %   \SI{1.7}{\volt}, which represents a reading of \SI{0}{\ampere}.
 \end{enumerate}
 
 % TODO: add figure of the FTDI232HQ clock output
+\begin{figure}[H]
+  \centering
+  % \includegraphics[width=\textwidth]{figures/pcb-closeup.JPG}
+  \caption{FT232HQ Clock Output Waveform}
+  \label{fig:ftdi-clk}
+\end{figure}
 
 % write a little blurb about doing final assembly
+All three PCBs also passed the functional tests enumerated above. At this point,
+all parts omitted from the assembly process are soldered onto the PCB. This
+includes all through-hole components on the board except for the voltage
+regulator which was soldered earlier on for the power-up test. Through-hole
+parts were omitted from the assembly order to keep costs low. Moreover, due to
+the chip shortage, the hall effect current sensor had to be purchased separately
+and soldered manually. The through-hole parts that are soldered manually include
+all the pin headers for the FPGA, BNC connectors for the oscilloscope probes and
+through-hole testpoints. To protect the PCB from any conductive surfaces or ESD,
+M3 standoff screws are installed into all of the mounting holes to elevate the
+PCB from the surface on which it rests. After this final assembly step, the PCB
+is ready for software and FPGA development. The FPGA module can be installed
+into the pin header and flashed. A fully assembled TeachEE is shown in Figure
+\ref{fig:pcb-final}.
 
-% Then also add a figure of what the board looked like after the final assembly
-% steps and population of the FPGA module
 
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{figures/pcb-final.jpg}
+  \caption{Final Assembled TeachEE}
+  \label{fig:pcb-final}
+\end{figure}
 
 \subsection{FPGA Verification} % ETHAN
 % Talk about FPGA automated sims, testbenches CI ETC
