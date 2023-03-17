@@ -4,13 +4,13 @@ use libftd2xx::{BitMode, Ft232h, FtdiCommon};
 
 use crate::controller::{Channels, BUF_SIZE};
 
-use super::{Channel, Result, SampleSource};
+use super::{Result, SampleSource};
 
 const MASK: u8 = 0xFF;
 const LATENCY_TIMER: Duration = Duration::from_millis(16);
 const IN_TRANSFER_SIZE: u32 = 0x10000;
-const RX_BUF_SIZE: usize = BUF_SIZE * 6;
 const PACKET_SIZE: usize = 6;
+const RX_BUF_SIZE: usize = BUF_SIZE * PACKET_SIZE;
 
 /// A sample source that reads from a real TeachEE device.
 pub struct FtSampleSource {
@@ -39,17 +39,16 @@ impl SampleSource for FtSampleSource {
         })
     }
 
-    fn read_samples(&mut self, channels: &mut Channels) -> Result<(usize, Channel)> {
+    fn read_samples(&mut self, channels: &mut Channels) -> Result<usize> {
         let num_bytes = self.read_bytes()?;
         let num_samples = self.decode_and_copy(channels, num_bytes);
-        Ok((num_samples, Channel::VoltageA))
+        Ok(num_samples)
     }
 }
 
 impl FtSampleSource {
     fn read_bytes(&mut self) -> Result<usize> {
         self.ft.read_all(&mut self.rx_buf)?;
-
         Ok(RX_BUF_SIZE)
     }
     fn decode_and_copy(&mut self, channels: &mut Channels, num_bytes: usize) -> usize {
