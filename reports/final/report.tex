@@ -756,10 +756,36 @@ the producer and consumer cases discussed above using modports. The
 \code{Sink} modport can be used for consumers. The modports switch the direction
 of the signals from \code{input} to \code{output} depending on the use case.
 
-% TODO: talk about most useful modules from the library
-% COBS
-% FIFO QUEUES
-% Width adapters
+\code{verilog-axis} contains many modules but there are three that were employed
+when writing the RTL code for TeachEE. 
+
+The first module is \code{axis_async_fifo}, which is wrapped by
+\code{axis_async_fifo_wrapper}. This module constructs a First-In-First-Out
+(FIFO) Queue and is used repeatedly throughout the code. The first and foremost
+purpose of the Queue is to provide sample memory to ensure samples are not
+dropped when the rate of production deviates from the rate of consumption.
+Secondly the FIFO is asynchronous, meaning it can use different clock signals
+for its input and output. The module has internal synchronization logic to bring
+data across clock domains. This functionality was critical in the TeachEE RTL
+design as we had multiple clock domains and needed to transfer data between them
+efficiently. The top-level system, USB FIFO, HSADC, and XADC all had different
+clock signals and had their data inputs buffered by asynchronous FIFOs.
+
+The second key module is the \code{axis_adapter}, which is wrapped by
+\code{axis_adapter_wrapper}. This module takes an AXI Stream, and adapts it to a
+smaller width specified as a parameter in the module instantiation. This module
+was critical in getting the 32-bit sample stream from the XADC to fit the 8-bit
+stream accepted by the USB FIFO.
+
+The final module used from the library was the \code{cobs_encode}, which is
+wrapped by \code{cobs_encode_wrapper}. This module takes an 8-bit input stream
+and outputs the same data encoded using Consistent Overhead Byte Stuffing
+(COBS). The COBS encoder is highly efficient and only creates two additional
+bytes of overhead ensuring the USB link bandwidth is not wasted \cite{cobs}.
+In order to transmit samples to the computer, the 32-bit stream from the XADC
+(or 16-bit from the HSADC) is adapted to 8 bits using \code{axis_adapter}. The
+resulting 8-bit stream is fed into the COBS encoder, whose output is connected
+to the USB FIFO. These two modules make up the packet encoding stack.
 
 Perhaps the most important benefit of AXIS over other streaming interfaces is
 its direct compatibility with the more fully-featured AXI bus. AXI is a standard
