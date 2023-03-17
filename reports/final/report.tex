@@ -464,7 +464,7 @@ functioning correctly. This signal is used to create a reset signal to all the
 modules holding them in reset until the PLL has locked and all clocks are up and
 running.
 
-\subsubsection{Interface Instantiations}
+\subsubsection{Interface Instantiations} \label{sec:interface-inst}
 
 Given below are the instantiations for the different interfaces used to make
 connections between the sub-modules. Interfaces in SystemVerilog can be thought
@@ -693,33 +693,78 @@ and \code{tvalid} are asserted can you consume data from the \code{tdata} bus.
 it consumes data while \code{tvalid} is controlled by the sender to tell the
 receiver when new data is ready on the \code{tdata} lines. The full
 specification contains many additional signals but these are the three that most
-often being manipulated during data transmission \cite{axis_spec}. Figure
-\ref{fig:axis-transaction} shows the AXIS read and write timing diagrams.
+often being manipulated during data transmission \cite{axis_spec}. Figures
+\ref{fig:axis-read} \ref{fig:axis-write} show the AXIS read and write timing
+diagrams respectively.
 
-\begin{figure}[h]
+\begin{figure}[H]
   \centering
-  % TODO: Make the timing diagram
   \includegraphics[width=\textwidth]{figures/axis_read.png}
-  \includegraphics[width=\textwidth]{figures/axis_write.png}
-  % \includegraphics[width=\textwidth]{../../misc/TeachEE-System-Diagram-Hardware.png}
-  \caption{AXIS Read/Write Transaction Timing Diagram}
-  \label{fig:axis-transaction}
+  \caption{AXIS Read Transaction Timing Diagram}
+  \label{fig:axis-read}
 \end{figure}
 
-% TODO explain the timing diagrams here
+In AXIS read and write transactions, the producer is responsible for
+\code{tdata} and \code{tvalid} signals while the consumer toggles \code{tready}.
+This allows the consumer to know when new data becomes available and it is able
+to signal to the producer when it is ready to accept it via \code{tready}. All
+three signals should only be asserted or deasserted in synchronization with the
+system clock per the specification. As shown in Figure \ref{fig:axis-read},
+\code{tvalid} is asserted on the same rising edge as the new data coming onto
+the \code{tdata} bus. The consumer sees this and asserts tready on the next
+rising edge consuming the data. In the case where multiple words of data are
+queued by the producer, the \code{tdata} value will advance to the next byte
+available after each cycle where both \code{tvalid \&\& tready} is true. This
+allows a new read to take place every cycle if the producer has the data and the
+consumer is ready for it. This simple protocol yields strong performance and
+flexibility with minimal FPGA LUT resources used. It should be noted that for
+any AXIS transaction to take place \code{tready \&\& tvalid} must be true.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{figures/axis_write.png}
+  \caption{AXIS Write Transaction Timing Diagram}
+  \label{fig:axis-write}
+\end{figure}
+
+In the AXIS write case shown in Figure \ref{fig:axis-write}, the consumer first
+asserts \code{tready}, which tells the producer that it can accept new data.
+Once the producer has data, it asserts the value on \code{tdata} and drives
+\code{tvalid} high on the same rising edge. Since \code{tready \&\& tvalid} is
+true, the data is written to the consumer successfully. This design pattern is
+replicated repeatedly throughout the FPGA codebase provided in Appendix
+\ref{appendix:rtl-code}.
 
 In addition to the simplicity protocol, there is significant library support for
 AXI streams. In the case of TeachEE, the \code{verilog-axis} library is used
-\cite{verilog_axis_lib}.
+\cite{verilog_axis_lib}. This library contains a variety of useful verilog
+modules, all of which expose an AXIS interface at their inputs and outputs. The
+standard interface across all modules makes connecting up the library modules
+with TeachEE modules trivial. The only modification made to these library
+modules was to wrap them in another more ergonomic module. Since the library is
+written in Verilog, it does not have access to interfaces, which are a feature
+of SystemVerilog only. As a result, each AXIS signal is written out individually
+making instanciating and connecting the modules unwieldy. In order to bundle all
+these signals into one module port, the \code{axis_interface} is used. For each
+module in the \code{verilog-axis} library used by TeachEE, a wrapper module is
+written that places all the signals for the AXI streams in AXIS interfaces
+making module connectivity far simpler thanks to SystemVerilog. This is possible
+due to the Xilinx Vivado project build configuration that cross compiles both
+Verilog and SystemVerilog. The interface is also designed to seamlessly handle
+the producer and consumer cases discussed above using modports. The
+\code{Source} modport can be used on producer stream interfaces and the
+\code{Sink} modport can be used for consumers. The modports switch the direction
+of the signals from \code{input} to \code{output} depending on the use case.
 
-% TODO
-% Also cite the GitHub page of the axis tool library.
-% talk about why AXIS is great and the extensibility of the codebase as a
-% a result
-% Perhaps also add some timing diagram figures
-% Explain the use of the library and how we write custom wrappers to bundle the
-% signals together under the custom axis_interface definition
-
+Perhaps the most important benefit of AXIS over other streaming interfaces is
+its direct compatibility with the more fully-featured AXI bus. AXI is a standard
+memory-mapped bus interface used in ARM processors REFERENCE HERE. Since all
+modules in TeachEE's FPGA codebase use AXI streams, the platform is highly
+extensible and can be connected to ARM coprocessors with minimal effort. Such a
+design extension would make TeachEE similar architecturally to more expensive
+benchtop oscilloscopes that make use of both an ASIC and traditional processor
+through a high-speed interconnection protocol. An example of this architecture
+is Keysight's MegaZoom ASIC REFERENCE HERE.
 
 \subsection{Software} % ERIC
 % Basically everything from poster with more detail
