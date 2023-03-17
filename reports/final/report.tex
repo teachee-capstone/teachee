@@ -904,8 +904,27 @@ All three assembled PCBs passed these inspection checks. Next, functional
 testing was done on the three units. The functional tests are as follows.
 
 \begin{enumerate}
-  \item Plug the TeachEE to a computer via the USB Mini connector.
+  \item Plug the TeachEE to a computer via the USB Mini connector. Open the FTDI
+    Utility to check if the USB FIFO is detected. Ensure that the EEPROM can be
+    read and that the USB device descriptor can be changed to \code{TeachEE}.
+    After making the EEPROM change, unplug the device and plug back in. Check
+    that the USB device is detected with the right descriptor information. This
+    descriptor is used by the desktop software to identify the USB device as the
+    oscilloscope.
+  \item Use the \code{reader.py} script found in Appendix
+    \ref{appendix:python-reader} to set the FT232HQ on TeachEE to synchronous
+    data transmission mod to set the FT232HQ on TeachEE to synchronous data
+    transmission mode 40.
+  \item After setting the device to synchronous mode, connect an oscilloscope to
+    the FT232HQ clock testpoint on the PCB. Verify that a \SI{60}{\mega\hertz}
+    clock is supplied to the FPGA. The waveform should be a triangle wave. ADD
+    FIGURE REFERENCE HERE
+  \item Check the output voltage of the hall effect current sensor by probing
+    the \code{VIOUT} pin with a DMM. This voltage should be approximately
+    \SI{1.7}{\volt}, which represents a reading of \SI{0}{\ampere}.
 \end{enumerate}
+
+% TODO: add figure of the FTDI232HQ clock output
 
 % write a little blurb about doing final assembly
 
@@ -940,6 +959,9 @@ testing was done on the three units. The functional tests are as follows.
 %% outside the tolerance values, explain why in this section. Your mark for this
 %% section depends on how close you got to your specs
 
+% NOTE From Ethan: This was done earlier in the report reference those tables.
+% We met specs so reflect on that I guess.
+
 \section{Conclusions \& Recommendations} % Tim
 %% Conclusions and recommendations – provide commentary on the main technical
 %% lessons learned from this project; is there potential for lasting impact for
@@ -954,6 +976,9 @@ testing was done on the three units. The functional tests are as follows.
 \section{Overall Team Effort}
 The following table quantifies the percentage effort each team member expended
 on all aspects of the project.
+
+% NOTE: I think we will need to add some further reflection here about how the
+% project went overall, it is in the rubric
 
 \begin{table}[H]
   \caption{Team Effort Table}
@@ -1172,7 +1197,7 @@ on all aspects of the project.
     \subsection{xadc\_packetizer\_tb.py}
     \inputminted[linenos,breaklines]{python}{../../rtl/python/xadc_packetizer_tb.py}
 
-    \section{Python Packet Integrity Test Script}
+    \section{Python Packet Integrity Test Script} \label{appendix:python-reader}
     \inputminted[linenos,breaklines]{python}{../../rtl/teachee/reader.py}
 
     \end{appendices}
