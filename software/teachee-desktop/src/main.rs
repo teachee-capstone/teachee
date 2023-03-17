@@ -22,7 +22,6 @@ struct Opt {
 fn main() {
     let options = NativeOptions {
         default_theme: Theme::Light,
-        min_window_size: Some(Vec2 { x: 496.0, y: 518.0 }),
         ..NativeOptions::default()
     };
 

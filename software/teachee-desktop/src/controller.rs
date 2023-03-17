@@ -4,6 +4,8 @@ use std::{
     sync::{Arc, Condvar, Mutex, RwLock},
 };
 
+use spectrum_analyzer::{samples_fft_to_spectrum, FrequencyLimit, scaling::divide_by_N_sqrt, FrequencySpectrum};
+
 // Number of samples in each channel's buffer
 const BUF_SIZE: usize = 10000;
 const NUM_BUFS: usize = 2;
@@ -12,6 +14,7 @@ const NUM_BUFS: usize = 2;
 pub struct Channels {
     pub voltage1: Vec<f64>,
     pub current1: Vec<f64>,
+    pub fft1: FrequencySpectrum,
 }
 
 impl Default for Channels {
@@ -19,6 +22,7 @@ impl Default for Channels {
         Self {
             voltage1: vec![0.0; BUF_SIZE],
             current1: vec![0.0; BUF_SIZE],
+            fft1: FrequencySpectrum::default(),
         }
     }
 }
@@ -65,6 +69,7 @@ pub struct AppData {
     pub bufs: Vec<Arc<(Condvar, Mutex<BufferState>)>>,
     pub voltage_trigger_threshold: Arc<RwLock<f64>>,
     pub current_trigger_threshold: Arc<RwLock<f64>>,
+    pub fft: Arc<RwLock<bool>>,
 }
 
 fn generate_buffers() -> Vec<Arc<(Condvar, Mutex<BufferState>)>> {
@@ -92,6 +97,7 @@ impl Default for AppData {
             bufs: generate_buffers(),
             voltage_trigger_threshold: Arc::new(RwLock::new(0.0)),
             current_trigger_threshold: Arc::new(RwLock::new(0.0)),
+            fft: Arc::new(RwLock::new(false)),
         }
     }
 }
@@ -137,6 +143,16 @@ impl Controller {
                     *self.app_data.voltage_trigger_threshold.read().unwrap(),
                     *self.app_data.current_trigger_threshold.read().unwrap(),
                 );
+
+                if *self.app_data.fft.read().unwrap() {
+                    let mut temp: [f32; BUF_SIZE * 2] = [0.0; BUF_SIZE * 2];
+                    for i in 0..num_remaining {
+                        temp[i] = dst.voltage1[i] as f32;
+                    }
+
+                    // TODO
+                    dst.fft1 = samples_fft_to_spectrum(&temp[..num_remaining.next_power_of_two()], 1000000, FrequencyLimit::All, Some(&divide_by_N_sqrt)).unwrap();
+                }
 
                 *data_state = BufferState::Empty(src);
                 *app_state = BufferState::Full(dst, num_remaining);

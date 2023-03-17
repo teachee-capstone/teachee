@@ -55,6 +55,7 @@ struct UIControls {
     c_trigger_threshold_text: String,
     c_trigger_format_wrong: bool,
     export_error_string: String,
+    fft: bool,
 }
 
 impl Default for UIControls {
@@ -73,6 +74,7 @@ impl Default for UIControls {
             c_trigger_threshold_text: String::new(),
             c_trigger_format_wrong: false,
             export_error_string: String::new(),
+            fft: false,
         }
     }
 }
@@ -264,13 +266,15 @@ impl eframe::App for App {
                     ui.add_space(GROUP_SPACING);
 
                     ui.group(|ui| {
-                        ui.label("Channel scaling");
+                        ui.add_space(GROUP_SPACING);
+                        ui.label(RichText::new("Channel scaling").size(14.0));
 
                         ui.add_space(GROUP_SPACING);
                         ui.separator();
                         ui.add_space(GROUP_SPACING);
 
                         ui.label("Horizontal");
+                        ui.add_space(GROUP_SPACING);
                         offset_scale_sliders(
                             ui,
                             &mut ui_controls.h_offset,
@@ -284,6 +288,7 @@ impl eframe::App for App {
                         ui.add_space(GROUP_SPACING);
 
                         ui.label("Channel 1 Vertical");
+                        ui.add_space(GROUP_SPACING);
                         offset_scale_sliders(
                             ui,
                             &mut ui_controls.channel1_v_offset,
@@ -295,6 +300,7 @@ impl eframe::App for App {
                         ui.add_space(GROUP_SPACING);
 
                         ui.label("Channel 2 Vertical");
+                        ui.add_space(GROUP_SPACING);
                         offset_scale_sliders(
                             ui,
                             &mut ui_controls.channel2_v_offset,
@@ -307,7 +313,8 @@ impl eframe::App for App {
                     ui.add_space(GROUP_SPACING);
 
                     ui.group(|ui| {
-                        ui.label("Triggers");
+                        ui.add_space(GROUP_SPACING);
+                        ui.label(RichText::new("Triggers").size(14.0));
                         ui.add_space(GROUP_SPACING);
                         ui.separator();
                         ui.add_space(GROUP_SPACING);
@@ -336,7 +343,23 @@ impl eframe::App for App {
                     ui.add_space(GROUP_SPACING);
 
                     ui.group(|ui| {
-                        ui.label("Reset All Configurations");
+                        ui.add_space(GROUP_SPACING);
+                        ui.label(RichText::new("FFT").size(14.0));
+                        ui.add_space(GROUP_SPACING);
+                        ui.separator();
+                        ui.add_space(GROUP_SPACING);
+                        ui.vertical_centered_justified(|ui| {
+                            if ui.toggle_value(&mut ui_controls.fft, "Channel 1").clicked() {
+                                *data.fft.write().unwrap() = ui_controls.fft;
+                            }
+                        });
+                    });
+
+                    ui.add_space(GROUP_SPACING);
+
+                    ui.group(|ui| {
+                        ui.add_space(GROUP_SPACING);
+                        ui.label(RichText::new("Reset All Configurations").size(14.0));
                         ui.add_space(GROUP_SPACING);
                         ui.separator();
                         ui.add_space(GROUP_SPACING);
@@ -365,8 +388,8 @@ impl eframe::App for App {
                 .unwrap();
 
             let (channels, num_samples) = buf_state.unwrap();
+
             // Mapping i -> t using the fixed sample rate to get point (i * period, samples[i]).
-            // TODO: Scale and offset
             let voltage = plot::Line::new(plot::PlotPoints::from_parametric_callback(
                 |i| {
                     (
@@ -379,6 +402,7 @@ impl eframe::App for App {
                 num_samples,
             ))
             .name("Channel 1");
+
             let current = plot::Line::new(plot::PlotPoints::from_parametric_callback(
                 |i| {
                     (
@@ -392,17 +416,49 @@ impl eframe::App for App {
             ))
             .name("Channel 2");
 
+            let fft_line = if ui_controls.fft {
+                plot::Line::new(plot::PlotPoints::from_parametric_callback(
+                    |i| {
+                        (
+                            channels.fft1.data()[i as usize].0.val() as f64,
+                            channels.fft1.data()[i as usize].1.val() as f64,
+                        )
+                    },
+                    0.0..(channels.fft1.data().len() as f64),
+                    channels.fft1.data().len(),
+                ))
+                .name("Channel 1 FFT")
+            } else {
+                plot::Line::new(plot::PlotPoints::default())
+            };
+
             // Next update, use the other buffer.
             *buf_idx ^= 0x1;
             *buf_state = BufferState::Empty(channels);
             condvar.notify_one();
+            drop(buf_state);
 
-            plot::Plot::new("plot")
-                .legend(plot::Legend::default())
+            let plot_height = (frame.info().window_info.size.y - 42.0) / 2.0;
+            let mut time_plot = plot::Plot::new("plot")
+                .legend(plot::Legend::default());
+            if ui_controls.fft {
+                time_plot = time_plot.height(plot_height);
+            }
+
+            time_plot
                 .show(ui, |ui| {
                     ui.line(voltage);
                     ui.line(current);
                 });
+
+            if ui_controls.fft {
+                plot::Plot::new("fft")
+                    .height(plot_height)
+                    .legend(plot::Legend::default())
+                    .show(ui, |ui| {
+                        ui.line(fft_line);
+                    });
+            }
         });
     }
 }
