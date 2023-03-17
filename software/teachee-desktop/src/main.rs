@@ -3,7 +3,7 @@
 
 use std::thread;
 
-use eframe::{self, epaint::Vec2, NativeOptions, Theme};
+use eframe::{self, NativeOptions, Theme};
 
 use structopt::StructOpt;
 use teachee_desktop::{
@@ -22,7 +22,6 @@ struct Opt {
 fn main() {
     let options = NativeOptions {
         default_theme: Theme::Light,
-        min_window_size: Some(Vec2 { x: 496.0, y: 518.0 }),
         ..NativeOptions::default()
     };
 

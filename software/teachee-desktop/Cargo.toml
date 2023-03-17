@@ -8,6 +8,7 @@ eframe = "0.20.1"
 libftd2xx = "0.32.1"
 structopt = "0.3.26"
 csv = "1.2.1"
+spectrum-analyzer = "1.4.0"
 
 [target.'cfg(any(windows,linux))'.dependencies.libftd2xx]
 version = "0.32.1"
