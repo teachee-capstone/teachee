@@ -11,13 +11,6 @@ use crate::controller::{BufferState, Channels, USBData};
 
 pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
-pub enum Channel {
-    VoltageA,
-    VoltageB,
-    VoltageC,
-    Current,
-}
-
 /// A trait which represents a source of samples. Could be a real TeachEE or a mock data.
 pub trait SampleSource {
     /// Attempt to init sample source.
@@ -27,7 +20,7 @@ pub trait SampleSource {
 
     /// Read samples into a pre-allocated buffer. Return the number of samples written and their
     /// channel.
-    fn read_samples(&mut self, samples: &mut Channels) -> Result<(usize, Channel)>;
+    fn read_samples(&mut self, samples: &mut Channels) -> Result<usize>;
 }
 
 /// A generic manager which reads from a given `SampleSource` into shared buffers.
@@ -76,7 +69,7 @@ where
 
                 let (mut channels, _) = buf_state.unwrap();
                 match reader.read_samples(&mut channels) {
-                    Ok((num_samples, _channel)) => {
+                    Ok(num_samples) => {
                         // Tell Controller that this buffer is full, and wake them up if waiting.
                         *buf_state = BufferState::Full(channels, num_samples);
                         condvar.notify_one();
