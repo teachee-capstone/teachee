@@ -7,7 +7,7 @@ use std::{
 use spectrum_analyzer::{samples_fft_to_spectrum, FrequencyLimit, scaling::divide_by_N_sqrt, FrequencySpectrum};
 
 // Number of samples in each channel's buffer
-const BUF_SIZE: usize = 10000;
+pub const BUF_SIZE: usize = 20000;
 const NUM_BUFS: usize = 2;
 
 #[derive(Debug)]
@@ -151,7 +151,7 @@ impl Controller {
                     }
 
                     // TODO
-                    dst.fft1 = samples_fft_to_spectrum(&temp[..num_remaining.next_power_of_two()], 1000000, FrequencyLimit::Range(1000.0, 500_000.0), Some(&divide_by_N_sqrt)).unwrap();
+                    dst.fft1 = samples_fft_to_spectrum(&temp[..min(num_remaining.next_power_of_two(), 2_usize.pow(14))], 1000000, FrequencyLimit::Range(1000.0, 100_000.0), Some(&divide_by_N_sqrt)).unwrap();
                 }
 
                 *data_state = BufferState::Empty(src);

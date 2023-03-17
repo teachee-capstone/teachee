@@ -2,14 +2,14 @@ use std::{thread, time::Duration};
 
 use libftd2xx::{BitMode, Ft232h, FtdiCommon};
 
-use crate::controller::Channels;
+use crate::controller::{Channels, BUF_SIZE};
 
 use super::{Channel, Result, SampleSource};
 
 const MASK: u8 = 0xFF;
 const LATENCY_TIMER: Duration = Duration::from_millis(16);
 const IN_TRANSFER_SIZE: u32 = 0x10000;
-const RX_BUF_SIZE: usize = 10000;
+const RX_BUF_SIZE: usize = BUF_SIZE * 6;
 const PACKET_SIZE: usize = 6;
 
 /// A sample source that reads from a real TeachEE device.
