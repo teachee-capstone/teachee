@@ -946,6 +946,9 @@ on all aspects of the project.
     project. Each subsection corresponds to the files in a particular folder of
     the GitHub repository.
 
+    \subsubsection{TeachEE Main Project Top Level Module}
+    \inputminted[linenos,breaklines]{systemverilog}{../../rtl/teachee/teachee.sv}
+
     \subsection{AXIS} \label{appendix:axis}
     \subsubsection{axis\_adapter\_wrapper.sv}
     \inputminted[linenos,breaklines]{systemverilog}{../../rtl/axis/axis_adapter_wrapper.sv}
@@ -976,6 +979,18 @@ on all aspects of the project.
     \subsubsection{hsadc\_interface.sv}
     \inputminted[linenos,breaklines]{systemverilog}{../../rtl/hsadc/hsadc_interface.sv}
 
+    \subsection{Xilinx XADC}
+    \subsubsection{xadc\_bfm.sv}
+    \inputminted[linenos,breaklines]{systemverilog}{../../rtl/xadc/xadc_bfm.sv}
+    \subsubsection{xadc\_drp\_axis\_adapter.sv}
+    \inputminted[linenos,breaklines]{systemverilog}{../../rtl/xadc/xadc_drp_axis_adapter.sv}
+    \subsubsection{xadc\_drp\_axis\_single\_stream.sv}
+    \inputminted[linenos,breaklines]{systemverilog}{../../rtl/xadc/xadc_drp_axis_single_stream.sv}
+    \subsubsection{xadc\_drp\_package.sv}
+    \inputminted[linenos,breaklines]{systemverilog}{../../rtl/xadc/xadc_drp_package.sv}
+    \subsubsection{xadc\_packetizer.sv}
+    \inputminted[linenos,breaklines]{systemverilog}{../../rtl/xadc/xadc_packetizer.sv}
+
     \subsection{Legacy Non-VUnit Testbenches}
     \subsubsection{ft232h\_bfm\_tb.sv}
     \inputminted[linenos,breaklines]{systemverilog}{../../rtl/testbenches/legacy/ft232h_bfm_tb.sv}
@@ -999,7 +1014,32 @@ on all aspects of the project.
     \inputminted[linenos,breaklines]{systemverilog}{../../rtl/testbenches/xadc_packetizer_tb.sv}
 
     \subsection{Example Projects}
-    \section{FPGA GitHub Actions Script}
-    % TODO
+    \subsubsection{blink}
+    \inputminted[linenos,breaklines]{systemverilog}{../../rtl/examples/blink/blink.sv}
+    \subsubsection{ftdi\_sync}
+    \inputminted[linenos,breaklines]{systemverilog}{../../rtl/examples/ftdi_sync/ftdi_sync.sv}
+    \subsubsection{pll\_blink}
+    \inputminted[linenos,breaklines]{systemverilog}{../../rtl/examples/pll_blink/pll_blink.sv}
+    \subsubsection{xadc\_axis}
+    \inputminted[linenos,breaklines]{systemverilog}{../../rtl/examples/xadc_axis/xadc_axis.sv}
+
+    \section{FPGA GitHub Actions Script} \label{appendix:github-action-script}
+    \inputminted[linenos,breaklines]{yaml}{../../.github/workflows/rtl.yml}
+
+    \section{Python VUnit Testbenches} \label{appendix:python-vunit-tb}
+    \subsection{axis\_adapter\_wrapper\_tb.py}
+    \inputminted[linenos,breaklines]{python}{../../rtl/python/axis_adapter_wrapper_tb.py}
+    \subsection{cobs\_axis\_adapter\_wrapper\_tb.py}
+    \inputminted[linenos,breaklines]{python}{../../rtl/python/cobs_axis_adapter_wrapper_tb.py}
+    \subsection{cobs\_encode\_wrapper\_tb.py}
+    \inputminted[linenos,breaklines]{python}{../../rtl/python/cobs_encode_wrapper_tb.py}
+    \subsection{hsadc\_axis\_wrapper\_tb.py}
+    \inputminted[linenos,breaklines]{python}{../../rtl/python/hsadc_axis_wrapper_tb.py}
+    \subsection{xadc\_packetizer\_tb.py}
+    \inputminted[linenos,breaklines]{python}{../../rtl/python/xadc_packetizer_tb.py}
+
+    \section{Python Packet Integrity Test Script}
+    \inputminted[linenos,breaklines]{python}{../../rtl/teachee/reader.py}
+
     \end{appendices}
 \end{document}
