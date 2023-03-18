@@ -281,9 +281,9 @@ The following subsections break down each sub-circuit sheet entry in Figure
 
 \subsubsection{Power}
 The power schematic sheet contains a single LD1117V33C linear voltage regulator.
-The regulator takes the 5V VBUS supply from the USB connection and provides a
-3.3V power output. A linear voltage regulator is employed over a switching buck
-converter for the following reasons.
+The regulator takes the \SI{5}{\volt} VBUS supply from the USB connection and
+provides a \SI{3.3}{\volt} power output. A linear voltage regulator is employed
+over a switching buck converter for the following reasons.
   \begin{enumerate}
     \item The analog to digital converters require clean voltage references to
       produce accurate readings and function correctly. Buck converters are
@@ -291,8 +291,8 @@ converter for the following reasons.
     \item The linear voltage regulator requires less components to implement
       easing chip shortage concerns.
     \item The significantly lower efficiency of a linear regulator is not an
-      issue as this regulator has a capacity of 1A which is more than enough to
-      run the devices on-board.
+      issue as this regulator has a capacity of \SI{1}{\ampere} which is more
+      than enough to run the devices on-board.
   \end{enumerate}
 \subsubsection{USB FIFO}
 The USB FIFO is a queue that sends data out to the laptop over USB 2.0 Full
@@ -328,14 +328,14 @@ the current sensor is connected FPGA\_ADC0, which is one of two ADC channels
 available on the FPGA module.
 
 \subsubsection{ADC}
-The TeachEE ADC schematic sheet contains AD9288BSTZ dual channel 40MSPS ADC.
-This chip provides two additional high-speed voltage channels on top of the ADC
-channels provided directly on board the FPGA module. The data outputs for both
-channels A and B are sent to the FPGA along with the sample clocks. This ADC was
-selected for its FPGA friendly control interface. Since the control consists of
-only a data bus and sample clock, it is trivial to write an FPGA module to
-collect the data in comparison to other SPI and I2C based converters on the
-market.
+The TeachEE ADC schematic sheet contains AD9288BSTZ dual channel
+\SI{40}{\mega\samplepersec} ADC. This chip provides two additional high-speed
+voltage channels on top of the ADC channels provided directly on board the FPGA
+module. The data outputs for both channels A and B are sent to the FPGA along
+with the sample clocks. This ADC was selected for its FPGA friendly control
+interface. Since the control consists of only a data bus and sample clock, it is
+trivial to write an FPGA module to collect the data in comparison to other SPI
+and I2C based converters on the market.
 
 Bypass capacitors and ferrite beads are used to power the ADC for the cleanest
 reference voltage possible. Additionally, the PCB contains non-populated
@@ -376,14 +376,15 @@ for voltage sampling.
 
 The FPGA module schematic had one mistake that was not discovered until the
 physical PCBs had already been manufactured and delivered. In order to use the
-parallel-bus interface of the FT232HQ to send data, the FPGA must lock to a 60
-MHz output clock from the FT232HQ. During the layout, the FPGA pin wired to this
-clock was swapped to a normal GPIO pin rather than an MRCC dedicated clock pin.
-As a result, the FPGA place and route was failing during compilation as the FPGA
-could not route this clock from a standard GPIO pin. This issue was resolved by
-waiving the warnings and optimizing the SystemVerilog code to still pass timing
-without a proper clock route for the 60 MHz signal. Further information on this
-process is given in Section \ref{sec:fpga-impl} on the FPGA implementation.
+parallel-bus interface of the FT232HQ to send data, the FPGA must lock to a
+\SI{60}{\mega\hertz} output clock from the FT232HQ. During the layout, the FPGA
+pin wired to this clock was swapped to a normal GPIO pin rather than an MRCC
+dedicated clock pin. As a result, the FPGA place and route was failing during
+compilation as the FPGA could not route this clock from a standard GPIO pin.
+This issue was resolved by waiving the warnings and optimizing the SystemVerilog
+code to still pass timing without a proper clock route for the
+\SI{60}{\mega\hertz} signal. Further information on this process is given in
+Section \ref{sec:fpga-impl} on the FPGA implementation.
 
 \subsubsection{Connectors}
 % Talk about LPFs and BNC connectors 
@@ -446,17 +447,18 @@ module teachee (
 \end{minted}
 \setstretch{2}
 
-As shown above, the FPGA takes in one 12 MHz clock provided by an external
-oscillator and the 60 MHz clock from the FT232HQ. After the clocks, IO for the
-FT232HQ and AD9288BSTZ control signals are defined. At the end of the interface
-declaration are pins for the FPGA module analog channels and some debug buttons
-and LEDs on the TeachEE PCB.
+As shown above, the FPGA takes in one \SI{12}{\mega\hertz} clock provided by an
+external oscillator and the \SI{60}{\mega\hertz} clock from the FT232HQ. After
+the clocks, IO for the FT232HQ and AD9288BSTZ control signals are defined. At
+the end of the interface declaration are pins for the FPGA module analog
+channels and some debug buttons and LEDs on the TeachEE PCB.
 
 \subsubsection{PLL Clock Generation}
 After the module interface is declared, the PLL system clock generator is
 initialized. This is an IP core provided by the FPGA manufacturer Xilinx that
-takes the oscillator 12 MHz input and outputs a variety of useful clock signals
-for the rest of the design. Given below is the IP core module instantiation.
+takes the oscillator \SI{12}{\mega\hertz} input and outputs a variety of useful
+clock signals for the rest of the design. Given below is the IP core module
+instantiation.
 
 \setstretch{1}
 \begin{minted}{systemverilog}
@@ -479,16 +481,17 @@ for the rest of the design. Given below is the IP core module instantiation.
 \setstretch{2}
 
 The module takes the external oscillator clock as an input and outputs 100, 50,
-25, 20 and 10 MHz clocks. Different frequencies can be specified within the
-Xilinx Vivado IDE used to flash the FPGA. In the current implementation, only
-the 100 and 10 MHz clocks are used. 100 MHz is used throughout the top level
-system and 10 MHz is used as a sampling clock in the high speed ADC. One clock
-that is not covered by this PLL is the 60 MHz clock generated externally by the
-FT232HQ. The PLL also has a \code{locked} output. When driven high, this signal
-indicates that the PLL is locked to the input clock and the output clocks are
-functioning correctly. This signal is used to create a reset signal to all the
-modules holding them in reset until the PLL has locked and all clocks are up and
-running.
+25, 20 and \SI{10}{\mega\hertz} clocks. Different frequencies can be specified
+within the Xilinx Vivado IDE used to flash the FPGA. In the current
+implementation, only the 100 and \SI{10}{\mega\hertz} clocks are used.
+\SI{100}{\mega\hertz} is used throughout the top level system and
+\SI{10}{\mega\hertz} is used as a sampling clock in the high speed ADC. One
+clock that is not covered by this PLL is the \SI{60}{\mega\hertz} clock
+generated externally by the FT232HQ. The PLL also has a \code{locked} output.
+When driven high, this signal indicates that the PLL is locked to the input
+clock and the output clocks are functioning correctly. This signal is used to
+create a reset signal to all the modules holding them in reset until the PLL has
+locked and all clocks are up and running.
 
 \subsubsection{Interface Instantiations} \label{sec:interface-inst}
 
@@ -820,10 +823,121 @@ is Keysight's MegaZoom ASIC \cite{keysight_megazoom}.
 % Basically everything from poster with more detail
 
 \section{Testing, Evaluation \& Verification} \label{sec:testing}
-The following tables outline the target hardware and software specifications of
-this project.
+The testing and validation of the TeachEE can be broken up into hardware/PCB,
+FPGA, software subsystems. The following subsections cover each subsystem of
+TeachEE in full detail.
+
 \subsection{PCB Verification} % ETHAN
 % Hardware tests
+The PCB verification process was broken up into physical inspection of the board
+and functional testing. The PCBs were both fabricated and assembled by an
+external vendor. Upon receiving the fully assembled TeachEE units, the following
+physical inspection steps were taken.
+
+\subsubsection{Physical Inspection and Acceptance Testing}
+\begin{enumerate}
+  \item Microscope examination of the PCB. Looking at each solder joint to
+    identify any cold or weak links, tombstoning etc.
+  \item Assembly BOM check. Examine the components populated on the board.
+    Ensure nothing was missed and make sure that components that were not
+    supposed to be populated are left blank per the instructions to the vendor.
+  \item Solder the linear voltage regulator in for power on testing. This is not
+    populated initially because it is through-hole. Through-hole components
+    drive assembly costs upwards so they are done by hand for this project.
+  \item Basic electrical check. Use a DMM to check for any short circuits
+    between the power rails and ground.
+  \item Power on the TeachEE via the USB Mini port. Verify that the LEDs all
+    turn on and that the voltage regulator is outputting the correct voltage.
+    Check for heat around the board indicating a possible short circuit.
+\end{enumerate}
+
+Figures \ref{fig:pcb-front} and \ref{fig:pcb-back} are the front and back of the
+PCB respectively. These photos were provided by the vendor and provide a clear
+picture of the boards at the point of delivery and inspection. Figure
+\ref{fig:area-around-fifo} is a closeup of the area around the USB FIFO as this
+was a high density area in the PCB layout.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{figures/pcb-front.JPG}
+  \caption{PCB Front Side After Delivery}
+  \label{fig:pcb-front}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{figures/pcb-back.JPG}
+  \caption{PCB Back Side After Delivery}
+  \label{fig:pcb-back}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{figures/pcb-closeup.JPG}
+  \caption{Close up of the FIFO on the PCB}
+  \label{fig:area-around-fifo}
+\end{figure}
+
+\subsubsection{Functional Testing}
+All three assembled PCBs passed these inspection checks. Next, functional
+testing was done on the three units. The functional tests are as follows.
+
+\begin{enumerate}
+  \item Plug the TeachEE to a computer via the USB Mini connector. Open the FTDI
+    Utility to check if the USB FIFO is detected. Ensure that the EEPROM can be
+    read and that the USB device descriptor can be changed to \code{TeachEE}.
+    After making the EEPROM change, unplug the device and plug back in. Check
+    that the USB device is detected with the right descriptor information. This
+    descriptor is used by the desktop software to identify the USB device as the
+    oscilloscope.
+  \item Use the \code{reader.py} script found in Appendix
+    \ref{appendix:python-reader} to set the FT232HQ on TeachEE to synchronous
+    data transmission mod to set the FT232HQ on TeachEE to synchronous data
+    transmission mode 40.
+  \item After setting the device to synchronous mode, connect an oscilloscope to
+    the FT232HQ clock testpoint on the PCB. Verify that a \SI{60}{\mega\hertz}
+    clock is supplied to the FPGA. The waveform should be a triangle wave. A
+    screen capture of the clock waveform is given in Figure \ref{fig:ftdi-clk}.
+    The triangle wave is not ideal but the FPGA locks to it successfully
+    nonetheless.
+
+  % \item Check the output voltage of the hall effect current sensor by probing
+  %   the \code{VIOUT} pin with a DMM. This voltage should be approximately
+  %   \SI{1.7}{\volt}, which represents a reading of \SI{0}{\ampere}.
+\end{enumerate}
+
+% TODO: add figure of the FTDI232HQ clock output
+\begin{figure}[H]
+  \centering
+  % \includegraphics[width=\textwidth]{figures/pcb-closeup.JPG}
+  \caption{FT232HQ Clock Output Waveform}
+  \label{fig:ftdi-clk}
+\end{figure}
+
+% write a little blurb about doing final assembly
+All three PCBs also passed the functional tests enumerated above. At this point,
+all parts omitted from the assembly process are soldered onto the PCB. This
+includes all through-hole components on the board except for the voltage
+regulator which was soldered earlier on for the power-up test. Through-hole
+parts were omitted from the assembly order to keep costs low. Moreover, due to
+the chip shortage, the hall effect current sensor had to be purchased separately
+and soldered manually. The through-hole parts that are soldered manually include
+all the pin headers for the FPGA, BNC connectors for the oscilloscope probes and
+through-hole testpoints. To protect the PCB from any conductive surfaces or ESD,
+M3 standoff screws are installed into all of the mounting holes to elevate the
+PCB from the surface on which it rests. After this final assembly step, the PCB
+is ready for software and FPGA development. The FPGA module can be installed
+into the pin header and flashed. A fully assembled TeachEE is shown in Figure
+\ref{fig:pcb-final}.
+
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{figures/pcb-final.jpg}
+  \caption{Final Assembled TeachEE}
+  \label{fig:pcb-final}
+\end{figure}
+
 \subsection{FPGA Verification} % ETHAN
 % Talk about FPGA automated sims, testbenches CI ETC
 \subsection{Software Verification} \label{sec:software-testing} % ERIC
@@ -926,6 +1040,71 @@ components. The full BOM for the PCB is provided in Appendix \ref{appendix:bom}.
 %% outside the tolerance values, explain why in this section. Your mark for this
 %% section depends on how close you got to your specs
 
+% NOTE: John please finish off this section, i just did the tables, - ethan
+The following tables outline the target hardware and software specifications of
+this project. This specifications table differs from the design section as it
+states what specifications were and were not achieved in the final
+implementation. The hardware and software specification evaluations are given in
+Tables \ref{tab:hw-spec-eval} and \ref{tab:sw-spec-eval} respectively.
+
+\begin{table}[H]
+    \caption{Hardware Specification Evaluation}
+    \begin{tabularx}{\textwidth}{c|c|c|p{5cm}}
+        Specification & Target Value & Achieved? & Comments \\
+        \hline
+      Voltage Input Bandwidth&\SI{100}{\kilo\hertz}& Yes & Ultimately \SI{500}{\kilo\hertz} of bandwidth was achieved through the low speed ADC and \SI{20}{\mega\hertz} through the high speed ADC.\\
+        \hline
+        Current Input Bandwidth&\SI{100}{\kilo\hertz}& Yes & N/A. This bandwidth matches the hall effect sensor.\\
+        \hline 
+        Measureable Current Range&\SI{-15}{\ampere} to \SI{+15}{\ampere}& Yes & Matches the specification of the sensor.\\
+        \hline
+        Measureable Voltage Range& \SI{0}{\volt} to \SI{3.3}{\volt} & Yes & This was achieved in both XADC and HSADC channels.\\
+        \hline
+        Number of Current Input Channels& $1$ & Yes & N/A\\
+        \hline
+        Number of Voltage Input Channels& $1$ & Yes & Two additional voltage channels were added using the HSADC.\\
+        \hline
+        Power Input Voltage Rating& \SI{5}{\volt} & Yes & USB voltage is used as supply and the regulator is tolerant up to \SI{12}{\volt}\\
+        \hline
+        Power Current Consumption Rating& \SI{500}{\milli\ampere} & Yes & Current draw has not exceeded \SI{500}{\milli\ampere} in any operation setting.\\
+        \hline
+        Voltage Sample Rate& \SI{1}{\mega\samplepersec} & Yes & The XADC can sample at \SI{1}{\mega\samplepersec} and HSADC can sample at \SI{40}{\mega\samplepersec}\\
+        \hline
+        Current Sample Rate& \SI{1}{\mega\samplepersec} & Yes & N/A \\
+        \hline
+        PCB Thickness& \SI{1.6}{\milli\metre} & Yes & Thickness was exactly 1.6mm in a four-layer stackup. \\
+        \hline
+        PCB Dimensions& $\pm \SI{400}{\milli\metre\squared}$ & Yes & the tolerance given is less than the final size of the PCB.\\
+        \hline
+        Voltage Sample Error & $\pm \SI{20}{\percent}$ & Yes & values match almost exactly to the Rigol scope in the Sci '65 lab through empirical testing.\\
+        \hline
+        Current Sample Error & $\pm \SI{20}{\percent}$ & Yes & current readings match a DMM within this tolerance.\\
+        \hline
+    \end{tabularx} 
+\label{tab:hw-spec-eval}
+\end{table}
+
+As shown above, the hardware prototype meets all specifications originally
+defined in the project blueprint. The TeachEE hardware also exceeds expectations
+in the sample rate, bandwidth, and channel count specifications.
+
+\begin{table}[H]
+  \caption{Software Specification Evaluation}
+  \begin{tabularx}{\textwidth}{l|l|p{5cm}}
+    Specification & Achieved? & Comments\\
+    \hline
+    The software shall be able to modify the horizontal and vertical scales of the plot. & Yes & \\
+    The software shall be able to modify the trigger voltage. & Yes & \\
+    The application shall be deployable to Windows, macOS, and Linux. & Yes & \\
+    \hline
+    The software shall be able to capture voltage samples and export them to a CSV file. & Yes & \\
+    The software shall receive samples via the FTDI 232 in synchronous mode. & Yes & \\
+    \hline
+    The software shall be able to render waveforms at a rate of \SI{30}{\hertz} on screen. & Yes & \\
+    \hline
+  \end{tabularx} 
+  \label{tab:sw-spec-eval}
+\end{table}
 \section{Conclusions \& Recommendations} % Tim
 %% Conclusions and recommendations – provide commentary on the main technical
 %% lessons learned from this project; is there potential for lasting impact for
@@ -940,6 +1119,9 @@ components. The full BOM for the PCB is provided in Appendix \ref{appendix:bom}.
 \section{Overall Team Effort}
 The following table quantifies the percentage effort each team member expended
 on all aspects of the project.
+
+% NOTE: I think we will need to add some further reflection here about how the
+% project went overall, it is in the rubric
 
 \begin{table}[H]
   \caption{Team Effort Table}
@@ -1158,7 +1340,7 @@ on all aspects of the project.
     \subsection{xadc\_packetizer\_tb.py}
     \inputminted[linenos,breaklines]{python}{../../rtl/python/xadc_packetizer_tb.py}
 
-    \section{Python Packet Integrity Test Script}
+    \section{Python Packet Integrity Test Script} \label{appendix:python-reader}
     \inputminted[linenos,breaklines]{python}{../../rtl/teachee/reader.py}
 
     \end{appendices}
