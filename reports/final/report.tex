@@ -939,7 +939,48 @@ into the pin header and flashed. A fully assembled TeachEE is shown in Figure
 \end{figure}
 
 \subsection{FPGA Verification} % ETHAN
+% NOTE: from Eric, Discuss different problems we had to debug, how we overcame
+% them.
+
 % Talk about FPGA automated sims, testbenches CI ETC
+
+% Verification of the FPGA code takes place on a per module basis
+
+% Testbenches are written for each module individually to verify the function of
+% each one before its integration into the TeachEE code base
+
+% Initially testbenches were made up of a finite state machine that applied
+% different inputs to the module and the outputs were manually inspected by the
+% developer in ModelSim. These initial testbenches are shown in REFERENCE LEGACY
+% TESTBENCH APPENDIX HERE
+
+% SHOW a figure of how unwieldy the manual inspection becomes. Maybe grab a
+% screenshot of the xadc packetizer tb
+
+% TALK ABOUT VUNIT AND CI JOBS HERE
+% REFERENCE THE CI Script and figuring out how to run modelsim in a CI
+% environment
+% Defining the testbenches with Python. Talk about how useful it is for defining
+% the compilation sources without having to manually mess about in a GUI
+
+
+% In many cases, additional supporting modules were needed to test a specific
+% module. Examples of this are the FT232h, xadc, and hsadc. Since all of these
+% modules are designed to interact with the interface of a physical component on
+% the PCB, we have to mock out the that interface in order to test the module.
+% These device mocks are called ''Board Functional Models`' or BFMs.
+% Each BFM is designed to respond in the same way to input as the actual device
+% itself. Of course the BFM has no real data to return so the data coming back
+% will often be a preset value or known pattern. The BFMs are written as finite
+% state machines built to emulate the timing diagrams provided by the
+% manufacturer. Usually, they are more limited in their scope compared to the
+% full device interface to limit potential for bugs. For example, the ft232h bfm
+% only implements the write interface of the FT232HQ as the USB reads are not
+% used in TeachEE. The main problem with BFMs is that they can produce bugs of
+% their own. However, if the BFM is correct, then a module interacting with the
+% hardware modeled by the BFM should work exactly as expected on the physical
+% PCB.
+
 \subsection{Software Verification} \label{sec:software-testing} % ERIC
 % Rust CI, Testing with mock byte streams? 
 \subsection{System Level Verification} % ETHAN / ERIC
