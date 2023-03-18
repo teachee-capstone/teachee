@@ -6,7 +6,7 @@ use std::{
 
 use crate::controller::Channels;
 
-use super::{Channel, Result, SampleSource};
+use super::{Result, SampleSource};
 
 const SAMPLE_DELAY_SEC: f64 = 1.0 / 1_000.0;
 const CHUNK_DELAY_SEC: f64 = 1.0 / 100.0;
@@ -29,7 +29,7 @@ impl SampleSource for SineSampleSource {
         })
     }
 
-    fn read_samples(&mut self, channels: &mut Channels) -> Result<(usize, Channel)> {
+    fn read_samples(&mut self, channels: &mut Channels) -> Result<usize> {
         // sleep to emulate blocking read
         thread::sleep(Duration::from_secs_f64(CHUNK_DELAY_SEC));
 
@@ -51,6 +51,6 @@ impl SampleSource for SineSampleSource {
             *c_sample = *v_sample;
         }
 
-        Ok((num_samples, Channel::VoltageA))
+        Ok(num_samples)
     }
 }

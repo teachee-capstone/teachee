@@ -4,12 +4,11 @@ use std::{
     fs::{remove_file, File},
     ops::RangeInclusive,
     sync::{Arc, RwLock},
+    time::{SystemTime, UNIX_EPOCH},
 };
 
 use csv::Writer;
-
 use eframe::egui::*;
-use std::time::{SystemTime, UNIX_EPOCH};
 
 use crate::controller::{AppData, BufferState, SAMPLE_RATE_PER_CHANNEL};
 
@@ -31,7 +30,7 @@ const GROUP_SPACING: f32 = 3.0;
 const BUTTON_HEIGHT: f32 = 25.0;
 const ERROR_COLOUR: Color32 = Color32::LIGHT_RED;
 
-// 1 MSPS
+// 0.5 MSPS
 const SAMPLE_PERIOD: f64 = 1.0 / (SAMPLE_RATE_PER_CHANNEL as f64);
 
 const H_SCALE_RANGE: RangeInclusive<f64> = RangeInclusive::new(0.1, 10.0);

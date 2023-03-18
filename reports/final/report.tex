@@ -88,7 +88,7 @@ as a cheap alternative to traditional postsecondary education. With this trend o
 remote higher education, engineering students will need their own lab equipment to
 complete their learning requirements.
 
-TeachEE is a user friendly general purpose electronics measurement instrument
+TeachEE is a general purpose electronics measurement instrument
 designed for remotely delivered engineering labs. It acts as both a
 USB oscilloscope and current monitor. Currently, there are few instrumentation
 options for students completing their labs remotely. The oscilloscopes used for
@@ -96,6 +96,13 @@ onsite learning are bulky and difficult to use. TeachEE bundles
 together the functionality most commonly required for electrical engineering
 labs and packages it with portable software that can run on lower end computers
 with any operating system.
+
+As TeachEE is targeted for electrical engineering students, it must be powerful
+enough to be used in a variety of practices, but also simple enough to
+be intuitive to use for novices. It must also be compact to carry between classes,
+and portable to ensure students can use it with any machine. Finally, it must be
+cost efficient so that students receive the most value out of this oscilloscope
+compared to alternatives.
 
 \section{Design}
 %% Design – describe your functional requirements and constraints; provide
@@ -200,7 +207,7 @@ of contact to the USB interface.
 Figure \ref{fig:hw-block-diagram} is a complete hardware block diagram used as a
 guide for the PCB design implementation.
 
-\begin{figure}[h]
+\begin{figure}[H]
   \centering
   \includegraphics[width=\textwidth]{../../misc/TeachEE-System-Diagram-Hardware.png}
   \caption{Hardware System Block Diagram}
@@ -220,7 +227,7 @@ sending all data at once is too much throughput for USB 2.0. With these issues
 in mind, the diagram given in Figure \ref{fig:fpga-block-diagram} provides a
 system-level block diagram for the FPGA design.
 
-\begin{figure}[h]
+\begin{figure}[H]
   \centering
   \includegraphics[width=\textwidth]{../../misc/TeachEE-System-Diagram-FPGA.png}
   \caption{FPGA System Block Diagram}
@@ -262,7 +269,7 @@ the PCB. The top level schematic is shown in Figure
 \ref{fig:hw-top-level-sheet}. It should be noted that all 8 pages of the
 schematic are provided in Appendix \ref{appendix:schematic}.
 
-\begin{figure}[h]
+\begin{figure}[H]
   \centering
   \includegraphics[width=\textwidth]{figures/altium-top-level.png}
   \caption{TeachEE PCB Top Level Schematic}
@@ -991,7 +998,7 @@ into the pin header and flashed. A fully assembled TeachEE is shown in Figure
 
 \subsection{FPGA Verification} % ETHAN
 % Talk about FPGA automated sims, testbenches CI ETC
-\subsection{Software Verification} % ERIC
+\subsection{Software Verification} \label{sec:software-testing} % ERIC
 % Rust CI, Testing with mock byte streams? 
 \subsection{System Level Verification} % ETHAN / ERIC
 % This subsection should include some notes on time spent in the lab running all
@@ -999,6 +1006,81 @@ into the pin header and flashed. A fully assembled TeachEE is shown in Figure
 % output against that of a real scope connected to the same signal
 
 \section{Project Planning and Budgeting} % ERIC
+
+The following table lists the original milestones associated with this project.
+\begin{table}[H]
+    \caption{Milestones}
+    \begin{tabularx}{\textwidth}{l|l|l|l}
+        No. & Milestone & Due date & Responsible Member(s) \\
+        \hline
+        1 & Design and order PCB & Week 4 & Ethan \\
+        2 & Create skeleton of application & Week 11 & Tim \\
+        3 & Submit blueprint report & Week 11 & All members \\
+        4 & Verify PCB is functional & Week 12 & Ethan \\
+        5 & Read values from USB driver & Week 13 & Tim and John \\
+        6 & Create basic UI and waveform display & Week 14 & Eric \\
+        7 & FPGA programming & Week 16 & Ethan \\
+        8 & Implement oscilloscope triggering & Week 16 & John \\
+        9 & Implement CSV exporting and all UI functionality & Week 17 & Eric \\
+        10 & Testing of application & Week 18 & Tim, Eric, and John \\
+        11 & Testing of PCB & Week 18 & Ethan \\
+        12 & Testing of complete system & Week 20 & All members \\
+        13 & Open House & Week 22 & \\
+        14 & Final deliverable & Week 23 & \\
+        15 & Final project report & Week 24 & All members
+    \end{tabularx} 
+\label{hw:milestones-table}
+\end{table}
+
+Many milestones were completed earlier than planned; in particular, the full FPGA
+and UI work were completed between weeks 12 and 13, and basic triggering was
+implemented in week 15. Due to the severe software performance issues described in
+Section \ref{sec:software-testing}, developing a new design became the top priority.
+This slightly delayed some less important UI work, but all required functionality was
+completed by week 19. Furthermore, many stretch goals were achieved, including
+reading from four concurrent channels, advanced triggering, and frequency spectrum
+analysis. Also, minimal testing was required near the end of the timeline as most
+issues were solved during development through iterative testing.
+
+Table \ref{tab:abbreviated-bom} breaks down the cost of the PCB
+fabrication and assembly as quoted by the supplier. The supplier contracted for
+TeachEE is Bittele (7PCB). Bittele takes care of both the fabrication and
+soldering of the PCBs. Moreover, Bittele takes the generated output from the EDA
+software (Altium) and procures all the parts directly to their facility. The
+procurement cost is expanded in the budget table with the major functional
+components on the PCB. An exhaustive list is not included as there are hundreds
+of miscellaneous resistors, capacitors, and inductors whose cost is marginal.
+
+A full unit of the PCB costed \$80 under budget. This left
+additional budget to purchase any replacement components or
+cover unexpected expenses. Two additional backup boards were ordered in case the main
+board failed. Fortunately, the team did not encounter any hardware failures during the
+course of the project and therefore did not require any replacing of the board or its
+components. The full BOM for the PCB is provided in Appendix \ref{appendix:bom}.
+
+\begin{table}[H]
+    \caption{TeachEE Bill of Materials}
+    \begin{tabularx}{\textwidth}{l|l|l}
+        \textbf{Item / Part Number} & \textbf{Supplier} & \textbf{Cost (CAD)} \\
+        \hline
+        PCB Fabrication & Bittele & \$104.37\\
+        PCB Total BOM Procurement & Bittele & \$126.67\\
+        \hline
+        \textbf{Major Components (Included in cost above)}& &\\
+        \hline
+        AD9288BSTZ-40 ADC & Digi-Key & \$14.70\\
+        AD8138ARZ-R7 ADC Driver & Digi-Key & \$26.85\\
+        FT232HQ-REEL USB FIFO & Digi-Key & \$6.41\\
+        ACS720KLATR-15AB-T Current Sensor & Digi-Key & \$9.81\\
+        \hline
+        PCB Assembly & Bittele & \$289.76\\
+        \hline
+        Total & & \$520.80\\
+        \hline
+        Budget Remaining & & \$79.20
+    \end{tabularx} 
+\label{tab:abbreviated-bom}
+\end{table}
 
 \section{Stakeholder Needs} % John / Tim
 %% Describe how you considered stakeholder needs in your design, and how factors
