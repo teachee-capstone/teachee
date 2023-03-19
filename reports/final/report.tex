@@ -20,7 +20,7 @@
 \usepackage{minted}
 
 \DeclareSIUnit{\samplepersec}{SPS}
-\newcommand{\code}[1]{\mintinline{systemverilog}{#1}}
+\newcommand{\code}[1]{\mintinline{text}{#1}}
 
 \begin{document}
 
@@ -820,7 +820,246 @@ through a high-speed interconnection protocol. An example of this architecture
 is Keysight's MegaZoom ASIC \cite{keysight_megazoom}.
 
 \subsection{Software} % ERIC
-% Basically everything from poster with more detail
+TeachEE's software workload is split between three modules, each of which runs in its
+own thread. The first module is the USB Manager, responsible for reading packets from the
+hardware driver and decoding them. The second is the App, responsible for updating and
+displaying the user interface. Finally, the Controller facilitates communication between
+the two and provides some additional sample processing.
+
+The software for TeachEE follows an improved threading model described in
+Figure \ref{fig:soft-sequence-diagram} below. This design change was necessitated
+by software performance issues encountered in the initial design, described in
+Section \ref{sec:soft-testing}. The USB manager and Controller share one set of
+two buffers, referred to as the USB Buffers, and the App and Controller share
+another set of two buffers, the App buffers. The threads coordinate their workflows
+such that each thread can exclusively operate on a buffer at a time. For example,
+while the USB Manager is writing samples to USB Buffer 0, the Controller can copy
+samples from USB Buffer 1 to App Buffer 1, and the App can read from App Buffer 0.
+After every work cycle, each thread swaps to the other buffer. This protocol
+parallelizes the workload as much as possible and minimizes thread block times.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{../../misc/sequence_diagram.drawio.png}
+  \caption{Threading Model Sequence Diagram}
+  \label{fig:soft-sequence-diagram}
+\end{figure}
+
+The sequence diagram above simplifies the buffer representation. Each buffer in the
+two sets actually represents several buffers/channels in the \code{Channels}
+struct. In the current implementation, two channels are supported and every buffer
+operation operates on both channels simultaneously. Furthermore, each \code{Channels}
+struct is wrapped in a \code{BufferState} enum, representing the emptyness/fullness
+of the channels, which in turn is guarded by a monitor. To allow these monitors to
+be shared between threads, they are wrapped by Rust's shared pointer, the \code{Arc}.
+Only when the last \code{Arc} pointer to a \code{BufferState} goes out of scope do the
+shared buffers get deallocated. This allows automatic memory management of shared data.
+Figure \ref{fig:soft-buffer-config} below illustrates the shared data's configuration.
+Note that there is an additional field in the \code{Channels} struct used to store the
+results of frequency spectrum analysis performed in the Controller thread. This field
+is unused in the USB Buffer \code{Channels}.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=10cm]{figures/buffer_config.drawio.png}
+  \caption{Shared Data Configuration}
+  \label{fig:soft-buffer-config}
+\end{figure}
+
+In Rust, monitors are implemented using condition variables and mutexes. The condition
+variable allows threads to wait while a condition is true. The mutex ensures that only
+one thread is allowed access to a given \code{Channels} at a time. A thread acquires a
+monitor by first locking the mutex. Once the mutex is locked, the thread checks the
+\code{BufferState}. If the thread intends to write to the buffers, but the buffers are
+\code{Full}, it unlocks the mutex and is put to sleep until it receives a notification
+that the buffers have been emptied. The same applies to threads attempting to read from
+\code{Empty} buffers. Once the thread is notified, it is woken from the wait function
+with the mutex reacquired. A thread releases a monitor by setting the \code{BufferState}
+to the appropriate type and notifies a thread waiting on the condition variable. An
+example of this procedure (run by the App thread) is given in the code block below.
+
+\setstretch{1}
+\begin{minted}{rust}
+    // Wait until controller thread has filled the current buffer.
+    let mut buf_state = condvar
+        .wait_while(mutex.lock().unwrap(), |buf_state| buf_state.is_empty())
+        .unwrap();
+    // Get the Channels buffers.
+    let (channels, num_samples) = buf_state.unwrap();
+    ...
+    // Release the monitor.
+    *buf_state = BufferState::Empty(channels);
+    condvar.notify_one();
+\end{minted}
+\setstretch{2}
+
+\subsubsection{The USB Manager}
+The USB Manager thread reads packets from the FTDI receiver queue into a buffer,
+decodes them into voltage and current samples, and populates the USB Buffers.
+The packets are read from the queue using an FTDI library. The thread always
+reads 60 000 bytes at a time so that the App displays approximately 10 000
+samples each cycle. This ensures that the plotted waveform does not expand
+or contract in the horizontal direction, improving user experience.
+
+The decoding function decodes the six-byte COBS packets into pairs of voltage
+and current samples. The main decoding loop is described in the code below.
+
+\setstretch{1}
+\begin{minted}{rust}
+    ...
+    'outer: while src_index + PACKET_SIZE < end && dst_index < channels.voltage1.len() {
+        // Packet error: offset byte not in [1, 5] or packet not delimited with 0
+        if self.rx_buf[src_index] == 0
+            || self.rx_buf[src_index] >= PACKET_SIZE as u8
+            || self.rx_buf[src_index + PACKET_SIZE - 1] != 0
+        {
+            // Find the next 0 and continue from there
+            ...
+        } else {
+            let packet = &self.rx_buf[src_index..(src_index + PACKET_SIZE)];
+            let mut block = packet[0] - 1;
+            // Two bytes of packet overhead
+            let mut decoded: [u8; PACKET_SIZE - 2] = [0; PACKET_SIZE - 2];
+            let mut decoded_index = 0;
+
+            // Note: the packet index is just the decoded_index + 1 (skip the first offset byte)
+            // Example packet: 01 02 22 02 44 00
+            // Decodes to:        00 22 00 44
+            while decoded_index < decoded.len() {
+                if block > 0 {
+                    decoded[decoded_index] = packet[decoded_index + 1];
+                } else {
+                    decoded[decoded_index] = 0;
+                    block = packet[decoded_index + 1];
+
+                    if block == 0 {
+                        // The 4 sample bytes cannot be zero; skip this packet
+                        src_index += PACKET_SIZE;
+                        continue 'outer;
+                    }
+                }
+                decoded_index += 1;
+                block -= 1;
+            }
+
+            // Map digital values with 4096 discrete levels to samples
+            channels.voltage1[dst_index] =
+                (((decoded[3] as u16) << 4) | decoded[2] as u16) as f64 * 3.3 / 4095.0;
+            channels.current1[dst_index] =
+                ((((decoded[1] as u16) << 4) | decoded[0] as u16) as f64 * 3.3 / 4095.0 - 1.5)
+                    * (1.0 / 0.09);
+            src_index += PACKET_SIZE;
+            dst_index += 1;
+        }
+    }
+    ...
+\end{minted}
+\setstretch{2}
+
+\subsubsection{The Controller}
+The Controller thread copies samples from the USB Buffers to the App Buffers.
+If enabled by the user, it also performs rising edge triggering and/or frequency
+spectrum analysis on the samples with user-provided parameters. The triggering
+algorithm uses hysteresis to find the first rising edge while ignoring rising
+edges from noise. It does this by setting the hysteresis to 25\% of the signal
+peak-to-peak so that only larger rising edges get triggered on \cite{hysteresis}.
+The triggering function is provided below.
+
+\setstretch{1}
+\begin{minted}{rust}
+    /// Returns position of first rising edge based on trigger
+    fn hysteresis_trigger(src: &[f64], trigger: f64) -> usize {
+        // Hysteresis width as fraction of peak to peak
+        const HYSTERESIS_WIDTH: f64 = 0.25;
+        let mut max_val = f64::MIN;
+        let mut min_val = f64::MAX;
+        for &val in src.iter() {
+            max_val = f64::max(max_val, val);
+            min_val = f64::min(min_val, val);
+        }
+        let hysteresis = (max_val - min_val) * HYSTERESIS_WIDTH;
+
+        // Trigger when signal first falls below (trigger - hysteresis)
+        // and then rises above trigger
+        let first_lower = src.iter().position(|&val| val < trigger -
+            hysteresis);
+        if let Some(lower_idx) = first_lower {
+            let first_higher = src[lower_idx..].iter().position(
+                |&val| val >= trigger);
+            if let Some(higher_idx) = first_higher {
+                return lower_idx + higher_idx;
+            }
+        }
+        // Don't trigger if it failed
+        0
+    }
+\end{minted}
+\setstretch{2}
+
+Spectrum analysis is performed using the \code{spectrum-analyzer} library. The
+provided function takes in the sample data, sample rate, desired frequency range,
+and an optional scaling function and returns a \code{FrequencySpectrum} struct.
+This struct contains an array of frequency/magnitude tuples, which can be passed
+to the App to be displayed.
+
+\subsubsection{The App}
+\code{egui} is a simple and fast GUI library written entirely in Rust \cite{egui}.
+It is an immediate mode GUI, which means that the UI is refreshed at approximately
+sixty frames per second and does not require any event handlers. This makes it
+ideal for writing simple UIs quickly as it eliminates the need for complex
+callbacks, UI objects, or state storage. \code{egui} was chosen to implement the
+front end instead of JavaScript to avoid the overhead of message passing.
+
+The function below adds and manages a pair of offset/scale sliders, and is an example
+of the simplicity of the \code{egui} library. This function is called three times to
+add the three pairs of sliders shown in Figure \ref{fig:soft-ui}.
+
+\setstretch{1}
+\begin{minted}{rust}
+    fn offset_scale_sliders(
+        ui: &mut Ui,
+        offset: &mut f64,
+        o_range: RangeInclusive<f64>,
+        scale: &mut f64,
+        s_range: RangeInclusive<f64>,
+    ) {
+        ui.columns(2, |uis| {
+            uis[0].label("Offset");
+            uis[0].add(Slider::new(offset, o_range).clamp_to_range(false));
+            uis[1].label("Scale");
+            uis[1].add(
+                Slider::new(scale, s_range)
+                    .clamp_to_range(false)
+                    .logarithmic(true),
+            );
+        });
+    }
+\end{minted}
+\setstretch{2}
+
+The App stores two structs: an \code{AppData} and a \code{UIControls}.
+\code{AppData} stores the App Buffers, trigger thresholds, and Frequency Spectrum
+enable, and is shared with the Controller thread. \code{UIControls} stores the
+current UI state set by the user, e.g., offsets, scaling, trigger thresholds, and
+spectrum analysis enable/disable.
+
+TeachEE implements several features reflected in the UI, including:
+\begin{enumerate}
+  \item Individual channel scaling and offsetting (both horizontal and vertical)
+  \item Rising edge triggering with user-provided threshold
+  \item Sample plotting with cursor and various pan and zoom options
+  \item Plotting of samples in the frequency domain
+  \item Exporting plotted samples to a CSV file
+  \item Ability to turn individual channels on and off
+\end{enumerate} 
+Figure \ref{fig:soft-ui} shows all of TeachEE's features in use at the same time.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{figures/software-ui.png}
+  \caption{Example screenshot showcasing all UI features}
+  \label{fig:soft-ui}
+\end{figure}
 
 \section{Testing, Evaluation \& Verification} \label{sec:testing}
 The testing and validation of the TeachEE can be broken up into hardware/PCB,
@@ -1051,8 +1290,9 @@ triggering on the first clock edge. Once the source of the problem was
 established, a clever use of the \code{locked} output of the PLL is used to hold
 all modules in reset until the clock becomes available.
 
-\subsection{Software Verification} \label{sec:software-testing} % ERIC
+\subsection{Software Verification} \label{sec:soft-testing} % ERIC
 % Rust CI, Testing with mock byte streams? 
+% Threading model iteration, trigger iteration
 \subsection{System Level Verification} % ETHAN / ERIC
 % This subsection should include some notes on time spent in the lab running all
 % three HW, FPGA and SW components integrated together. Also comparing our
@@ -1088,7 +1328,7 @@ The following table lists the original milestones associated with this project.
 Many milestones were completed earlier than planned; in particular, the full FPGA
 and UI work were completed between weeks 12 and 13, and basic triggering was
 implemented in week 15. Due to the severe software performance issues described in
-Section \ref{sec:software-testing}, developing a new design became the top priority.
+Section \ref{sec:soft-testing}, developing a new design became the top priority.
 This slightly delayed some less important UI work, but all required functionality was
 completed by week 19. Furthermore, many stretch goals were achieved, including
 reading from four concurrent channels, advanced triggering, and frequency spectrum
