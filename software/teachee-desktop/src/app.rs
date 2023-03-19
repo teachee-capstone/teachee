@@ -3,7 +3,7 @@ use std::{
     fmt,
     fs::{remove_file, File},
     ops::RangeInclusive,
-    sync::{Arc, RwLock},
+    sync::{Arc, Mutex},
     time::{SystemTime, UNIX_EPOCH},
 };
 
@@ -97,7 +97,7 @@ impl App {
 
 fn update_trigger(
     ui: &mut Ui,
-    trigger_val: &mut Arc<RwLock<f64>>,
+    trigger_val: &mut Arc<Mutex<f64>>,
     button_text: &mut TriggerControl,
     textedit_text: &mut String,
     format_wrong: &mut bool,
@@ -119,7 +119,7 @@ fn update_trigger(
                 let parsed = textedit_text.parse::<f64>();
                 match parsed {
                     Ok(new_value) => {
-                        *trigger_val.write().unwrap() = new_value;
+                        *trigger_val.lock().unwrap() = new_value;
                         *button_text = TriggerControl::Stop;
                         *format_wrong = false;
                     }
@@ -140,7 +140,7 @@ fn update_trigger(
                 let parsed = textedit_text.parse::<f64>();
                 match parsed {
                     Ok(new_value) => {
-                        *trigger_val.write().unwrap() = (new_value - offset) / scale;
+                        *trigger_val.lock().unwrap() = (new_value - offset) / scale;
                         *button_text = Stop;
                         *format_wrong = false;
                     }
@@ -150,7 +150,7 @@ fn update_trigger(
                 }
             }
             Stop => {
-                *trigger_val.write().unwrap() = f64::INFINITY;
+                *trigger_val.lock().unwrap() = f64::INFINITY;
                 *button_text = Start;
             }
         };
@@ -345,7 +345,7 @@ impl eframe::App for App {
 
                         ui.vertical_centered_justified(|ui| {
                             if ui.toggle_value(&mut ui_controls.fft, "Channel 1").clicked() {
-                                *data.fft.write().unwrap() = ui_controls.fft;
+                                *data.fft.lock().unwrap() = ui_controls.fft;
                             }
                         });
                     });
@@ -364,9 +364,9 @@ impl eframe::App for App {
                                 .clicked()
                             {
                                 *ui_controls = UIControls::default();
-                                *data.voltage_trigger_threshold.write().unwrap() = f64::INFINITY;
-                                *data.current_trigger_threshold.write().unwrap() = f64::INFINITY;
-                                *data.fft.write().unwrap() = false;
+                                *data.voltage_trigger_threshold.lock().unwrap() = f64::INFINITY;
+                                *data.current_trigger_threshold.lock().unwrap() = f64::INFINITY;
+                                *data.fft.lock().unwrap() = false;
                             }
                         });
                     })

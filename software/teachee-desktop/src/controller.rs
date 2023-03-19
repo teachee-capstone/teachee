@@ -1,7 +1,7 @@
 use std::{
     cmp::min,
     mem::take,
-    sync::{Arc, Condvar, Mutex, RwLock},
+    sync::{Arc, Condvar, Mutex},
 };
 
 use spectrum_analyzer::{
@@ -72,9 +72,9 @@ pub struct USBData {
 #[derive(Debug, Clone)]
 pub struct AppData {
     pub bufs: Vec<Arc<(Condvar, Mutex<BufferState>)>>,
-    pub voltage_trigger_threshold: Arc<RwLock<f64>>,
-    pub current_trigger_threshold: Arc<RwLock<f64>>,
-    pub fft: Arc<RwLock<bool>>,
+    pub voltage_trigger_threshold: Arc<Mutex<f64>>,
+    pub current_trigger_threshold: Arc<Mutex<f64>>,
+    pub fft: Arc<Mutex<bool>>,
 }
 
 fn generate_buffers() -> Vec<Arc<(Condvar, Mutex<BufferState>)>> {
@@ -100,9 +100,9 @@ impl Default for AppData {
     fn default() -> Self {
         Self {
             bufs: generate_buffers(),
-            voltage_trigger_threshold: Arc::new(RwLock::new(0.0)),
-            current_trigger_threshold: Arc::new(RwLock::new(0.0)),
-            fft: Arc::new(RwLock::new(false)),
+            voltage_trigger_threshold: Arc::new(Mutex::new(0.0)),
+            current_trigger_threshold: Arc::new(Mutex::new(0.0)),
+            fft: Arc::new(Mutex::new(false)),
         }
     }
 }
@@ -122,7 +122,6 @@ impl Controller {
         loop {
             // Cycle between the two buffers in each pair.
             for (dbuf, abuf) in self.usb_data.bufs.iter().zip(self.app_data.bufs.iter()) {
-                // TODO: ignore samples until trigger sample
                 let (data_condvar, data_mutex) = &**dbuf;
                 let (app_condvar, app_mutex) = &**abuf;
 
@@ -145,11 +144,11 @@ impl Controller {
                     &mut dst,
                     &src,
                     num_samples,
-                    *self.app_data.voltage_trigger_threshold.read().unwrap(),
-                    *self.app_data.current_trigger_threshold.read().unwrap(),
+                    *self.app_data.voltage_trigger_threshold.lock().unwrap(),
+                    *self.app_data.current_trigger_threshold.lock().unwrap(),
                 );
 
-                if *self.app_data.fft.read().unwrap() {
+                if *self.app_data.fft.lock().unwrap() {
                     let mut temp: [f32; MAX_FFT_SAMPLES_INPUT] = [0.0; MAX_FFT_SAMPLES_INPUT];
                     for i in 0..min(temp.len(), num_remaining) {
                         temp[i] = dst.voltage1[i] as f32;
