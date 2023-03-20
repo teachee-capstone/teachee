@@ -240,7 +240,7 @@ identical to the final implementation. The team made use of COBs packet encoding
 as promised in the blueprint and added a standard AXI Streaming protocol for the
 internal FPGA datapath.
 
-\subsection{Software} % Tim
+\subsection{Software} \label{sec:soft-design}% Tim
 % Tauri, two threaded one buffer guarded with mutex
 
 \section{Implementation} \label{sec:impl}
@@ -829,7 +829,7 @@ the two and provides some additional sample processing.
 The software for TeachEE follows an improved threading model described in
 Figure \ref{fig:soft-sequence-diagram} below. This design change was necessitated
 by software performance issues encountered in the initial design, described in
-Section \ref{sec:soft-testing}. The USB manager and Controller share one set of
+Section \ref{sec:soft-performance-issues}. The USB manager and Controller share one set of
 two buffers, referred to as the USB Buffers, and the App and Controller share
 another set of two buffers, the App buffers. The threads coordinate their workflows
 such that each thread can exclusively operate on a buffer at a time. For example,
@@ -862,34 +862,35 @@ is unused in the USB Buffer \code{Channels}.
 \begin{figure}[H]
   \centering
   \includegraphics[width=10cm]{figures/buffer_config.drawio.png}
-  \caption{Shared Data Configuration}
+  \caption{Shared data configuration representing one set of ``buffers"}
   \label{fig:soft-buffer-config}
 \end{figure}
 
-In Rust, monitors are implemented using condition variables and mutexes. The condition
+In Rust, a monitor is implemented as a condition variable and mutex tuple. The condition
 variable allows threads to wait while a condition is true. The mutex ensures that only
 one thread is allowed access to a given \code{Channels} at a time. A thread acquires a
 monitor by first locking the mutex. Once the mutex is locked, the thread checks the
 \code{BufferState}. If the thread intends to write to the buffers, but the buffers are
-\code{Full}, it unlocks the mutex and is put to sleep until it receives a notification
+\code{Full}, it unlocks the mutex and goes to sleep until it receives a notification
 that the buffers have been emptied. The same applies to threads attempting to read from
 \code{Empty} buffers. Once the thread is notified, it is woken from the wait function
 with the mutex reacquired. A thread releases a monitor by setting the \code{BufferState}
-to the appropriate type and notifies a thread waiting on the condition variable. An
-example of this procedure (run by the App thread) is given in the code block below.
+to the appropriate type and notifies a thread waiting on the condition variable. The
+mutex is unlocked implicitly when it goes out of scope. An example of this procedure
+(run by the App thread) is given in the code block below.
 
 \setstretch{1}
 \begin{minted}{rust}
-    // Wait until controller thread has filled the current buffer.
-    let mut buf_state = condvar
-        .wait_while(mutex.lock().unwrap(), |buf_state| buf_state.is_empty())
-        .unwrap();
-    // Get the Channels buffers.
-    let (channels, num_samples) = buf_state.unwrap();
-    ...
-    // Release the monitor.
-    *buf_state = BufferState::Empty(channels);
-    condvar.notify_one();
+  // Wait until controller thread has filled the current buffer.
+  let mut buf_state = condvar
+      .wait_while(mutex.lock().unwrap(), |buf_state| buf_state.is_empty())
+      .unwrap();
+  // Get the Channels buffers.
+  let (channels, num_samples) = buf_state.unwrap();
+  ...
+  // Release the monitor.
+  *buf_state = BufferState::Empty(channels);
+  condvar.notify_one();
 \end{minted}
 \setstretch{2}
 
@@ -897,77 +898,84 @@ example of this procedure (run by the App thread) is given in the code block bel
 The USB Manager thread reads packets from the FTDI receiver queue into a buffer,
 decodes them into voltage and current samples, and populates the USB Buffers.
 The packets are read from the queue using an FTDI library. The thread always
-reads 60 000 bytes at a time so that the App displays approximately 10 000
-samples each cycle. This ensures that the plotted waveform does not expand
-or contract in the horizontal direction, improving user experience.
+reads 120 000 bytes at a time so that after decoding, the App displays
+approximately 20 000 samples each cycle. This ensures that the plotted waveform
+does not expand or contract in the horizontal direction, improving user experience.
 
 The decoding function decodes the six-byte COBS packets into pairs of voltage
 and current samples. The main decoding loop is described in the code below.
 
 \setstretch{1}
 \begin{minted}{rust}
-    ...
-    'outer: while src_index + PACKET_SIZE < end && dst_index < channels.voltage1.len() {
-        // Packet error: offset byte not in [1, 5] or packet not delimited with 0
-        if self.rx_buf[src_index] == 0
-            || self.rx_buf[src_index] >= PACKET_SIZE as u8
-            || self.rx_buf[src_index + PACKET_SIZE - 1] != 0
-        {
-            // Find the next 0 and continue from there
-            ...
-        } else {
-            let packet = &self.rx_buf[src_index..(src_index + PACKET_SIZE)];
-            let mut block = packet[0] - 1;
-            // Two bytes of packet overhead
-            let mut decoded: [u8; PACKET_SIZE - 2] = [0; PACKET_SIZE - 2];
-            let mut decoded_index = 0;
+  ...
+  'outer: while src_index + PACKET_SIZE < end
+      && dst_index < channels.voltage1.len()
+  {
+      // Packet error: offset byte not in [1, 5] or packet not delimited
+      // with 0
+      if self.rx_buf[src_index] == 0
+          || self.rx_buf[src_index] >= PACKET_SIZE as u8
+          || self.rx_buf[src_index + PACKET_SIZE - 1] != 0
+      {
+          // Find the next 0 and continue from there
+          ...
+      } else {
+          let packet = &self.rx_buf[src_index..(src_index + PACKET_SIZE)];
+          let mut block = packet[0] - 1;
+          // Two bytes of packet overhead
+          let mut decoded: [u8; PACKET_SIZE - 2] = [0; PACKET_SIZE - 2];
+          let mut decoded_index = 0;
 
-            // Note: the packet index is just the decoded_index + 1 (skip the first offset byte)
-            // Example packet: 01 02 22 02 44 00
-            // Decodes to:        00 22 00 44
-            while decoded_index < decoded.len() {
-                if block > 0 {
-                    decoded[decoded_index] = packet[decoded_index + 1];
-                } else {
-                    decoded[decoded_index] = 0;
-                    block = packet[decoded_index + 1];
+          // Note: the packet index is just the decoded_index + 1 (skip
+          //       the first offset byte)
+          // Example packet: 01 02 22 02 44 00
+          // Decodes to:        00 22 00 44
+          while decoded_index < decoded.len() {
+              if block > 0 {
+                  decoded[decoded_index] = packet[decoded_index + 1];
+              } else {
+                  decoded[decoded_index] = 0;
+                  block = packet[decoded_index + 1];
 
-                    if block == 0 {
-                        // The 4 sample bytes cannot be zero; skip this packet
-                        src_index += PACKET_SIZE;
-                        continue 'outer;
-                    }
-                }
-                decoded_index += 1;
-                block -= 1;
-            }
+                  if block == 0 {
+                      // The 4 sample bytes cannot be zero; skip this
+                      // packet
+                      src_index += PACKET_SIZE;
+                      continue 'outer;
+                  }
+              }
+              decoded_index += 1;
+              block -= 1;
+          }
 
-            // Map digital values with 4096 discrete levels to samples
-            channels.voltage1[dst_index] =
-                (((decoded[3] as u16) << 4) | decoded[2] as u16) as f64 * 3.3 / 4095.0;
-            channels.current1[dst_index] =
-                ((((decoded[1] as u16) << 4) | decoded[0] as u16) as f64 * 3.3 / 4095.0 - 1.5)
-                    * (1.0 / 0.09);
-            src_index += PACKET_SIZE;
-            dst_index += 1;
-        }
-    }
-    ...
+          // Map digital values with 4096 discrete levels to samples
+          channels.voltage1[dst_index] =
+              (((decoded[3] as u16) << 4) | decoded[2] as u16) as f64
+                  * 3.3 / 4095.0;
+          channels.current1[dst_index] =
+              ((((decoded[1] as u16) << 4) | decoded[0] as u16) as f64
+                  * 3.3 / 4095.0 - 1.5) * (1.0 / 0.09);
+          src_index += PACKET_SIZE;
+          dst_index += 1;
+      }
+  }
+  ...
 \end{minted}
 \setstretch{2}
 
-\subsubsection{The Controller}
+\subsubsection{The Controller} \label{sec:soft-controller}
 The Controller thread copies samples from the USB Buffers to the App Buffers.
 If enabled by the user, it also performs rising edge triggering and/or frequency
-spectrum analysis on the samples with user-provided parameters. The triggering
-algorithm uses hysteresis to find the first rising edge while ignoring rising
-edges from noise. It does this by setting the hysteresis to 25\% of the signal
-peak-to-peak so that only larger rising edges get triggered on \cite{hysteresis}.
+spectrum analysis on the samples. The triggering algorithm uses hysteresis to
+find the first rising edge while ignoring rising edges from noise. It does this
+by setting the hysteresis to 25\% of the signal peak-to-peak so that only larger
+rising edges get triggered on \cite{hysteresis}. Triggering is done on both
+voltage and current channels with separate thresholds provided by the user.
 The triggering function is provided below.
 
 \setstretch{1}
 \begin{minted}{rust}
-    /// Returns position of first rising edge based on trigger
+    /// Returns position of first rising edge based on threshold
     fn hysteresis_trigger(src: &[f64], trigger: f64) -> usize {
         // Hysteresis width as fraction of peak to peak
         const HYSTERESIS_WIDTH: f64 = 0.25;
@@ -1006,9 +1014,10 @@ to the App to be displayed.
 \code{egui} is a simple and fast GUI library written entirely in Rust \cite{egui}.
 It is an immediate mode GUI, which means that the UI is refreshed at approximately
 sixty frames per second and does not require any event handlers. This makes it
-ideal for writing simple UIs quickly as it eliminates the need for complex
-callbacks, UI objects, or state storage. \code{egui} was chosen to implement the
-front end instead of JavaScript to avoid the overhead of message passing.
+ideal for writing simple and highly interactive UIs quickly as it eliminates the
+need for complex callbacks, UI objects, or state storage. \code{egui} was chosen to
+implement the front end for TeachEE instead of JavaScript to avoid the overhead of
+message passing.
 
 The function below adds and manages a pair of offset/scale sliders, and is an example
 of the simplicity of the \code{egui} library. This function is called three times to
@@ -1038,7 +1047,7 @@ add the three pairs of sliders shown in Figure \ref{fig:soft-ui}.
 \setstretch{2}
 
 The App stores two structs: an \code{AppData} and a \code{UIControls}.
-\code{AppData} stores the App Buffers, trigger thresholds, and Frequency Spectrum
+\code{AppData} stores the App Buffers, trigger thresholds, and frequency spectrum
 enable, and is shared with the Controller thread. \code{UIControls} stores the
 current UI state set by the user, e.g., offsets, scaling, trigger thresholds, and
 spectrum analysis enable/disable.
@@ -1046,10 +1055,10 @@ spectrum analysis enable/disable.
 TeachEE implements several features reflected in the UI, including:
 \begin{enumerate}
   \item Individual channel scaling and offsetting (both horizontal and vertical)
-  \item Rising edge triggering with user-provided threshold
-  \item Sample plotting with cursor and various pan and zoom options
-  \item Plotting of samples in the frequency domain
-  \item Exporting plotted samples to a CSV file
+  \item Rising edge triggering with user-provided thresholds
+  \item Signal plotting with cursor and various pan and zoom options
+  \item Plotting of signals in the frequency domain
+  \item Exporting plotted signals to a CSV file
   \item Ability to turn individual channels on and off
 \end{enumerate} 
 Figure \ref{fig:soft-ui} shows all of TeachEE's features in use at the same time.
@@ -1062,9 +1071,11 @@ Figure \ref{fig:soft-ui} shows all of TeachEE's features in use at the same time
 \end{figure}
 
 \section{Testing, Evaluation \& Verification} \label{sec:testing}
-The testing and validation of the TeachEE can be broken up into hardware/PCB,
-FPGA, software subsystems. The following subsections cover each subsystem of
-TeachEE in full detail.
+The testing and validation of the TeachEE consists of testing the hardware/PCB,
+FPGA, and software subsystems. The following subsections cover each subsystem of
+TeachEE in full detail. Testing was performed in an iterative manner for all
+subsystems: a design component was tested in isolation and integration after being
+implemented to ensure that it was implemented and integrated correctly.
 
 \subsection{PCB Verification} % ETHAN
 % Hardware tests
@@ -1257,7 +1268,7 @@ BFM is correct, then a module interacting with the hardware modeled by the BFM
 should work exactly as expected on the physical PCB. An example BFM that mocks
 the interface of the XADC is given in Appendix \ref{xadc-bfm}.
 
-\subsubsection{FPGA Bugs and Solutions}
+\subsubsection{FPGA Bugs and Solutions} \label{sec:fpga-bugs}
 During the FPGA and hardware verification process, the most difficult bugs were
 at the intersection of the PCB hardware and FPGA. Specifically, bringing up the
 FT232HQ and transmitting data proved difficult. The main for reason for this is
@@ -1290,9 +1301,107 @@ triggering on the first clock edge. Once the source of the problem was
 established, a clever use of the \code{locked} output of the PLL is used to hold
 all modules in reset until the clock becomes available.
 
-\subsection{Software Verification} \label{sec:soft-testing} % ERIC
+\subsection{Software Verification} % ERIC
 % Rust CI, Testing with mock byte streams? 
 % Threading model iteration, trigger iteration
+% Testing decoding algo with recorded bytestream and asserts (adding error handling)
+% FFT testing (using lab sig gen, discovered incorrect sample rate)
+Overall software validation was done throughout the development life cycle using
+two tools. The first is a mock bytestream generator that populates the channel
+buffers with sawtooth waves. The generator simulates data arriving from the hardware
+and allows developers to test Controller and App functionality without TeachEE
+hardware. This greatly increases development flexibility as the developers could
+write code and immediately test it. For example, the trigger functionality
+correctness was veried on these mock bytestreams rather than the hardware. The
+second tool is an automated GitHub Action script run on every branch that builds the
+software, checks code formatting, and runs a linter to catch common mistakes. This
+tool ensures that code merged to the main branch is written with good style and does
+not introduce any build errors.
+
+\subsubsection{Design Iteration} \label{sec:soft-performance-issues}
+Severe performance issues were encountered while implementing the initial
+software design described in Section \ref{sec:soft-design}. The framerate of the
+UI was limited to approximately ten frames per second. This issue was caused by high
+levels of mutex contention: the USB Manager thread would repeatedly acquire the
+mutex, thereby starving the App thread. It also did not help that the App thread
+acquired the mutex at the start of a UI update cycle and released at the end.
+Because threads did not take turns, they could overwrite new data or read stale
+data. The new implementation addressed these concerns by using monitors to
+prevent redundant read/writes and limit contention, and runs at sixty frames per
+second on average. These frame rates were measured using instrumentation code run
+in the UI update function. The code is provided below.
+
+\setstretch{1}
+\begin{minted}{rust}
+  ...
+  self.counter += 1;
+  if self.start.elapsed() > Duration::from_secs(1) {
+      println!("{}", self.counter);
+      self.counter = 0;
+      self.start = Instant::now();
+  }
+  ...
+\end{minted}
+\setstretch{2}
+
+The triggering functionality also underwent design iteration. The original
+triggering algorithm uses a moving average sliding window as the noise
+mitigation strategy. It requires that the average of the last \code{WINDOW_SIZE}
+samples be lower than the current sample in addition to requiring that the
+current sample be greater than the trigger threshold. The sliding window
+iterator is shown below.
+
+\setstretch{1}
+\begin{minted}{rust}
+  const WINDOW_SIZE: usize = 10;
+  let mut sum: f64 = src[lower_idx..(lower_idx + WINDOW_SIZE)].iter().sum();
+  // Iterate over all windows of size WINDOW_SIZE + 1. The first WINDOW_SIZE
+  // samples are used to calculate the average value of previous samples,
+  // which is then compared to the last sample. This is done to find a
+  // rising edge while attempting to filter out noise.
+  let first_higher = src[lower_idx..]
+      .windows(WINDOW_SIZE + 1)
+      .position(|window| {
+          let val = *window.last().unwrap();
+          val >= trigger && sum / (WINDOW_SIZE as f64) < val || {
+              // Update sliding window.
+              sum += val;
+              sum -= *window.first().unwrap();
+              false
+          }
+      });
+\end{minted}
+\setstretch{2}
+
+Although this algorithm functioned well, it produced slightly unstable
+waveforms. It did not consistently trigger at the exact same position on every
+iteration on a signal. Furthermore, concerns were made about the validity of
+the algorithm and the team wanted a more conventional one. These issues led to
+the research and implementation of the current hysteresis-based triggering
+algorithm described in Section \ref{sec:soft-controller}.
+
+\subsubsection{Feature Testing}
+Every implemented feature was rigorously tested before proceeding with new features.
+For example, the packet decoding functionality was tested using bytestreams
+redirected from the hardware to a file. Because the voltage and current values
+from the file was known, it could be compared to the voltage and current values
+after being decoded by the software algorithm. This verified that the packets
+were being decoded correctly and that the bytes were mapped to the right
+voltage/current values. Additionally, assertions were used to alert the team
+of any unexpected packet errors. These assertions led to the discovery of the
+packet encoding problem described in Section \ref{sec:fpga-bugs}. They also
+prompted additional decoder error handling as the bytestream channel was not
+completely reliable.
+
+Software bugs were also discovered during testing of the frequency spectrum
+analysis feature. The library-provided spectrum analysis function produced
+frequencies twice that of signals generated using a lab signal generator.
+This factor-of-two error was ultimately determined to be caused by an
+incorrect sample rate assumption in software. Although the hardware was
+indeed sampling at \SI{1}{\mega\samplepersec}, the sample rate per channel
+with two channels was actually \SI{500}{\kilo\samplepersec}. This correction
+fixed both the FFT functionality and the plots' time scales.
+
 \subsection{System Level Verification} % ETHAN / ERIC
 % This subsection should include some notes on time spent in the lab running all
 % three HW, FPGA and SW components integrated together. Also comparing our
@@ -1328,7 +1437,7 @@ The following table lists the original milestones associated with this project.
 Many milestones were completed earlier than planned; in particular, the full FPGA
 and UI work were completed between weeks 12 and 13, and basic triggering was
 implemented in week 15. Due to the severe software performance issues described in
-Section \ref{sec:soft-testing}, developing a new design became the top priority.
+Section \ref{sec:soft-performance-issues}, developing a new design became the top priority.
 This slightly delayed some less important UI work, but all required functionality was
 completed by week 19. Furthermore, many stretch goals were achieved, including
 reading from four concurrent channels, advanced triggering, and frequency spectrum
@@ -1383,6 +1492,13 @@ components. The full BOM for the PCB is provided in Appendix \ref{appendix:bom}.
 % JOHN should use this section to discuss why our device is more suited to EE
 % undergrads than what is currently on the market. Tim should provide some input
 % on manufacturability and cost too.
+
+% Add something about how an EE professor and stakeholder (Whitehall) noted that
+% the scopes provided in his class's lab kits didn't have a good FFT implementation
+% (difficult to tell whether the screen showed time domain or FFT, could not
+% simultaneously display both time and frequency plots) so we took his needs into
+% account with our implementation (which clearly shows time or FFT and both at the
+% same time)
 
 \section{Compliance with System Requirements} % John
 %% Compliance with specifications – Include your original specifications table from
@@ -1466,6 +1582,7 @@ in the sample rate, bandwidth, and channel count specifications.
 %% the market size for such a product. If the product makes it to the market, what
 %% are the potential positive and adverse societal and cultural impacts of the
 %% product? How can the adverse impacts be mitigated?
+% See open house poster for inspiration
 
 \section{Overall Team Effort}
 The following table quantifies the percentage effort each team member expended
