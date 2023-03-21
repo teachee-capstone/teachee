@@ -55,6 +55,7 @@ struct UIControls {
     c_trigger_format_wrong: bool,
     export_error_string: String,
     fft: bool,
+    fft_dom_freq: f32,
 }
 
 impl Default for UIControls {
@@ -74,6 +75,7 @@ impl Default for UIControls {
             c_trigger_format_wrong: false,
             export_error_string: String::new(),
             fft: false,
+            fft_dom_freq: 0.0,
         }
     }
 }
@@ -348,6 +350,14 @@ impl eframe::App for App {
                                 *data.fft.lock().unwrap() = ui_controls.fft;
                             }
                         });
+
+                        ui.add_space(GROUP_SPACING);
+
+                        let mut dominant_freq_str = "Dominant Frequency: ".to_string();
+                        if ui_controls.fft {
+                            dominant_freq_str.push_str(&ui_controls.fft_dom_freq.to_string());
+                        }
+                        ui.label(dominant_freq_str);
                     });
 
                     ui.add_space(GROUP_SPACING);
@@ -413,6 +423,9 @@ impl eframe::App for App {
             .name("Channel 2");
 
             let fft_line = if ui_controls.fft {
+                // Update dominant frequency while we hold the monitor
+                ui_controls.fft_dom_freq = channels.fft1.max().0.val();
+                // Convert array of (Freq, FreqVal) tuples to (f64, f64) points
                 plot::Line::new(plot::PlotPoints::from_parametric_callback(
                     |i| {
                         (
