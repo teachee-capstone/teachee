@@ -157,7 +157,7 @@ impl Controller {
                     dst.fft1 = samples_fft_to_spectrum(
                         &temp[..min(temp.len(), num_remaining.next_power_of_two())],
                         SAMPLE_RATE_PER_CHANNEL as u32,
-                        FrequencyLimit::Range(1000.0, 100_000.0),
+                        FrequencyLimit::Range(65.0, 100_000.0),
                         Some(&divide_by_N_sqrt),
                     )
                     .unwrap();
