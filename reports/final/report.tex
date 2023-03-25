@@ -99,10 +99,10 @@ with any operating system.
 
 As TeachEE is targeted for electrical engineering students, it must be powerful
 enough to be used in a variety of practices, but also simple enough to
-be intuitive to use for novices. It must also be compact to carry between classes,
-and portable to ensure students can use it with any machine. Finally, it must be
-cost efficient so that students receive the most value out of this oscilloscope
-compared to alternatives.
+be intuitive to use for novices. It must also be compact, to be carried between classes,
+and portable, to ensure that students can use it with any machine. Finally, it must be
+cost efficient, so that students can justify purchasing this oscilloscope
+as opposed to alternatives.
 
 \section{Design}
 %% Design – describe your functional requirements and constraints; provide
@@ -167,7 +167,7 @@ requirements.
 
 Based on the system requirements, the project is broken up into three
 subsystems; hardware, FPGA, and software. The following subsections correspond
-to each subsystem. Each section describes the subsystem's top level design, and
+to each subsystem. Each section describes the subsystem's top level design and
 key design decisions made to comply with system requirements.
 
 % INCLUDE THE BLOCK DIAGRAMS FOR EACH OF THESE
@@ -241,7 +241,8 @@ as promised in the blueprint and added a standard AXI Streaming protocol for the
 internal FPGA datapath.
 
 \subsection{Software} \label{sec:soft-design}% Tim
-% Tauri, two threaded one buffer guarded with mutex
+% Initial design: Tauri, two threaded one buffer guarded with mutex
+% Stuff from blueprint with more detail (and from ECE night)
 
 \section{Implementation} \label{sec:impl}
 %% Describe how the solution was implemented – this may involve a description of
@@ -969,7 +970,7 @@ If enabled by the user, it also performs rising edge triggering and/or frequency
 spectrum analysis on the samples. The triggering algorithm uses hysteresis to
 find the first rising edge while ignoring rising edges from noise. It does this
 by setting the hysteresis to 25\% of the signal peak-to-peak so that only larger
-rising edges get triggered on \cite{hysteresis}. Triggering is done on both
+rising edges are triggered on \cite{hysteresis}. Triggering is done on both the
 voltage and current channels with separate thresholds provided by the user.
 The triggering function is provided below.
 
@@ -987,7 +988,7 @@ The triggering function is provided below.
         }
         let hysteresis = (max_val - min_val) * HYSTERESIS_WIDTH;
 
-        // Trigger when signal first falls below (trigger - hysteresis)
+        // Trigger when signal first falls below 'trigger - hysteresis'
         // and then rises above trigger
         let first_lower = src.iter().position(|&val| val < trigger -
             hysteresis);
@@ -1005,7 +1006,7 @@ The triggering function is provided below.
 \setstretch{2}
 
 Spectrum analysis is performed using the \code{spectrum-analyzer} library. The
-provided function takes in the sample data, sample rate, desired frequency range,
+provided function takes the sample data, sample rate, desired frequency range,
 and an optional scaling function and returns a \code{FrequencySpectrum} struct.
 This struct contains an array of frequency/magnitude tuples, which can be passed
 to the App to be displayed.
@@ -1056,7 +1057,7 @@ TeachEE implements several features reflected in the UI, including:
 \begin{enumerate}
   \item Individual channel scaling and offsetting (both horizontal and vertical)
   \item Rising edge triggering with user-provided thresholds
-  \item Signal plotting with cursor and various pan and zoom options
+  \item Signal plotting with cursor and various navigation options
   \item Plotting of signals in the frequency domain
   \item Exporting plotted signals to a CSV file
   \item Ability to turn individual channels on and off
@@ -1071,10 +1072,10 @@ Figure \ref{fig:soft-ui} shows all of TeachEE's features in use at the same time
 \end{figure}
 
 \section{Testing, Evaluation \& Verification} \label{sec:testing}
-The testing and validation of the TeachEE consists of testing the hardware/PCB,
+The testing and validation of the TeachEE consisted of testing the hardware/PCB,
 FPGA, and software subsystems. The following subsections cover each subsystem of
 TeachEE in full detail. Testing was performed in an iterative manner for all
-subsystems: a design component was tested in isolation and integration after being
+subsystems: a design component was tested in both isolation and integration after being
 implemented to ensure that it was implemented and integrated correctly.
 
 \subsection{PCB Verification} % ETHAN
@@ -1307,15 +1308,15 @@ all modules in reset until the clock becomes available.
 % Testing decoding algo with recorded bytestream and asserts (adding error handling)
 % FFT testing (using lab sig gen, discovered incorrect sample rate)
 Overall software validation was done throughout the development life cycle using
-two tools. The first is a mock bytestream generator that populates the channel
+two tools. The first tool was a mock bytestream generator that populates the channel
 buffers with sawtooth waves. The generator simulates data arriving from the hardware
-and allows developers to test Controller and App functionality without TeachEE
-hardware. This greatly increases development flexibility as the developers could
-write code and immediately test it. For example, the trigger functionality
+and allowed developers to test Controller and App functionality without TeachEE
+hardware. This greatly increased development flexibility as the developers could
+write code and immediately test it remotely. For example, the trigger functionality
 correctness was veried on these mock bytestreams rather than the hardware. The
-second tool is an automated GitHub Action script run on every branch that builds the
+second tool was an automated GitHub Action script run on every branch that builds the
 software, checks code formatting, and runs a linter to catch common mistakes. This
-tool ensures that code merged to the main branch is written with good style and does
+tool ensured that code merged to the main branch was written with good style and did
 not introduce any build errors.
 
 \subsubsection{Design Iteration} \label{sec:soft-performance-issues}
@@ -1323,12 +1324,12 @@ Severe performance issues were encountered while implementing the initial
 software design described in Section \ref{sec:soft-design}. The framerate of the
 UI was limited to approximately ten frames per second. This issue was caused by high
 levels of mutex contention: the USB Manager thread would repeatedly acquire the
-mutex, thereby starving the App thread. It also did not help that the App thread
+mutex, thereby starving the App thread. Furthermore, the App thread
 acquired the mutex at the start of a UI update cycle and released at the end.
 Because threads did not take turns, they could overwrite new data or read stale
 data. The new implementation addressed these concerns by using monitors to
-prevent redundant read/writes and limit contention, and runs at sixty frames per
-second on average. These frame rates were measured using instrumentation code run
+prevent redundant read/writes and limit contention, and runs at an average of fifty
+frames per second. These frame rates were measured using instrumentation code run
 in the UI update function. The code is provided below.
 
 \setstretch{1}
@@ -1344,11 +1345,11 @@ in the UI update function. The code is provided below.
 \end{minted}
 \setstretch{2}
 
-The triggering functionality also underwent design iteration. The original
-triggering algorithm uses a moving average sliding window as the noise
-mitigation strategy. It requires that the average of the last \code{WINDOW_SIZE}
-samples be lower than the current sample in addition to requiring that the
-current sample be greater than the trigger threshold. The sliding window
+The triggering functionality also underwent design iteration. The initial
+triggering algorithm used a moving average sliding window as the noise
+mitigation strategy. It required that the average of the last \code{WINDOW_SIZE}
+samples be lower than the currently analyzed sample in addition to requiring that the
+currently analyzed sample be greater than the trigger threshold. The sliding window
 iterator is shown below.
 
 \setstretch{1}
@@ -1374,7 +1375,7 @@ iterator is shown below.
 \setstretch{2}
 
 Although this algorithm functioned well, it produced slightly unstable
-waveforms. It did not consistently trigger at the exact same position on every
+waveforms and did not consistently trigger at the exact same position on every
 iteration on a signal. Furthermore, concerns were made about the validity of
 the algorithm and the team wanted a more conventional one. These issues led to
 the research and implementation of the current hysteresis-based triggering
@@ -1390,8 +1391,8 @@ were being decoded correctly and that the bytes were mapped to the right
 voltage/current values. Additionally, assertions were used to alert the team
 of any unexpected packet errors. These assertions led to the discovery of the
 packet encoding problem described in Section \ref{sec:fpga-bugs}. They also
-prompted additional decoder error handling as the bytestream channel was not
-completely reliable.
+prompted additional decoder error handling as the bytestream channel was found
+not to be completely reliable.
 
 Software bugs were also discovered during testing of the frequency spectrum
 analysis feature. The library-provided spectrum analysis function produced
@@ -1401,11 +1402,6 @@ incorrect sample rate assumption in software. Although the hardware was
 indeed sampling at \SI{1}{\mega\samplepersec}, the sample rate per channel
 with two channels was actually \SI{500}{\kilo\samplepersec}. This correction
 fixed both the FFT functionality and the plots' time scales.
-
-\subsection{System Level Verification} % ETHAN / ERIC
-% This subsection should include some notes on time spent in the lab running all
-% three HW, FPGA and SW components integrated together. Also comparing our
-% output against that of a real scope connected to the same signal
 
 \section{Project Planning and Budgeting} % ERIC
 
@@ -1572,6 +1568,7 @@ in the sample rate, bandwidth, and channel count specifications.
   \end{tabularx} 
   \label{tab:sw-spec-eval}
 \end{table}
+
 \section{Conclusions \& Recommendations} % Tim
 %% Conclusions and recommendations – provide commentary on the main technical
 %% lessons learned from this project; is there potential for lasting impact for
