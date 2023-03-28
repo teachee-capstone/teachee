@@ -964,6 +964,9 @@ and current samples. The main decoding loop is described in the code below.
 \end{minted}
 \setstretch{2}
 
+The full USB Manager code is provided in Appendix \ref{appendix:software-mod} and
+Appendix \ref{appendix:software-ft}.
+
 \subsubsection{The Controller} \label{sec:soft-controller}
 The Controller thread copies samples from the USB Buffers to the App Buffers.
 If enabled by the user, it also performs rising edge triggering and/or frequency
@@ -1010,6 +1013,9 @@ provided function takes the sample data, sample rate, desired frequency range,
 and an optional scaling function and returns a \code{FrequencySpectrum} struct.
 This struct contains an array of frequency/magnitude tuples, which can be passed
 to the App to be displayed.
+
+The full Controller code is provided in Appendix \ref{appendix:software-controller}
+and includes the trigger and spectrum analysis procedures.
 
 \subsubsection{The App}
 \code{egui} is a simple and fast GUI library written entirely in Rust \cite{egui}.
@@ -1070,6 +1076,9 @@ Figure \ref{fig:soft-ui} shows all of TeachEE's features in use at the same time
   \caption{Example screenshot showcasing all UI features}
   \label{fig:soft-ui}
 \end{figure}
+
+The full App code is provided in Appendix \ref{appendix:software-app} and contains
+the UI implementation.
 
 \section{Testing, Evaluation \& Verification} \label{sec:testing}
 The testing and validation of the TeachEE consisted of testing the hardware/PCB,
@@ -1313,11 +1322,13 @@ buffers with sawtooth waves. The generator simulates data arriving from the hard
 and allowed developers to test Controller and App functionality without TeachEE
 hardware. This greatly increased development flexibility as the developers could
 write code and immediately test it remotely. For example, the trigger functionality
-correctness was veried on these mock bytestreams rather than the hardware. The
+correctness was veried on these mock bytestreams rather than the hardware. The mock
+bytestream code is provided in Appendix \ref{appendix:software-sine}. The
 second tool was an automated GitHub Action script run on every branch that builds the
 software, checks code formatting, and runs a linter to catch common mistakes. This
 tool ensured that code merged to the main branch was written with good style and did
-not introduce any build errors.
+not introduce any build errors. This script is provided in Appendix
+\ref{appendix:software-script}.
 
 \subsubsection{Design Iteration} \label{sec:soft-performance-issues}
 Severe performance issues were encountered while implementing the initial
@@ -1807,6 +1818,31 @@ on all aspects of the project.
 
     \section{Python Packet Integrity Test Script} \label{appendix:python-reader}
     \inputminted[linenos,breaklines]{python}{../../rtl/teachee/reader.py}
+
+    \section{TeachEE Rust Code} \label{appendix:software}
+
+    \subsection*{main.rs}
+    \inputminted[linenos,breaklines]{rust}{../../software/teachee-desktop/src/main.rs}
+
+    \subsection*{/sample\_source}
+
+    \subsubsection*{mod.rs} \label{appendix:software-mod}
+    \inputminted[linenos,breaklines]{rust}{../../software/teachee-desktop/src/sample_source/mod.rs}
+
+    \subsubsection*{ft.rs} \label{appendix:software-ft}
+    \inputminted[linenos,breaklines]{rust}{../../software/teachee-desktop/src/sample_source/ft.rs}
+
+    \subsubsection*{sine.rs} \label{appendix:software-sine}
+    \inputminted[linenos,breaklines]{rust}{../../software/teachee-desktop/src/sample_source/sine.rs}
+
+    \subsection*{controller.rs} \label{appendix:software-controller}
+    \inputminted[linenos,breaklines]{rust}{../../software/teachee-desktop/src/controller.rs}
+
+    \subsection*{app.rs} \label{appendix:software-app}
+    \inputminted[linenos,breaklines]{rust}{../../software/teachee-desktop/src/app.rs}
+
+    \subsection*{xtask: main.rs} \label{appendix:software-script}
+    \inputminted[linenos,breaklines]{rust}{../../software/teachee-desktop/xtask/src/main.rs}
 
     \end{appendices}
 \end{document}
