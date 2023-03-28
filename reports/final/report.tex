@@ -244,6 +244,38 @@ internal FPGA datapath.
 % Initial design: Tauri, two threaded one buffer guarded with mutex
 % Stuff from blueprint with more detail (and from ECE night)
 
+Several iterations were required to complete TeachEE's desktop application.
+Initially, the prototype was built using the Tauri GUI framework. Tauri was
+selected since it uses an instance of the Chrome Web Browser to render the user
+interface, allowing developers to take advantage of the rich library and
+tooling ecosystem for frontend web development. Despite these benefits, two
+major factors led us to replace Tauri: 1) displaying a rapidly changing
+waveform using HTML and Javascript at the required \SI{60}{\hertz} frame-rate
+proved extremely difficult; 2) data transfer between Rust and Javascript
+resulted in increased code-complexity.
+
+\code{egui} was selected as a replacement for Tauri because of it's simple API
+and a large built-in widget library. \code{egui} is an \emph{immediate mode}
+GUI, meaning it re-renders all widgets on every frame, regardless of whether or
+not the relevant application state has changed. This technique sacrifices
+efficiency for a simple programming model in which the developers express their
+entire GUI as a single pure function \(f:~\text{State}~\mapsto~\text{UI}\)
+\cite{egui}. An \emph{immediate mode} GUI is a good fit for TeachEE, since it's
+UI changes frequently and independently from user-input, nullifying the
+aforementioned efficiency problem; even with a traditional \emph{retained mode}
+GUI, widgets would still re-render whenever a new voltage/current is received.
+
+Later in the Software design process, performance issues were encountered
+related to processing the incoming data stream fast enough to update our GUI at
+\SI{60}{\hertz}. The slowdown was caused by our original threading model, in
+which the \emph{USB Manager} and \emph{App} threads communicated via a single
+shared buffer protected by a Mutex. When the \emph{App} thread attempted to
+render a new frame, it would frequently be blocked by \emph{USB Manager} which
+was simultaneously writing incoming samples. The frequency and duration of this
+blocking behavior was prevalent enough to greatly reduce frame rate. To address
+this problem we re-implemented our threading model using the three thread
+design described in Section \ref{sec:software-impl}.
+
 \section{Implementation} \label{sec:impl}
 %% Describe how the solution was implemented – this may involve a description of
 %% major code blocks, schematics, photographs, CAD drawings, etc. The reader
@@ -820,7 +852,7 @@ benchtop oscilloscopes that make use of both an ASIC and traditional processor
 through a high-speed interconnection protocol. An example of this architecture
 is Keysight's MegaZoom ASIC \cite{keysight_megazoom}.
 
-\subsection{Software} % ERIC
+\subsection{Software} \label{sec:software-impl} % ERIC 
 TeachEE's software workload is split between three modules, each of which runs in its
 own thread. The first module is the USB Manager, responsible for reading packets from the
 hardware driver and decoding them. The second is the App, responsible for updating and
