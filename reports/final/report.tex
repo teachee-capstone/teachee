@@ -1523,7 +1523,7 @@ components. The full BOM for the PCB is provided in Appendix \ref{appendix:bom}.
 \label{tab:abbreviated-bom}
 \end{table}
 
-\section{Stakeholder Needs} % John / Tim
+\section{Stakeholder Needs} \label{sec:stakeholder-needs} % John / Tim
 %% Describe how you considered stakeholder needs in your design, and how factors
 %% like safety, privacy, codes/standards, manufacturability, ethics and cost were
 %% considered in your design.
@@ -1634,6 +1634,36 @@ in the sample rate, bandwidth, and channel count specifications.
 %% are the potential positive and adverse societal and cultural impacts of the
 %% product? How can the adverse impacts be mitigated?
 % See open house poster for inspiration
+
+Developing TeachEE provided the team with several valuable technical lessons,
+including the value of using Rust for applications requiring high performance
+and concurrency. Rust's focus on memory safety and zero-cost abstractions makes
+it an ideal choice for building high-performance systems with low-level
+control. The team found that Rust enabled them to write code that was both safe
+and efficient, allowing them to achieve the necessary performance requirements
+for the TeachEE prototype. Overall, the team believes that Rust was a key
+factor in the success of the TeachEE project, and they plan to continue using
+it for future projects that require high performance and concurrency.
+
+Another key lesson learned is to avoid assuming ideal specifications for hardware
+components. For example, assuming ideal speeds for USB 2, which were not
+achievable in practice. Such assumptions led to unexpected issues in the
+prototype. As a result, the team had make adjustments to accommodate the actual
+capabilities of the components. This experience taught the team the importance
+of conducting thorough research on the specifications of hardware components
+and testing them under realistic conditions.
+
+In conclusion, the team considers TeachEE the TeachEE prototype to be a success
+and we are proud to have met or exceeded all of our product requirements. We
+believe that if TeachEE were to be launched as a product it would have the
+potential to create lasting impact on the field of engineering by reducing the
+barrier of entry for aspiring electrical engineers. TeachEE's low cost makes it
+more accessible to students and hobbyists who may not have access to expensive
+laboratory equipment (See Section \ref{sec:stakeholder-needs}). By providing an
+affordable tool for learning and experimentation, TeachEE can help to
+democratize access electrical engineering education and enable a more diverse
+range of individuals to engage with the discipline. For these reasons, the team
+believes further development in products like TeachEE is a worthy endeavour.
 
 \section{Overall Team Effort}
 The following table quantifies the percentage effort each team member expended
