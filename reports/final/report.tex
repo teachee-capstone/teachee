@@ -1029,8 +1029,7 @@ and current samples. The main decoding loop is described in the code below.
 \end{minted}
 \setstretch{2}
 
-The full USB Manager code is provided in Appendix \ref{appendix:software-mod} and
-Appendix \ref{appendix:software-ft}.
+The full USB Manager code is provided in Appendix \ref{appendix:software-usb_manager}.
 
 \subsubsection{The Controller} \label{sec:soft-controller}
 The Controller thread copies samples from the USB Buffers to the App Buffers.
@@ -1935,7 +1934,7 @@ on all aspects of the project.
     \subsection{main.rs}
     \inputminted[linenos,breaklines]{rust}{../../software/teachee-desktop/src/main.rs}
 
-    \subsection{/sample\_source}
+    \subsection{/sample\_source} \label{appendix:software-usb_manager}
 
     \subsubsection{mod.rs} \label{appendix:software-mod}
     \inputminted[linenos,breaklines]{rust}{../../software/teachee-desktop/src/sample_source/mod.rs}
