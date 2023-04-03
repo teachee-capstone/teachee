@@ -57,7 +57,40 @@
 \pagenumbering{gobble}
 \section*{Executive Summary}
 % ERIC OWNS THIS SECTION
-EXEC SUMMARY HERE
+The Covid-19 pandemic abruptly forced many educational institutions towards online
+learning. As a result, many of these institutions were unequipped to deal with this
+new learning model due to, for example, a lack of laboratory equipment to provide
+to students. Much of the onsite equipment is ill-suited for online learning due to
+its high cost and poor portability. Additionally, the take-home equipment provided
+to students during the pandemic was typically of lower quality in comparison. In
+particular, the oscilloscopes provided by the Electronics II course taught at Queen's
+University were expensive and of poor quality. They had tiny 3-inch displays and a
+small maximum bandwidth of 100 kHz. Moreover, they were single channel, limiting the
+student's ability to see how signals in a circuit are related to one another.
+
+TeachEE is a general-purpose electronics measurement instrument designed for remote
+engineering labs, functioning as both an oscilloscope and current monitor. It bundles
+together the functionality most required in Electrical Engineering labs and packages
+it with lightweight and portable software. 
+
+TeachEE's hardware consists of a four-layer custom designed PCB powered by a USB
+connection to the computer. The PCB has a two-channel 1MSPS ADC for reading low-speed
+signals and current from a hall-effect sensor. The PCB also has a two-channel 40MSPS
+ADC for observing high speed signals. Both ADCs are connected to an FPGA, which is in
+turn connected to USB 2.0 PHY. The FPGA collects sample data from both ADCs and frames
+it into packets, which are sent over the USB PHY and transmitted to the computer to be
+decoded and displayed. This allows TeachEE to leverage the student's machine to create
+a streamlined user experience. 
+
+TeachEE's software is a full stack application written in Rust. Its workload is split
+between three modules, each of which runs in its own thread. The first module is the
+USB Manager, responsible for reading and decoding packets from the hardware driver
+into voltage and current samples. The second is the App, responsible for updating and
+displaying the user interface. The third module, the Controller, facilitates
+communication between the two, and performs signal triggering and frequency spectrum
+analysis. These three threads pass samples between each other using two sets of two
+buffers: the USB Buffers and App Buffers. By cycling between buffers within a set,
+much of the data processing can be parallelized, greatly improving performance. 
 
 \newpage
 
@@ -88,7 +121,7 @@ as a cheap alternative to traditional postsecondary education. With this trend o
 remote higher education, engineering students will need their own lab equipment to
 complete their learning requirements.
 
-TeachEE is a general purpose electronics measurement instrument
+TeachEE is a general-purpose electronics measurement instrument
 designed for remotely delivered engineering labs. It acts as both a
 USB oscilloscope and current monitor. Currently, there are few instrumentation
 options for students completing their labs remotely. The oscilloscopes used for
@@ -854,10 +887,10 @@ is Keysight's MegaZoom ASIC \cite{keysight_megazoom}.
 
 \subsection{Software} \label{sec:software-impl} % ERIC 
 TeachEE's software workload is split between three modules, each of which runs in its
-own thread. The first module is the USB Manager, responsible for reading packets from the
-hardware driver and decoding them. The second is the App, responsible for updating and
+own thread. The first module is the USB Manager, responsible for reading and decoding
+packets from the hardware driver. The second is the App, responsible for updating and
 displaying the user interface. Finally, the Controller facilitates communication between
-the two and provides some additional sample processing.
+the two and provides additional sample processing.
 
 The software for TeachEE follows an improved threading model described in
 Figure \ref{fig:soft-sequence-diagram} below. This design change was necessitated
@@ -1694,6 +1727,11 @@ on all aspects of the project.
 
 \newpage
 \setstretch{1}
+\newcommand{\changelocaltocdepth}[1]{%
+  \addtocontents{toc}{\protect\setcounter{tocdepth}{#1}}%
+  \setcounter{tocdepth}{#1}%
+}
+\changelocaltocdepth{1}
 
 \pagestyle{empty}
 
@@ -1797,96 +1835,96 @@ on all aspects of the project.
     project. Each subsection corresponds to the files in a particular folder of
     the GitHub repository.
 
-    \subsubsection*{TeachEE Main Project Top Level Module}
+    \subsubsection{TeachEE Main Project Top Level Module}
     \inputminted[linenos,breaklines]{systemverilog}{../../rtl/teachee/teachee.sv}
 
     \subsection{AXIS} \label{appendix:axis}
-    \subsubsection*{axis\_adapter\_wrapper.sv}
+    \subsubsection{axis\_adapter\_wrapper.sv}
     \inputminted[linenos,breaklines]{systemverilog}{../../rtl/axis/axis_adapter_wrapper.sv}
-    \subsubsection*{axis\_async\_fifo\_wrapper.sv}
+    \subsubsection{axis\_async\_fifo\_wrapper.sv}
     \inputminted[linenos,breaklines]{systemverilog}{../../rtl/axis/axis_async_fifo_wrapper.sv}
-    \subsubsection*{axis\_interface.sv} \label{appendix:axis-interface}
+    \subsubsection{axis\_interface.sv} \label{appendix:axis-interface}
     \inputminted[linenos,breaklines]{systemverilog}{../../rtl/axis/axis_interface.sv}
 
     \subsection{COBS}
-    \subsubsection*{cobs\_axis\_adapter\_wrapper.sv}
+    \subsubsection{cobs\_axis\_adapter\_wrapper.sv}
     \inputminted[linenos,breaklines]{systemverilog}{../../rtl/cobs/cobs_axis_adapter_wrapper.sv}
-    \subsubsection*{cobs\_encode\_wrapper.sv}
+    \subsubsection{cobs\_encode\_wrapper.sv}
     \inputminted[linenos,breaklines]{systemverilog}{../../rtl/cobs/cobs_encode_wrapper.sv}
 
     \subsection{FT232H}
-    \subsubsection*{ft232h.sv}
+    \subsubsection{ft232h.sv}
     \inputminted[linenos,breaklines]{systemverilog}{../../rtl/ft232h/ft232h.sv}
-    \subsubsection*{ft232h\_bfm.sv}
+    \subsubsection{ft232h\_bfm.sv}
     \inputminted[linenos,breaklines]{systemverilog}{../../rtl/ft232h/ft232h_bfm.sv}
-    \subsubsection*{ft232h\_package.sv}
+    \subsubsection{ft232h\_package.sv}
     \inputminted[linenos,breaklines]{systemverilog}{../../rtl/ft232h/ft232h_package.sv}
 
     \subsection{HSADC}
-    \subsubsection*{hsadc\_axis\_wrapper.sv}
+    \subsubsection{hsadc\_axis\_wrapper.sv}
     \inputminted[linenos,breaklines]{systemverilog}{../../rtl/hsadc/hsadc_axis_wrapper.sv}
-    \subsubsection*{hsadc\_bfm.sv}
+    \subsubsection{hsadc\_bfm.sv}
     \inputminted[linenos,breaklines]{systemverilog}{../../rtl/hsadc/hsadc_bfm.sv}
-    \subsubsection*{hsadc\_interface.sv}
+    \subsubsection{hsadc\_interface.sv}
     \inputminted[linenos,breaklines]{systemverilog}{../../rtl/hsadc/hsadc_interface.sv}
 
     \subsection{Xilinx XADC} \label{xadc-bfm}
-    \subsubsection*{xadc\_bfm.sv}
+    \subsubsection{xadc\_bfm.sv}
     \inputminted[linenos,breaklines]{systemverilog}{../../rtl/xadc/xadc_bfm.sv}
-    \subsubsection*{xadc\_drp\_axis\_adapter.sv}
+    \subsubsection{xadc\_drp\_axis\_adapter.sv}
     \inputminted[linenos,breaklines]{systemverilog}{../../rtl/xadc/xadc_drp_axis_adapter.sv}
-    \subsubsection*{xadc\_drp\_axis\_single\_stream.sv}
+    \subsubsection{xadc\_drp\_axis\_single\_stream.sv}
     \inputminted[linenos,breaklines]{systemverilog}{../../rtl/xadc/xadc_drp_axis_single_stream.sv}
-    \subsubsection*{xadc\_drp\_package.sv}
+    \subsubsection{xadc\_drp\_package.sv}
     \inputminted[linenos,breaklines]{systemverilog}{../../rtl/xadc/xadc_drp_package.sv}
-    \subsubsection*{xadc\_packetizer.sv}
+    \subsubsection{xadc\_packetizer.sv}
     \inputminted[linenos,breaklines]{systemverilog}{../../rtl/xadc/xadc_packetizer.sv}
 
     \subsection{Legacy Non-VUnit Testbenches} \label{appendix:rtl-leg-tb}
-    \subsubsection*{ft232h\_bfm\_tb.sv}
+    \subsubsection{ft232h\_bfm\_tb.sv}
     \inputminted[linenos,breaklines]{systemverilog}{../../rtl/testbenches/legacy/ft232h_bfm_tb.sv}
-    \subsubsection*{ft232h\_tb.sv}
+    \subsubsection{ft232h\_tb.sv}
     \inputminted[linenos,breaklines]{systemverilog}{../../rtl/testbenches/legacy/ft232h_tb.sv}
-    \subsubsection*{xadc\_bfm\_tb.sv}
+    \subsubsection{xadc\_bfm\_tb.sv}
     \inputminted[linenos,breaklines]{systemverilog}{../../rtl/testbenches/legacy/xadc_bfm_tb.sv}
-    \subsubsection*{xadc\_drp\_axis\_adapter\_tb.sv}
+    \subsubsection{xadc\_drp\_axis\_adapter\_tb.sv}
     \inputminted[linenos,breaklines]{systemverilog}{../../rtl/testbenches/legacy/xadc_drp_axis_adapter_tb.sv}
 
     \subsection{VUnit Testbenches} \label{appendix:rtl-vunit-tb}
-    \subsubsection*{axis\_adapter\_wrapper\_tb.sv}
+    \subsubsection{axis\_adapter\_wrapper\_tb.sv}
     \inputminted[linenos,breaklines]{systemverilog}{../../rtl/testbenches/axis_adapter_wrapper_tb.sv}
-    \subsubsection*{cobs\_axis\_adapter\_wrapper\_tb.sv}
+    \subsubsection{cobs\_axis\_adapter\_wrapper\_tb.sv}
     \inputminted[linenos,breaklines]{systemverilog}{../../rtl/testbenches/cobs_axis_adapter_wrapper_tb.sv}
-    \subsubsection*{cobs\_encode\_wrapper\_tb.sv}
+    \subsubsection{cobs\_encode\_wrapper\_tb.sv}
     \inputminted[linenos,breaklines]{systemverilog}{../../rtl/testbenches/cobs_encode_wrapper_tb.sv}
-    \subsubsection*{hsadc\_axis\_wrapper\_tb.sv}
+    \subsubsection{hsadc\_axis\_wrapper\_tb.sv}
     \inputminted[linenos,breaklines]{systemverilog}{../../rtl/testbenches/hsadc_axis_wrapper_tb.sv}
-    \subsubsection*{xadc\_packetizer\_tb.sv}
+    \subsubsection{xadc\_packetizer\_tb.sv}
     \inputminted[linenos,breaklines]{systemverilog}{../../rtl/testbenches/xadc_packetizer_tb.sv}
 
     \subsection{Example Projects}
-    \subsubsection*{blink}
+    \subsubsection{blink}
     \inputminted[linenos,breaklines]{systemverilog}{../../rtl/examples/blink/blink.sv}
-    \subsubsection*{ftdi\_sync}
+    \subsubsection{ftdi\_sync}
     \inputminted[linenos,breaklines]{systemverilog}{../../rtl/examples/ftdi_sync/ftdi_sync.sv}
-    \subsubsection*{pll\_blink}
+    \subsubsection{pll\_blink}
     \inputminted[linenos,breaklines]{systemverilog}{../../rtl/examples/pll_blink/pll_blink.sv}
-    \subsubsection*{xadc\_axis}
+    \subsubsection{xadc\_axis}
     \inputminted[linenos,breaklines]{systemverilog}{../../rtl/examples/xadc_axis/xadc_axis.sv}
 
     \section{FPGA GitHub Actions Script} \label{appendix:github-action-script}
     \inputminted[linenos,breaklines]{yaml}{../../.github/workflows/rtl.yml}
 
     \section{Python VUnit Testbenches} \label{appendix:python-vunit-tb}
-    \subsection*{axis\_adapter\_wrapper\_tb.py}
+    \subsection{axis\_adapter\_wrapper\_tb.py}
     \inputminted[linenos,breaklines]{python}{../../rtl/python/axis_adapter_wrapper_tb.py}
-    \subsection*{cobs\_axis\_adapter\_wrapper\_tb.py}
+    \subsection{cobs\_axis\_adapter\_wrapper\_tb.py}
     \inputminted[linenos,breaklines]{python}{../../rtl/python/cobs_axis_adapter_wrapper_tb.py}
-    \subsection*{cobs\_encode\_wrapper\_tb.py}
+    \subsection{cobs\_encode\_wrapper\_tb.py}
     \inputminted[linenos,breaklines]{python}{../../rtl/python/cobs_encode_wrapper_tb.py}
-    \subsection*{hsadc\_axis\_wrapper\_tb.py}
+    \subsection{hsadc\_axis\_wrapper\_tb.py}
     \inputminted[linenos,breaklines]{python}{../../rtl/python/hsadc_axis_wrapper_tb.py}
-    \subsection*{xadc\_packetizer\_tb.py}
+    \subsection{xadc\_packetizer\_tb.py}
     \inputminted[linenos,breaklines]{python}{../../rtl/python/xadc_packetizer_tb.py}
 
     \section{Python Packet Integrity Test Script} \label{appendix:python-reader}
@@ -1894,27 +1932,27 @@ on all aspects of the project.
 
     \section{TeachEE Rust Code} \label{appendix:software}
 
-    \subsection*{main.rs}
+    \subsection{main.rs}
     \inputminted[linenos,breaklines]{rust}{../../software/teachee-desktop/src/main.rs}
 
-    \subsection*{/sample\_source}
+    \subsection{/sample\_source}
 
-    \subsubsection*{mod.rs} \label{appendix:software-mod}
+    \subsubsection{mod.rs} \label{appendix:software-mod}
     \inputminted[linenos,breaklines]{rust}{../../software/teachee-desktop/src/sample_source/mod.rs}
 
-    \subsubsection*{ft.rs} \label{appendix:software-ft}
+    \subsubsection{ft.rs} \label{appendix:software-ft}
     \inputminted[linenos,breaklines]{rust}{../../software/teachee-desktop/src/sample_source/ft.rs}
 
-    \subsubsection*{sine.rs} \label{appendix:software-sine}
+    \subsubsection{sine.rs} \label{appendix:software-sine}
     \inputminted[linenos,breaklines]{rust}{../../software/teachee-desktop/src/sample_source/sine.rs}
 
-    \subsection*{controller.rs} \label{appendix:software-controller}
+    \subsection{controller.rs} \label{appendix:software-controller}
     \inputminted[linenos,breaklines]{rust}{../../software/teachee-desktop/src/controller.rs}
 
-    \subsection*{app.rs} \label{appendix:software-app}
+    \subsection{app.rs} \label{appendix:software-app}
     \inputminted[linenos,breaklines]{rust}{../../software/teachee-desktop/src/app.rs}
 
-    \subsection*{xtask: main.rs} \label{appendix:software-script}
+    \subsection{xtask: main.rs} \label{appendix:software-script}
     \inputminted[linenos,breaklines]{rust}{../../software/teachee-desktop/xtask/src/main.rs}
 
     \end{appendices}
