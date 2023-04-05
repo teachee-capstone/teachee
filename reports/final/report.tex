@@ -360,6 +360,7 @@ over a switching buck converter for the following reasons.
       issue as this regulator has a capacity of \SI{1}{\ampere} which is more
       than enough to run the devices on-board.
   \end{enumerate}
+
 \subsubsection{USB FIFO}
 The USB FIFO is a queue that sends data out to the laptop over USB 2.0 Full
 Speed (FS). USB 2.0 FS is capable of up to 480 Mpbs. This circuit takes a
@@ -499,25 +500,18 @@ module teachee (
   output var logic hsadc_b_enc,
   input var logic[7:0] hsadc_b,
 
-  // CMOD IO Declarations
-  input var logic[1:0] btn,
-  output var logic[1:0] led,
-
   input var logic[1:0] xa_n,
   input var logic[1:0] xa_p,
-
-  // TeachEE IO Declarations
-  output var logic[1:0] teachee_led,
-  inout wire[5:0] spare_pin
+  ...
 );
 \end{minted}
 \setstretch{2}
 
 As shown above, the FPGA takes in one \SI{12}{\mega\hertz} clock provided by an
 external oscillator and the \SI{60}{\mega\hertz} clock from the FT232HQ. After
-the clocks, IO for the FT232HQ and AD9288BSTZ control signals are defined. At
-the end of the interface declaration are pins for the FPGA module analog
-channels and some debug buttons and LEDs on the TeachEE PCB.
+the clocks, IO for the FT232HQ and AD9288BSTZ control signals are defined. Some
+additional pins spare pins and LED signals at the end of the interface
+declaration are not shown as they were used for debugging purposes.
 
 \subsubsection{PLL Clock Generation}
 After the module interface is declared, the PLL system clock generator is
@@ -569,16 +563,7 @@ each wire does not need to be explicitly declared.
 \setstretch{1}
 \begin{minted}{systemverilog}
     hsadc_interface hsadc_ctrl ();
-    assign hsadc_a_enc = hsadc_ctrl.channel_a_enc;
-    assign hsadc_ctrl.channel_a = hsadc_a;
-
-    assign hsadc_b_enc = hsadc_ctrl.channel_b_enc;
-    assign hsadc_ctrl.channel_b = hsadc_b;
-
-    assign hsadc_ctrl.s1 = spare_pin[0];
-    assign hsadc_ctrl.s2 = spare_pin[1];
-    assign hsadc_ctrl.dfs = spare_pin[4];
-
+    ...
     axis_interface #(
         .DATA_WIDTH(2 * XADC_DRP_DATA_WIDTH)
     ) xadc_sample_channel (
@@ -589,20 +574,6 @@ each wire does not need to be explicitly declared.
     axis_interface #(
         .DATA_WIDTH(16)
     ) hsadc_sample_channel (
-        .clk(sys_clk),
-        .rst(reset)
-    );
-
-    axis_interface #(
-        .DATA_WIDTH(8)
-    ) hsadc_usb_axis (
-        .clk(sys_clk),
-        .rst(reset)
-    );
-
-    axis_interface #(
-        .DATA_WIDTH(8)
-    ) xadc_usb_axis (
         .clk(sys_clk),
         .rst(reset)
     );
@@ -782,7 +753,7 @@ it consumes data while \code{tvalid} is controlled by the sender to tell the
 receiver when new data is ready on the \code{tdata} lines. The full
 specification contains many additional signals but these are the three that most
 often being manipulated during data transmission \cite{axis_spec}. Figures
-\ref{fig:axis-read} \ref{fig:axis-write} show the AXIS read and write timing
+\ref{fig:axis-read} and \ref{fig:axis-write} show the AXIS read and write timing
 diagrams respectively.
 
 \begin{figure}[H]
@@ -802,11 +773,11 @@ system clock per the specification. As shown in Figure \ref{fig:axis-read},
 the \code{tdata} bus. The consumer sees this and asserts tready on the next
 rising edge consuming the data. In the case where multiple words of data are
 queued by the producer, the \code{tdata} value will advance to the next byte
-available after each cycle where both \code{tvalid \&\& tready} is true. This
+available after each cycle where both \code{tvalid && tready} is true. This
 allows a new read to take place every cycle if the producer has the data and the
 consumer is ready for it. This simple protocol yields strong performance and
 flexibility with minimal FPGA LUT resources used. It should be noted that for
-any AXIS transaction to take place \code{tready \&\& tvalid} must be true.
+any AXIS transaction to take place \code{tready && tvalid} must be true.
 
 \begin{figure}[H]
   \centering
@@ -818,12 +789,12 @@ any AXIS transaction to take place \code{tready \&\& tvalid} must be true.
 In the AXIS write case shown in Figure \ref{fig:axis-write}, the consumer first
 asserts \code{tready}, which tells the producer that it can accept new data.
 Once the producer has data, it asserts the value on \code{tdata} and drives
-\code{tvalid} high on the same rising edge. Since \code{tready \&\& tvalid} is
+\code{tvalid} high on the same rising edge. Since \code{tready && tvalid} is
 true, the data is written to the consumer successfully. This design pattern is
 replicated repeatedly throughout the FPGA codebase provided in Appendix
 \ref{appendix:rtl-code}.
 
-In addition to the simplicity protocol, there is significant library support for
+In addition to the simplicity of the protocol, there is significant library support for
 AXI streams. In the case of TeachEE, the \code{verilog-axis} library is used
 \cite{verilog_axis_lib}. This library contains a variety of useful verilog
 modules, all of which expose an AXIS interface at their inputs and outputs. The
@@ -1190,14 +1161,14 @@ was a high density area in the PCB layout.
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=\textwidth]{figures/pcb-back.JPG}
+  \includegraphics[width=12cm]{figures/pcb-back.JPG}
   \caption{PCB Back Side After Delivery}
   \label{fig:pcb-back}
 \end{figure}
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=\textwidth]{figures/pcb-closeup.JPG}
+  \includegraphics[width=12cm]{figures/pcb-closeup.JPG}
   \caption{Close up of the FIFO on the PCB}
   \label{fig:area-around-fifo}
 \end{figure}
@@ -1233,7 +1204,7 @@ testing was done on the three units. The functional tests are as follows.
 % TODO: add figure of the FTDI232HQ clock output
 \begin{figure}[H]
   \centering
-  \includegraphics[width=\textwidth]{figures/ftdi-clk-cap.png}
+  \includegraphics[width=12cm]{figures/ftdi-clk-cap.png}
   \caption{FT232HQ Clock Output Waveform}
   \label{fig:ftdi-clk}
 \end{figure}
