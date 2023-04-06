@@ -1316,7 +1316,7 @@ the interface of the XADC is given in Appendix \ref{xadc-bfm}.
 \subsubsection{FPGA Bugs and Solutions} \label{sec:fpga-bugs}
 During the FPGA and hardware verification process, the most difficult bugs were
 at the intersection of the PCB hardware and FPGA. Specifically, bringing up the
-FT232HQ and transmitting data proved difficult. The main for reason for this is
+FT232HQ and transmitting data proved difficult. The main reason for this is
 that without the USB FIFO up and running, there is little visibility into the
 FPGA firmware beyond the on-status LEDs and JTAG debugger. As a result, it was
 extraordinarily difficult to distinguish whether an issue was hardware or FPGA
@@ -1346,7 +1346,7 @@ triggering on the first clock edge. Once the source of the problem was
 established, a clever use of the \code{locked} output of the PLL is used to hold
 all modules in reset until the clock becomes available.
 
-\subsection{Software Verification} % ERIC
+\subsection{Software Verification} \label{sec:software-verification} % ERIC
 % Rust CI, Testing with mock byte streams? 
 % Threading model iteration, trigger iteration
 % Testing decoding algo with recorded bytestream and asserts (adding error handling)
@@ -1542,6 +1542,50 @@ components. The full BOM for the PCB is provided in Appendix \ref{appendix:bom}.
 % account with our implementation (which clearly shows time or FFT and both at the
 % same time)
 
+\subsubsection{Features and Quality}
+
+%% Ethan, if you could elaborate on why the kits were bad that would be great.
+%% John finds it difficult to comment since he did not use the kits
+%% Emphasis on the "quality" point
+
+%% and to double check, we did indeed have scroll to zoom functionality?
+
+In the online electrical engineering labs during the COVID pandemic, Professor
+Whitehall noticed issues with the kits provided to students. There was a general
+lack of quality and brittleness which caused students to require replacement
+kits. Additionally, the implementation of certain features was poor; the display
+was unable to simultaneously show the frequency and time domain, and it was
+poorly indicated which was currently being dislpayed. 
+
+Beyond the lab kits, the archaic design of a typical oscilliscope can be
+improved upon. Rather than rotating physical knobs to adjust the display it is
+more intuitive to interact with the application like you would any other:
+through the interface of a computer application.
+
+TeachEE solves these issues. As was demonstrated at the Open House, the
+application is intuitive to use, with the ability to click and drag to adjust
+the waveform display, as well zooming via mouse scroll. It can also
+simultaneously display the spatial and time domain at the same time.
+
+\subsubsection{Safety}
+
+As was mentioned in Section \ref{sec:software-verification}, software has been
+throughly tested to ensure stability for users. In particular, the choice of
+Rust in the presence of complex threading models yields a high degree of
+confidence that undefined behaviour is avoided. Given that TeachEE can export
+CSV files onto the host computer, this opens a vector of damage. If these
+percautions were not taken then there is the possibility that TeachEE enters an
+invalid state and writes to the user's computer in an undesirable way.
+
+A computer can be damaged through the USB port by devices such as "USB Killers"
+\cite{usb-killer}. Since TeachEE works with high voltage and current, it is
+important to ensure protection of the user's computer during operation. The
+computer is protected from backflow by diodes in the voltage regulator.
+Additionally, on the device itself, the analog front end clamps voltage which
+are too high.
+
+\subsubsection{Manufacturing Cost}
+
 The viability of manufacturing TeachEE at scale is promising due to the current
 design's significant drop in unit cost at increased volume.  At scales greater
 than 100 units we estimate the cost-per-unit could drop as low as \$250. This
@@ -1682,13 +1726,13 @@ on all aspects of the project.
   \begin{tabularx}{10cm}{l|l}
     \textbf{Name} & \textbf{Effort Expended \%}\\
     \hline
-    Ethan Peterson & 25 \\
+    Ethan Peterson & 100 \\
     \hline
-    Eric Yang & 25 \\
+    Eric Yang & 100 \\
     \hline
-    Timothy Morland & 25 \\
+    Timothy Morland & 100 \\
     \hline
-    John Giorshev & 25 \\
+    John Giorshev & 100 \\
   \end{tabularx} 
 \end{table}
 \newpage
