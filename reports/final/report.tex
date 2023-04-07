@@ -57,16 +57,17 @@
 \pagenumbering{gobble}
 \section*{Executive Summary}
 % ERIC OWNS THIS SECTION
-The Covid-19 pandemic abruptly forced many educational institutions towards online
-learning. As a result, many of these institutions were unequipped to deal with this
-new learning model due to, for example, a lack of laboratory equipment to provide
-to students. Much of the onsite equipment is ill-suited for online learning due to
-its high cost and poor portability. Additionally, the take-home equipment provided
-to students during the pandemic was typically of lower quality in comparison. In
-particular, the oscilloscopes provided by the Electronics II course taught at Queen's
-University were expensive and of poor quality. They had tiny 3-inch displays and a
-small maximum bandwidth of 100 kHz. Moreover, they were single channel, limiting the
-student's ability to see how signals in a circuit are related to one another.
+The Covid-19 pandemic abruptly forced educational institutions towards online
+learning. As a result, many of these institutions were unequipped to deal with
+this new learning model. Much of the onsite equipment, such as oscilloscopes and
+signal generators, are ill-suited for online learning due to its high cost and
+poor portability. Additionally, the take-home equipment provided to students
+during the pandemic was typically of lower quality in comparison. In particular,
+the oscilloscopes provided by the Electronics II course taught at Queen's
+University were expensive and of poor quality. They had tiny 3-inch displays and
+a small maximum bandwidth of 100 kHz. Moreover, they were single channel,
+limiting the student's ability to see how signals in a circuit are related to
+one another.
 
 TeachEE is a general-purpose electronics measurement instrument designed for remote
 engineering labs, functioning as both an oscilloscope and current monitor. It bundles
@@ -111,15 +112,15 @@ much of the data processing can be parallelized, greatly improving performance.
 % references. Examples of archival references include: journal papers, conference
 % papers, patents, books, corporate technical and annual reports, application
 % notes. Use the standard IEEE citation format. Website URLs are not archival
-During the Covid-19 pandemic, many universities abruptly switched to remote
-learning as campuses were shut down. This sudden change exposed the lack of
-support for more digital learning models \cite{online_learning}. Although the
-pandemic has since passed, forward-thinking institutions are starting to invest
-in online programs, for example, by leveraging AI chatbots and teaching assistants.
-Additionally, online course providers such as Udemy have recently risen in popularity
-as a cheap alternative to traditional postsecondary education. With this trend of
-remote higher education, engineering students will need their own lab equipment to
-complete their learning requirements.
+During the Covid-19 pandemic, universities abruptly switched to remote learning
+as campuses were shut down. This sudden change exposed the lack of support for
+digital learning models \cite{online_learning}. Although the pandemic has since
+passed, forward-thinking institutions are starting to invest in online programs,
+for example, by leveraging AI chatbots and teaching assistants. Additionally,
+online course providers such as Udemy have recently risen in popularity as a
+cheap alternative to traditional postsecondary education. With this trend of
+remote higher education, engineering students will need their own lab equipment
+to complete their learning requirements.
 
 TeachEE is a general-purpose electronics measurement instrument
 designed for remotely delivered engineering labs. It acts as both a
@@ -225,17 +226,16 @@ channels would be made available to the on-board FPGA should the team have the
 time to add additional channels. The two spare channels would also have a higher
 sample rate to improve the utility of the instrument.
 
-It should be noted that all the data acquisition channels are connected to an
-FPGA rather than a microprocessor. This decision was made to ensure we had no
-real time data processing limitations and precise timing in our sampling of the
-signal waveforms. Moreover, it is common with existing commercial oscilloscopes
-to have an FPGA or ASIC fulfill these real time requirements. One compromise
-that was made in the design was the use of an FPGA module rather than installing
-the chip to the PCB directly. While such a module could not be used in TeachEE
-in a mass-production setting, it greatly shortened the PCB design time, and
-allows the FPGA to be easily replaced in the event of hardware failure.
-Moreover, the FPGA combines all the sample streams and provides a single point
-of contact to the USB interface.
+All the data acquisition channels are connected to an FPGA rather than a
+microprocessor. This decision was made to ensure that there is no real-time data
+processing limitations, and that there is precise timing in our sampling of the
+signal waveforms. Moreover, an FPGA or ASIC is commonly used in existing
+commercial oscilloscopes. One compromise that was made in the design was the use
+of an FPGA module rather than installing the chip to the PCB directly. While
+such a module could not be used in TeachEE in a mass-production setting, it
+greatly shortened the PCB design time, and allows the FPGA to be easily replaced
+in the event of hardware failure. Additionally, the FPGA combines all the sample
+streams and provides a single point of contact to the USB interface.
 
 Figure \ref{fig:hw-block-diagram} is a complete hardware block diagram used as a
 guide for the PCB design implementation.
@@ -248,11 +248,11 @@ guide for the PCB design implementation.
 \end{figure}
 
 \subsection{FPGA} % Ethan
-The FPGA RTL is primarily driven by the implicit requirement to send multiple
-streams of data with low latency. The sample rate and bandwidth requirements are
-not as concerning in the design of the FPGA subsystem. This is because sample
-rates can be easily tuned in the FPGA with clock generation PLLs and bandwidth
-depends on the analog bandwidth of the input circuitry on the PCB.
+The FPGA RTL is driven by the implicit requirement to send multiple streams of
+data with low latency. The sample rate and bandwidth requirements are not as
+concerning in the design of the FPGA subsystem. This is because sample rates can
+be easily tuned in the FPGA with clock generation PLLs and bandwidth depends on
+the analog bandwidth of the input circuitry on the PCB.
 
 In order to transmit multiple streams, the FPGA needs to frame multi-channel
 data in a standard packet format. A multiplexer is also used for a case where
@@ -937,7 +937,8 @@ decodes them into voltage and current samples, and populates the USB Buffers.
 The packets are read from the queue using an FTDI library. The thread always
 reads 120 000 bytes at a time so that after decoding, the App displays
 approximately 20 000 samples each cycle. This ensures that the plotted waveform
-does not expand or contract in the horizontal direction, improving user experience.
+does not expand or contract in the horizontal direction, which improves the
+user's experience.
 
 The decoding function decodes the six-byte COBS packets into pairs of voltage
 and current samples. The main decoding loop is described in the code below.
@@ -1210,14 +1211,14 @@ testing was done on the three units. The functional tests are as follows.
 \end{figure}
 
 % write a little blurb about doing final assembly
-All three PCBs also passed the functional tests enumerated above. At this point,
-all parts omitted from the assembly process are soldered onto the PCB. This
-includes all through-hole components on the board except for the voltage
-regulator which was soldered earlier on for the power-up test. Through-hole
-parts were omitted from the assembly order to keep costs low. Moreover, due to
-the chip shortage, the hall effect current sensor had to be purchased separately
-and soldered manually. The through-hole parts that are soldered manually include
-all the pin headers for the FPGA, BNC connectors for the oscilloscope probes and
+All three PCBs passed the functional tests enumerated above. At this point, all
+parts omitted from the assembly process are soldered onto the PCB. This includes
+all through-hole components on the board except for the voltage regulator which
+was soldered earlier on for the power-up test. Through-hole parts were omitted
+from the assembly order to keep costs low. Moreover, due to the chip shortage,
+the hall effect current sensor had to be purchased separately and soldered
+manually. The through-hole parts that are soldered manually include all the pin
+headers for the FPGA, BNC connectors for the oscilloscope probes, and
 through-hole testpoints. To protect the PCB from any conductive surfaces or ESD,
 M3 standoff screws are installed into all of the mounting holes to elevate the
 PCB from the surface on which it rests. After this final assembly step, the PCB
