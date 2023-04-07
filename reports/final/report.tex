@@ -217,7 +217,7 @@ the instrument.
 The data acquisition channels are connected to an FPGA rather than a
 microprocessor. This decision was made to prevent real time data processing
 limitations and ensure precise timing in the sampling of the signal waveforms.
-Moreover, an FPGA or ASIC is more commonly used in existing commercial
+Moreover, an FPGA or ASIC is commonly used in existing commercial
 oscilloscopes to fulfill these real time requirements. A compromise that was
 made in the design was the use of an FPGA module, rather than installing
 the chip to the PCB directly. While such a module could not be used in TeachEE
@@ -396,8 +396,8 @@ and I2C based converters on the market.
 Bypass capacitors and ferrite beads are used to power the ADC for the cleanest
 reference voltage possible. Additionally, the PCB contains non-populated
 footprints for low pass filters, and filter bypasses to simplify testing and
-debugging. For the digital side, all data bus and clocks have test points so that a
-multimeter or oscilloscope can be connected to debug the FPGA control signals.
+debugging. For the digital side, all data busses and clocks have test points so
+multimeters or oscilloscopes can be connected to debug the FPGA control signals.
 
 \subsubsection{Analog Front End (AFE)}
 The Analog Front End (AFE) sits in front of the inputs of the high-speed ADC. As
@@ -579,7 +579,7 @@ The remaining two interfaces hold the sample data from the XADC and high-speed
 ADC respectively. The XADC is the dual channel 16-bit ADC built into the FPGA.
 The two sample data interfaces \code{hsadc_sample_channel} and
 \code{xadc_sample_channel} are each connected to the outputs of adapter modules
-that adapt the native interface of the device to an AXI stream. The AXI Stream
+that adapt the native interface of the device to an AXI Stream. The AXI Stream
 interface used is a custom wrapper for all the standard signals found in an AXI
 stream. The interface definition can be found in Appendix
 \ref{appendix:axis-interface}.
@@ -619,7 +619,7 @@ to send data to the computer over USB.
 This module consists of a state machine that adapts the AXI Stream of sample
 packets to control signals of the FT232HQ. The input is the \code{sys_axis}
 stream and the output is all the \code{ftdi_*} control signals used to produce
-data over USB. Wrapping the FT232HQ interface in a standard AXI stream makes it
+data over USB. Wrapping the FT232HQ interface in a standard AXI Stream makes it
 trivial to interface with all the other modules in the TeachEE source code. The
 same design approach is used throughout the codebase to ensure compatibility
 between the various hardware interface modules. The state machine for the module
@@ -632,7 +632,7 @@ is shown in Figure \ref{fig:ft232h-state-machine}.
   \label{fig:ft232h-state-machine}
 \end{figure}
 
-The state machine waits for the AXI stream to have data available and for the
+The state machine waits for the AXI Stream to have data available and for the
 FT232HQ to be ready for new data. When this condition is satisfied, the byte is
 sent out and the state machine automatically transitions back to the await
 state.
@@ -784,7 +784,7 @@ replicated repeatedly throughout the FPGA codebase provided in Appendix
 \ref{appendix:rtl-code}.
 
 In addition to the simplicity of the protocol, there is significant library support for
-AXI streams. In the case of TeachEE, the \code{verilog-axis} library is used
+AXI Streams. In the case of TeachEE, the \code{verilog-axis} library is used
 \cite{verilog_axis_lib}. This library contains a variety of useful verilog
 modules, all of which expose an AXIS interface at their inputs and outputs. The
 standard interface across all modules trivializes connecting up the library modules
@@ -795,7 +795,7 @@ of SystemVerilog only. As a result, each AXIS signal is written out individually
 making instantiating and connecting the modules unwieldy. To bundle all
 these signals into one module port, the \code{axis_interface} is used. For each
 module in the \code{verilog-axis} library used by TeachEE, a wrapper module is
-written that places all the signals for the AXI streams in AXIS interfaces,
+written that places all the signals for the AXI Streams in AXIS interfaces,
 making module connectivity far simpler with SystemVerilog. This is possible
 due to the Xilinx Vivado project build configuration that cross compiles both
 Verilog and SystemVerilog. The interface is also designed to seamlessly handle
@@ -838,7 +838,7 @@ to the USB FIFO. These two modules make up the packet encoding stack.
 Perhaps the most important benefit of AXIS over other streaming interfaces is
 its direct compatibility with the more fully-featured AXI bus. AXI is a standard
 memory-mapped bus interface used in ARM processors \cite{axi_spec}. Since all
-modules in TeachEE's FPGA codebase use AXI streams, the platform is highly
+modules in TeachEE's FPGA codebase use AXI Streams, the platform is highly
 extensible and can be connected to ARM coprocessors with minimal effort. Such a
 design extension would make TeachEE architecturally similar to more expensive
 benchtop oscilloscopes that make use of both an ASIC and traditional processor
@@ -1277,7 +1277,7 @@ module. Examples of this are the \code{ft232h}, \code{xadc_drp_axis_adapter},
 and \code{hsadc_axis_adapter}. Since all of these modules were designed to
 interact with the interface of a physical component on the PCB, mock interfaces
 were needed to test the module. These device mocks are called
-''Board Functional Models`' or BFMs. Each BFM is designed to respond in the same
+``Board Functional Models'' or BFMs. Each BFM is designed to respond in the same
 way to input as the actual device itself. Of course, the BFM has no real data to
 return so the data coming back will often be a preset value or known pattern.
 The BFMs are written as finite state machines built to emulate the timing
