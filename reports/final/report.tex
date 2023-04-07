@@ -150,7 +150,7 @@ as opposed to alternatives.
 % allowing for significant dev work without physical HW in house.
 
 The TeachEE design is derived from the system requirements set in the blueprint
-report. Given in Table \ref{tab:hw-reqs} and \ref{tab:sw-reqs} are the hardware
+report. Given in Table \ref{tab:hw-reqs} and \ref{tab:sw-reqs} are the most important hardware
 and software requirements respectively. It should also be noted that the FPGA
 shares responsibility with the desktop application for fulfilling software
 requirements.
@@ -162,18 +162,10 @@ requirements.
         \hline
         1 &Voltage Input Bandwidth&\SI{100}{\kilo\hertz}& $\pm \SI{1}{\kilo\hertz}$ \\
         2 &Current Input Bandwidth&\SI{100}{\kilo\hertz}& $\pm \SI{1}{\kilo\hertz}$ \\
-        3 &Measureable Current Range&\SI{-15}{\ampere} to \SI{+15}{\ampere}& $\pm \SI{5}{\ampere}$ \\
-        4 &Measureable Voltage Range&\SI{0}{\volt} to \SI{3.3}{\volt}& $\pm \SI{200}{\milli\volt}$ \\
-        5 &Number of Current Input Channels& $1$ & $0$ \\ 
-        6 &Number of Voltage Input Channels& $1$ & $+2$ \\
-        7 &Power Input Voltage Rating& \SI{5}{\volt} & $\pm \SI{500}{\milli\volt}$ \\
-        8 &Power Current Consumption Rating& \SI{500}{\milli\ampere} & $\pm \SI{250}{\milli\ampere}$ \\
-        9 &Voltage Sample Rate& \SI{1}{\mega\samplepersec} & \SI{0}{\mega\samplepersec}\\
-        10 &Current Sample Rate& \SI{1}{\mega\samplepersec} & \SI{0}{\mega\samplepersec} \\
-        11 &PCB Thickness& \SI{1.6}{\milli\metre} & $\pm \SI{0.1}{\milli\metre}$ \\
-        12 &PCB Dimensions& \SI{0.04}{\meter\squared} & $\pm \SI{400}{\milli\metre\squared}$ \\
-        13 &Voltage Sample Error against commercial scope & N/A & $\pm \SI{20}{\percent}$ \\
-        14 &Current Sample Error against commercial meter& N/A & $\pm \SI{20}{\percent}$
+        3 &Number of Current Input Channels& $1$ & $0$ \\ 
+        4 &Number of Voltage Input Channels& $1$ & $+2$ \\
+        5 &Voltage Sample Rate& \SI{1}{\mega\samplepersec} & \SI{0}{\mega\samplepersec}\\
+        6 &Current Sample Rate& \SI{1}{\mega\samplepersec} & \SI{0}{\mega\samplepersec} \\
     \end{tabularx} 
 \label{tab:hw-reqs}
 \end{table}
@@ -211,11 +203,7 @@ The primary design driving requirements for the Printed Circuit Board (PCB) are
 the bandwidth and sample rate of the data acquisition channels. Bandwidth and
 sample rate constrain the selection of the input filters and Analog to Digital
 Converters (ADCs) on the PCB. After selecting these parts, they can be easily
-duplicated to add additional channels. The power requirements for the hardware
-are trivial in comparison as they are already in alignment with the power
-interface supplied by a standard USB port. The physical dimension requirements
-of the PCB are also comparatively simple as the parts are easily packed more
-closely using modern PCB layout and assembly techniques. A full requirement
+duplicated to add additional channels. A full requirement
 compliance check for the hardware and other subsystems is provided in Section
 \ref{sec:testing}.
 
@@ -889,8 +877,6 @@ operation operates on both channels simultaneously. Furthermore, each \code{Chan
 struct is wrapped in a \code{BufferState} enum, representing the emptyness/fullness
 of the channels, which in turn is guarded by a monitor. To allow these monitors to
 be shared between threads, they are wrapped by Rust's shared pointer, the \code{Arc}.
-Only when the last \code{Arc} pointer to a \code{BufferState} goes out of scope do the
-shared buffers get deallocated. This allows automatic memory management of shared data.
 Figure \ref{fig:soft-buffer-config} below illustrates the shared data's configuration.
 Note that there is an additional field in the \code{Channels} struct used to store the
 results of frequency spectrum analysis performed in the Controller thread. This field
@@ -898,7 +884,7 @@ is unused in the USB Buffer \code{Channels}.
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=10cm]{figures/buffer_config.drawio.png}
+  \includegraphics[width=8cm]{figures/buffer_config.drawio.png}
   \caption{Shared data configuration representing one set of ``buffers"}
   \label{fig:soft-buffer-config}
 \end{figure}
@@ -956,7 +942,6 @@ and current samples. The main decoding loop is described in the code below.
           || self.rx_buf[src_index + PACKET_SIZE - 1] != 0
       {
           // Find the next 0 and continue from there
-          ...
       } else {
           let packet = &self.rx_buf[src_index..(src_index + PACKET_SIZE)];
           let mut block = packet[0] - 1;
@@ -974,13 +959,6 @@ and current samples. The main decoding loop is described in the code below.
               } else {
                   decoded[decoded_index] = 0;
                   block = packet[decoded_index + 1];
-
-                  if block == 0 {
-                      // The 4 sample bytes cannot be zero; skip this
-                      // packet
-                      src_index += PACKET_SIZE;
-                      continue 'outer;
-                  }
               }
               decoded_index += 1;
               block -= 1;
@@ -1603,10 +1581,9 @@ the potential for a good return on investment.
 
 % NOTE: John please finish off this section, i just did the tables, - ethan
 The following tables outline the target hardware and software specifications of
-this project. This specifications table differs from the design section as it
-states what specifications were and were not achieved in the final
-implementation. The hardware and software specification evaluations are given in
-Tables \ref{tab:hw-spec-eval} and \ref{tab:sw-spec-eval} respectively.
+this project. The hardware and software specification evaluations are given in
+Tables \ref{tab:hw-spec-eval} and \ref{tab:sw-spec-eval} below, and show that
+the prototype meets or exceeds the specifications in all areas.
 
 \begin{table}[H]
     \caption{Hardware Specification Evaluation}
@@ -1645,10 +1622,6 @@ Tables \ref{tab:hw-spec-eval} and \ref{tab:sw-spec-eval} respectively.
 \label{tab:hw-spec-eval}
 \end{table}
 
-As shown above, the hardware prototype meets all specifications originally
-defined in the project blueprint. The TeachEE hardware also exceeds expectations
-in the sample rate, bandwidth, and channel count specifications.
-
 \begin{table}[H]
   \caption{Software Specification Evaluation}
   \begin{tabularx}{\textwidth}{p{8cm}|l|p{6cm}}
@@ -1666,9 +1639,6 @@ in the sample rate, bandwidth, and channel count specifications.
   \end{tabularx} 
   \label{tab:sw-spec-eval}
 \end{table}
-
-All software specifications were also met. The implementation also exceeded
-several requirements, as described above.
 
 \section{Conclusions \& Recommendations} % Tim
 %% Conclusions and recommendations – provide commentary on the main technical
@@ -1735,6 +1705,7 @@ on all aspects of the project.
 \end{table}
 \newpage
 
+\setstretch{1.4}
 \bibliographystyle{IEEEtran}
 \bibliography{report}
 
