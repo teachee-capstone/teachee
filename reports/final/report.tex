@@ -60,7 +60,7 @@
 The Covid-19 pandemic abruptly forced educational institutions towards online
 learning. As a result, many of these institutions were unequipped to deal with
 this new learning model. Much of the onsite equipment, such as oscilloscopes and
-signal generators, are ill-suited for online learning due to its high cost and
+signal generators, is ill-suited for online learning due to its high cost and
 poor portability. Additionally, the take-home equipment provided to students
 during the pandemic was typically of lower quality in comparison. In particular,
 the oscilloscopes provided by the Electronics II course taught at Queen's
@@ -150,7 +150,7 @@ as opposed to alternatives.
 % allowing for significant dev work without physical HW in house.
 
 The TeachEE design is derived from the system requirements set in the blueprint
-report. Given in Table \ref{tab:hw-reqs} and \ref{tab:sw-reqs} are the hardware
+report. Given in Table \ref{tab:hw-reqs} and \ref{tab:sw-reqs} are the most important hardware
 and software requirements respectively. It should also be noted that the FPGA
 shares responsibility with the desktop application for fulfilling software
 requirements.
@@ -162,18 +162,10 @@ requirements.
         \hline
         1 &Voltage Input Bandwidth&\SI{100}{\kilo\hertz}& $\pm \SI{1}{\kilo\hertz}$ \\
         2 &Current Input Bandwidth&\SI{100}{\kilo\hertz}& $\pm \SI{1}{\kilo\hertz}$ \\
-        3 &Measureable Current Range&\SI{-15}{\ampere} to \SI{+15}{\ampere}& $\pm \SI{5}{\ampere}$ \\
-        4 &Measureable Voltage Range&\SI{0}{\volt} to \SI{3.3}{\volt}& $\pm \SI{200}{\milli\volt}$ \\
-        5 &Number of Current Input Channels& $1$ & $0$ \\ 
-        6 &Number of Voltage Input Channels& $1$ & $+2$ \\
-        7 &Power Input Voltage Rating& \SI{5}{\volt} & $\pm \SI{500}{\milli\volt}$ \\
-        8 &Power Current Consumption Rating& \SI{500}{\milli\ampere} & $\pm \SI{250}{\milli\ampere}$ \\
-        9 &Voltage Sample Rate& \SI{1}{\mega\samplepersec} & \SI{0}{\mega\samplepersec}\\
-        10 &Current Sample Rate& \SI{1}{\mega\samplepersec} & \SI{0}{\mega\samplepersec} \\
-        11 &PCB Thickness& \SI{1.6}{\milli\metre} & $\pm \SI{0.1}{\milli\metre}$ \\
-        12 &PCB Dimensions& \SI{0.04}{\meter\squared} & $\pm \SI{400}{\milli\metre\squared}$ \\
-        13 &Voltage Sample Error against commercial scope & N/A & $\pm \SI{20}{\percent}$ \\
-        14 &Current Sample Error against commercial meter& N/A & $\pm \SI{20}{\percent}$
+        3 &Number of Current Input Channels& $1$ & $0$ \\ 
+        4 &Number of Voltage Input Channels& $1$ & $+2$ \\
+        5 &Voltage Sample Rate& \SI{1}{\mega\samplepersec} & \SI{0}{\mega\samplepersec}\\
+        6 &Current Sample Rate& \SI{1}{\mega\samplepersec} & \SI{0}{\mega\samplepersec} \\
     \end{tabularx} 
 \label{tab:hw-reqs}
 \end{table}
@@ -211,31 +203,28 @@ The primary design driving requirements for the Printed Circuit Board (PCB) are
 the bandwidth and sample rate of the data acquisition channels. Bandwidth and
 sample rate constrain the selection of the input filters and Analog to Digital
 Converters (ADCs) on the PCB. After selecting these parts, they can be easily
-duplicated to add additional channels. The power requirements for the hardware
-are trivial in comparison as they are already in alignment with the power
-interface supplied by a standard USB port. The physical dimension requirements
-of the PCB are also comparatively simple as the parts are easily packed more
-closely using modern PCB layout and assembly techniques. A full requirement
+duplicated to add additional channels. A full requirement
 compliance check for the hardware and other subsystems is provided in Section
 \ref{sec:testing}.
 
 Given the requirement for a single voltage and current channel with room for
 additional voltage channels, the team settled on a four-channel design. One ADC
 channel would be used for current and another for voltage. The remaining two
-channels would be made available to the on-board FPGA should the team have the
-time to add additional channels. The two spare channels would also have a higher
-sample rate to improve the utility of the instrument.
+channels would be made available to be implemented as a stretch goal. The two
+spare channels would also have a higher sample rate to improve the utility of
+the instrument.
 
-All the data acquisition channels are connected to an FPGA rather than a
-microprocessor. This decision was made to ensure that there is no real-time data
-processing limitations, and that there is precise timing in our sampling of the
-signal waveforms. Moreover, an FPGA or ASIC is commonly used in existing
-commercial oscilloscopes. One compromise that was made in the design was the use
-of an FPGA module rather than installing the chip to the PCB directly. While
-such a module could not be used in TeachEE in a mass-production setting, it
-greatly shortened the PCB design time, and allows the FPGA to be easily replaced
-in the event of hardware failure. Additionally, the FPGA combines all the sample
-streams and provides a single point of contact to the USB interface.
+The data acquisition channels are connected to an FPGA rather than a
+microprocessor. This decision was made to prevent real time data processing
+limitations and ensure precise timing in the sampling of the signal waveforms.
+Moreover, an FPGA or ASIC is commonly used in existing commercial
+oscilloscopes to fulfill these real time requirements. A compromise that was
+made in the design was the use of an FPGA module, rather than installing
+the chip to the PCB directly. While such a module could not be used in TeachEE
+in a mass-production setting, it greatly shortened the PCB design time, and
+allows the FPGA to be easily replaced in the event of hardware failure.
+Additionally, the FPGA combines all the sample streams and provides a single
+point of contact to the USB interface.
 
 Figure \ref{fig:hw-block-diagram} is a complete hardware block diagram used as a
 guide for the PCB design implementation.
@@ -255,8 +244,8 @@ be easily tuned in the FPGA with clock generation PLLs and bandwidth depends on
 the analog bandwidth of the input circuitry on the PCB.
 
 In order to transmit multiple streams, the FPGA needs to frame multi-channel
-data in a standard packet format. A multiplexer is also used for a case where
-sending all data at once is too much throughput for USB 2.0. With these issues
+data in a standard packet format. A multiplexer is also used in the case that
+sending all data at once oversaturates USB 2.0. With these issues
 in mind, the diagram given in Figure \ref{fig:fpga-block-diagram} provides a
 system-level block diagram for the FPGA design.
 
@@ -267,9 +256,9 @@ system-level block diagram for the FPGA design.
   \label{fig:fpga-block-diagram}
 \end{figure}
 
-A full breakdown of Figure \ref{fig:fpga-block-diagram} is given in the Section
+A full breakdown of Figure \ref{fig:fpga-block-diagram} is given in Section
 \ref{sec:impl} focusing on implementation. Overall, the initial design is nearly
-identical to the final implementation. The team made use of COBs packet encoding
+identical to the final implementation. The team made use of COBS packet encoding
 as promised in the blueprint and added a standard AXI Streaming protocol for the
 internal FPGA datapath.
 
@@ -282,31 +271,31 @@ Initially, the prototype was built using the Tauri GUI framework. Tauri was
 selected since it uses an instance of the Chrome Web Browser to render the user
 interface, allowing developers to take advantage of the rich library and
 tooling ecosystem for frontend web development. Despite these benefits, two
-major factors led us to replace Tauri: 1) displaying a rapidly changing
-waveform using HTML and Javascript at the required \SI{60}{\hertz} frame-rate
+major factors necessitated a change: 1) displaying a rapidly changing
+waveform using HTML and Javascript at the required \SI{60}{\hertz} frame rate
 proved extremely difficult; 2) data transfer between Rust and Javascript
-resulted in increased code-complexity.
+resulted in increased code complexity.
 
-\code{egui} was selected as a replacement for Tauri because of it's simple API
-and a large built-in widget library. \code{egui} is an \emph{immediate mode}
+\code{egui} was selected as a replacement for Tauri because of its simple API
+and large built-in widget library. \code{egui} is an \emph{immediate mode}
 GUI, meaning it re-renders all widgets on every frame, regardless of whether or
-not the relevant application state has changed. This technique sacrifices
-efficiency for a simple programming model in which the developers express their
-entire GUI as a single pure function \(f:~\text{State}~\mapsto~\text{UI}\)
-\cite{egui}. An \emph{immediate mode} GUI is a good fit for TeachEE, since it's
+not the application state had changed. This technique sacrifices
+efficiency for a simpler programming model in which a developer expresses their
+GUI as a single pure function \(f:~\text{State}~\mapsto~\text{UI}\)
+\cite{egui}. An \emph{immediate mode} GUI is a good fit for TeachEE, since its
 UI changes frequently and independently from user-input, nullifying the
 aforementioned efficiency problem; even with a traditional \emph{retained mode}
 GUI, widgets would still re-render whenever a new voltage/current is received.
 
-Later in the Software design process, performance issues were encountered
-related to processing the incoming data stream fast enough to update our GUI at
-\SI{60}{\hertz}. The slowdown was caused by our original threading model, in
-which the \emph{USB Manager} and \emph{App} threads communicated via a single
-shared buffer protected by a Mutex. When the \emph{App} thread attempted to
-render a new frame, it would frequently be blocked by \emph{USB Manager} which
+Later in the software design process, performance issues were encountered
+related to processing the incoming data stream fast enough to update the GUI at
+\SI{30}{\hertz}. The slowdown was caused by the original threading model, in
+which the USB Manager and App threads communicated via a single
+shared buffer protected by a mutex. When the App thread attempted to
+render a new frame, it would frequently be blocked by the USB Manager, which
 was simultaneously writing incoming samples. The frequency and duration of this
 blocking behavior was prevalent enough to greatly reduce frame rate. To address
-this problem we re-implemented our threading model using the three thread
+this problem, the software was reimplemented using the three thread
 design described in Section \ref{sec:software-impl}.
 
 \section{Implementation} \label{sec:impl}
@@ -325,14 +314,14 @@ The implementation is broken up into three subsections corresponding to each
 subsystem.
 
 \subsection{Hardware} % ETHAN
-The hardware solution for the TeachEE is implemented in the form of a four-layer
-PCB. The PCB is designed using the EDA CAD software Altium Designer. Altium is
+The hardware solution for TeachEE is implemented in the form of a four-layer
+PCB. The PCB is designed using the EDA CAD software Altium Designer,
 the industry standard tool for PCB design. Our design takes advantage of
 Altium's hierarchical schematics. This allows the schematic to be broken up into
-multiple pages with interconnects between the different sub-circuits. The
+multiple pages with interconnects between the different sub-circuits.
 TeachEE's top level schematic is an interconnect between all the sub-circuits of
-the PCB. The top level schematic is shown in Figure
-\ref{fig:hw-top-level-sheet}. It should be noted that all 8 pages of the
+the PCB, and is shown in Figure
+\ref{fig:hw-top-level-sheet}. All eight pages of the
 schematic are provided in Appendix \ref{appendix:schematic}.
 
 \begin{figure}[H]
@@ -349,29 +338,29 @@ The following subsections break down each sub-circuit sheet entry in Figure
 The power schematic sheet contains a single LD1117V33C linear voltage regulator.
 The regulator takes the \SI{5}{\volt} VBUS supply from the USB connection and
 provides a \SI{3.3}{\volt} power output. A linear voltage regulator is employed
-over a switching buck converter for the following reasons.
+over a switching buck converter for the following reasons:
   \begin{enumerate}
     \item The analog to digital converters require clean voltage references to
-      produce accurate readings and function correctly. Buck converters are
-      typically have more noisy outputs that could harm performance.
-    \item The linear voltage regulator requires less components to implement
+      produce accurate readings and function correctly. Buck converters
+      typically have noisier outputs that could harm performance.
+    \item The linear voltage regulator requires less components to implement,
       easing chip shortage concerns.
     \item The significantly lower efficiency of a linear regulator is not an
-      issue as this regulator has a capacity of \SI{1}{\ampere} which is more
-      than enough to run the devices on-board.
+      issue as this regulator has a capacity of \SI{1}{\ampere}, which is more
+      than enough to run the devices on board.
   \end{enumerate}
 
 \subsubsection{USB FIFO}
 The USB FIFO is a queue that sends data out to the laptop over USB 2.0 Full
-Speed (FS). USB 2.0 FS is capable of up to 480 Mpbs. This circuit takes a
+Speed (FS), capable of up to 480 Mpbs. This circuit takes a
 parallel byte stream from the FPGA and converts it to a USB 2.0 data stream. The
 FT232HQ USB FIFO made by FTDI is used to implement this functionality. This chip
-was selected over other USB Interface ICs for the following reasons.
+was selected over other USB Interface ICs for the following reasons:
   \begin{enumerate}
     \item Availability. USB Interfaces are one of many ICs in short supply
       in the ongoing chip shortage. In fact, this IC was ordered for the
       project after ELEC390 in July 2021 and only received in August 2022.
-    \item Extensive pre-existing software tooling. FTDI provides a driver and
+    \item Extensive preexisting software tooling. FTDI provides a driver and
       configuration utility for extracting data from their USB interfaces. This
       significantly reduces the software development work required to build a
       sample streaming interface. This ease of use is critical in a project with
@@ -385,13 +374,13 @@ configuration EEPROM.
 
 \subsubsection{Current Monitor}
 The current monitor page contains a hall effect current sensor circuit. The
-circuit makes use of the ACS720KLATR current sensor. This sensor was chosen due
+circuit uses the ACS720KLATR current sensor. This sensor was chosen due
 to its supply chain availability and the fact that it reports its reading
 through a voltage output. The voltage output is linearly proportional to the
-current flowing through the sensor plus a DC offset. This is a preferred
-interface as it can be simply connected to a ADC channel without having to write
-a whole new driver for the specific sensor on the FPGA. As such, the output of
-the current sensor is connected FPGA\_ADC0, which is one of two ADC channels
+current flowing through the sensor plus a DC offset. This is a preferable
+interface as it can be connected to an ADC channel without having to write
+a new driver for the specific sensor on the FPGA. As such, the output of
+the current sensor is connected to FPGA\_ADC0, which is one of two ADC channels
 available on the FPGA module.
 
 \subsubsection{ADC}
@@ -407,8 +396,8 @@ and I2C based converters on the market.
 Bypass capacitors and ferrite beads are used to power the ADC for the cleanest
 reference voltage possible. Additionally, the PCB contains non-populated
 footprints for low pass filters, and filter bypasses to simplify testing and
-debugging. For the digital side, all data bus and clocks have test points so a
-multimeter or oscilloscope can be connected to debug the FPGA control signals.
+debugging. For the digital side, all data busses and clocks have test points so
+multimeters or oscilloscopes can be connected to debug the FPGA control signals.
 
 \subsubsection{Analog Front End (AFE)}
 The Analog Front End (AFE) sits in front of the inputs of the high-speed ADC. As
@@ -425,24 +414,24 @@ purposes in the data acquisition hardware.
 \end{enumerate}
 
 This functionality is implemented in hardware using an AD8138 differential ADC
-driver. This ``all-in-one'' component takes care of voltage clamping and
-single to differential conversion. Moreover, it has sufficient analog bandwidth
+driver. This all-in-one component takes care of voltage clamping and
+single-to-differential conversion. Moreover, it has sufficient analog bandwidth
 to avoid reducing the effective bandwidth of the ADC. For debugging, the
 sub-circuit contains 0-ohm bypass resistors that can be optionally soldered to
 send the unclamped signal directly to the ADC.
 
 \subsubsection{FPGA Module}
 The FPGA module is implemented using a CMOD A7-35T Xilinx Spartan 7 Breakout
-Board. the module is connected to the PCB via two 28-pin headers. Two pins are
+Board. It is connected to the PCB via two 28-pin headers. Two pins are
 used for power and ground while the rest are used for FPGA IO pins. The USB FIFO
-and ADC control pins are connected to the FPGA IO. There also two special IO,
+and ADC control pins are connected to the FPGA IO. There are also two special pins
 which can be used as ADCs. These two pins are used to implement the current and
 voltage channels at 1MSPS. The current sensor output is wired to one of the
 channels and a BNC connector is connected to the other through a low pass filter
 for voltage sampling.
 
 The FPGA module schematic had one mistake that was not discovered until the
-physical PCBs had already been manufactured and delivered. In order to use the
+physical PCBs had already been manufactured and delivered. To use the
 parallel-bus interface of the FT232HQ to send data, the FPGA must lock to a
 \SI{60}{\mega\hertz} output clock from the FT232HQ. During the layout, the FPGA
 pin wired to this clock was swapped to a normal GPIO pin rather than an MRCC
@@ -459,7 +448,7 @@ The connectors page contains all the external IO connections for TeachEE.
 Specifically, the USB mini connector for data and three BNC connectors for scope
 probes. The current sensor is exposed on its own separate pin header. The BNC
 connectors are connected to the appropriate ADC input or AFE. Also, each
-connectors has the appropriate low pass filters to satisfy nyquist theorem. Each
+connector has the appropriate low pass filters to satisfy Nyquist's theorem. Each
 connector also includes all the standard capacitors and resistors needed to
 connect an oscilloscope probe from the lab kit sold at the Queen's bookstore.
 \subsection{FPGA} \label{sec:fpga-impl} % ETHAN
@@ -468,8 +457,8 @@ connect an oscilloscope probe from the lab kit sold at the Queen's bookstore.
 % Talk about AXIS as a standard protocol. Also the extensible to ARM SOCs it
 % provides
 
-The FPGA datapath and implementation can be best summarized by examining the
-interconnections between modules in the top-level SystemVerilog module. Below is
+The FPGA datapath and implementation can be summarized by examining the
+interconnections between modules in the top level SystemVerilog module. Below is
 each section of the top level TeachEE RTL module broken down and explained. The
 entire RTL codebase can be viewed in Appendix \ref{appendix:rtl-code}.
 
@@ -550,13 +539,13 @@ clock that is not covered by this PLL is the \SI{60}{\mega\hertz} clock
 generated externally by the FT232HQ. The PLL also has a \code{locked} output.
 When driven high, this signal indicates that the PLL is locked to the input
 clock and the output clocks are functioning correctly. This signal is used to
-create a reset signal to all the modules holding them in reset until the PLL has
+send a reset signal to all modules, holding them in reset until the PLL has
 locked and all clocks are up and running.
 
 \subsubsection{Interface Instantiations} \label{sec:interface-inst}
 
 Given below are the instantiations for the different interfaces used to make
-connections between the sub-modules. Interfaces in SystemVerilog can be thought
+connections between the submodules. Interfaces in SystemVerilog can be thought
 of as groupings of wires that make managing inter-module connections easier as
 each wire does not need to be explicitly declared.
 
@@ -585,7 +574,7 @@ signals are assigned to the different control wires in the interface. Next, the
 various AXIS interfaces required to connect the modules are instantiated. The
 interface width is specified using the \code{DATA_WIDTH} parameter. 8-bit
 interfaces are used to connect the packet stream output for a given ADC to the
-FT232HQ wrapper module which adapts the AXI Stream to FT232HQ control signals.
+FT232HQ wrapper module that adapts the AXI Stream to FT232HQ control signals.
 The remaining two interfaces hold the sample data from the XADC and high-speed
 ADC respectively. The XADC is the dual channel 16-bit ADC built into the FPGA.
 The two sample data interfaces \code{hsadc_sample_channel} and
@@ -595,14 +584,14 @@ interface used is a custom wrapper for all the standard signals found in an AXI
 stream. The interface definition can be found in Appendix
 \ref{appendix:axis-interface}.
 
-The AXIS Protocol, also known as AXI Stream is derived from ARM's AXI bus
+The AXIS Protocol, also known as AXI Stream, is derived from ARM's AXI bus
 specification. Additional information on the AXI Stream protocol and the
 external libraries used to support it can be found in Section
 \ref{sec:external-fpga-libs}.
 
 \subsubsection{FT232HQ AXIS Wrapper}
 After instantiating the interfaces, they are used to make connections between
-the various sub-modules. Shown below is the \code{ft232h} module instance used
+the various submodules. Shown below is the \code{ft232h} module instance used
 to send data to the computer over USB.
 
 \setstretch{1}
@@ -630,7 +619,7 @@ to send data to the computer over USB.
 This module consists of a state machine that adapts the AXI Stream of sample
 packets to control signals of the FT232HQ. The input is the \code{sys_axis}
 stream and the output is all the \code{ftdi_*} control signals used to produce
-data over USB. Wrapping the FT232HQ interface in a standard AXI stream makes it
+data over USB. Wrapping the FT232HQ interface in a standard AXI Stream makes it
 trivial to interface with all the other modules in the TeachEE source code. The
 same design approach is used throughout the codebase to ensure compatibility
 between the various hardware interface modules. The state machine for the module
@@ -643,14 +632,13 @@ is shown in Figure \ref{fig:ft232h-state-machine}.
   \label{fig:ft232h-state-machine}
 \end{figure}
 
-The state machine Waits for the AXI stream to have data available and for the
+The state machine waits for the AXI Stream to have data available and for the
 FT232HQ to be ready for new data. When this condition is satisfied, the byte is
 sent out and the state machine automatically transitions back to the await
 state.
 
-It should also be noted that there is a comment in the code above indicating
-that the \code{sys_axis} stream input must be changed based on whether you want
-to use the XADC or high-speed ADC data. In this case, the XADC is used.
+Regarding the comment in the code above about changing the \code{sys_axis}
+stream input, in this case, the XADC is used.
 
 \subsubsection{XADC IP Core}
 Shown below is the XADC IP core used to extract data from the internal XADC on
@@ -698,10 +686,11 @@ signals are then fed into an AXIS adapter module for interface standardization.
 \subsubsection{ADC AXIS Wrappers}
 Similarly to the \code{ft232h} module, both the XADC and high-speed ADC have
 AXIS wrapper modules. Both wrapper modules function in the same manner, they
-await new data from the ADC and place it in AXIS compliant FIFO queue. The
+await new data from the ADC and place it in AXIS compliant FIFO queues. The
 \code{sample_stream} output is internally connected to this queue where samples
 can be consumed by the FT232HQ. Given below is the instantiation of both
 modules.
+
 \setstretch{1}
 \begin{minted}{systemverilog}
     xadc_drp_addr_t xadc_daddr;
@@ -744,15 +733,15 @@ declared earlier in the file.
 
 
 \subsubsection{AXIS and Verilog AXIS} \label{sec:external-fpga-libs} AXIS, also
-referred to as AXI Stream is the standard protocol used throughout the FPGA
+referred to as AXI Stream, is the standard protocol used throughout the FPGA
 datapath. While there are many signals in an AXI interface, the primary signals
-are called \code{tdata}, \code{tready}, \code{tvalid}. Only when \code{tready}
-and \code{tvalid} are asserted can you consume data from the \code{tdata} bus.
-\code{tready} is controlled by the receiver so it can regulate the rate at which
-it consumes data while \code{tvalid} is controlled by the sender to tell the
+are called \code{tdata}, \code{tready}, and \code{tvalid}. Only when \code{tready}
+and \code{tvalid} are asserted can data be consumed from the \code{tdata} bus.
+\code{tready} is controlled by the receiver so that it can regulate the rate at which
+it consumes data, while \code{tvalid} is controlled by the sender to notify the
 receiver when new data is ready on the \code{tdata} lines. The full
-specification contains many additional signals but these are the three that most
-often being manipulated during data transmission \cite{axis_spec}. Figures
+specification contains many additional signals, but these three are the ones most
+often manipulated during data transmission \cite{axis_spec}. Figures
 \ref{fig:axis-read} and \ref{fig:axis-write} show the AXIS read and write timing
 diagrams respectively.
 
@@ -768,7 +757,7 @@ In AXIS read and write transactions, the producer is responsible for
 This allows the consumer to know when new data becomes available and it is able
 to signal to the producer when it is ready to accept it via \code{tready}. All
 three signals should only be asserted or deasserted in synchronization with the
-system clock per the specification. As shown in Figure \ref{fig:axis-read},
+system clock, as per the specification. As shown in Figure \ref{fig:axis-read},
 \code{tvalid} is asserted on the same rising edge as the new data coming onto
 the \code{tdata} bus. The consumer sees this and asserts tready on the next
 rising edge consuming the data. In the case where multiple words of data are
@@ -795,19 +784,19 @@ replicated repeatedly throughout the FPGA codebase provided in Appendix
 \ref{appendix:rtl-code}.
 
 In addition to the simplicity of the protocol, there is significant library support for
-AXI streams. In the case of TeachEE, the \code{verilog-axis} library is used
+AXI Streams. In the case of TeachEE, the \code{verilog-axis} library is used
 \cite{verilog_axis_lib}. This library contains a variety of useful verilog
 modules, all of which expose an AXIS interface at their inputs and outputs. The
-standard interface across all modules makes connecting up the library modules
-with TeachEE modules trivial. The only modification made to these library
+standard interface across all modules trivializes connecting up the library modules
+with TeachEE modules. The only modification made to these library
 modules was to wrap them in another more ergonomic module. Since the library is
 written in Verilog, it does not have access to interfaces, which are a feature
 of SystemVerilog only. As a result, each AXIS signal is written out individually
-making instanciating and connecting the modules unwieldy. In order to bundle all
+making instantiating and connecting the modules unwieldy. To bundle all
 these signals into one module port, the \code{axis_interface} is used. For each
 module in the \code{verilog-axis} library used by TeachEE, a wrapper module is
-written that places all the signals for the AXI streams in AXIS interfaces
-making module connectivity far simpler thanks to SystemVerilog. This is possible
+written that places all the signals for the AXI Streams in AXIS interfaces,
+making module connectivity far simpler with SystemVerilog. This is possible
 due to the Xilinx Vivado project build configuration that cross compiles both
 Verilog and SystemVerilog. The interface is also designed to seamlessly handle
 the producer and consumer cases discussed above using modports. The
@@ -823,15 +812,15 @@ The first module is \code{axis_async_fifo}, which is wrapped by
 (FIFO) Queue and is used repeatedly throughout the code. The first and foremost
 purpose of the Queue is to provide sample memory to ensure samples are not
 dropped when the rate of production deviates from the rate of consumption.
-Secondly the FIFO is asynchronous, meaning it can use different clock signals
+Secondly, the FIFO is asynchronous, meaning it can use different clock signals
 for its input and output. The module has internal synchronization logic to bring
 data across clock domains. This functionality was critical in the TeachEE RTL
-design as we had multiple clock domains and needed to transfer data between them
-efficiently. The top-level system, USB FIFO, HSADC, and XADC all had different
+design as there were multiple clock domains that needed efficient data tranfer between
+them. The top-level system, USB FIFO, HSADC, and XADC all had different
 clock signals and had their data inputs buffered by asynchronous FIFOs.
 
 The second key module is the \code{axis_adapter}, which is wrapped by
-\code{axis_adapter_wrapper}. This module takes an AXI Stream, and adapts it to a
+\code{axis_adapter_wrapper}. This module takes an AXI Stream and adapts it to a
 smaller width specified as a parameter in the module instantiation. This module
 was critical in getting the 32-bit sample stream from the XADC to fit the 8-bit
 stream accepted by the USB FIFO.
@@ -840,8 +829,8 @@ The final module used from the library was the \code{cobs_encode}, which is
 wrapped by \code{cobs_encode_wrapper}. This module takes an 8-bit input stream
 and outputs the same data encoded using Consistent Overhead Byte Stuffing
 (COBS). The COBS encoder is highly efficient and only creates two additional
-bytes of overhead ensuring the USB link bandwidth is not wasted \cite{cobs}.
-In order to transmit samples to the computer, the 32-bit stream from the XADC
+bytes of overhead, minimizing USB link bandwidth wastage \cite{cobs}.
+To transmit samples to the computer, the 32-bit stream from the XADC
 (or 16-bit from the HSADC) is adapted to 8 bits using \code{axis_adapter}. The
 resulting 8-bit stream is fed into the COBS encoder, whose output is connected
 to the USB FIFO. These two modules make up the packet encoding stack.
@@ -849,9 +838,9 @@ to the USB FIFO. These two modules make up the packet encoding stack.
 Perhaps the most important benefit of AXIS over other streaming interfaces is
 its direct compatibility with the more fully-featured AXI bus. AXI is a standard
 memory-mapped bus interface used in ARM processors \cite{axi_spec}. Since all
-modules in TeachEE's FPGA codebase use AXI streams, the platform is highly
+modules in TeachEE's FPGA codebase use AXI Streams, the platform is highly
 extensible and can be connected to ARM coprocessors with minimal effort. Such a
-design extension would make TeachEE similar architecturally to more expensive
+design extension would make TeachEE architecturally similar to more expensive
 benchtop oscilloscopes that make use of both an ASIC and traditional processor
 through a high-speed interconnection protocol. An example of this architecture
 is Keysight's MegaZoom ASIC \cite{keysight_megazoom}.
@@ -889,8 +878,6 @@ operation operates on both channels simultaneously. Furthermore, each \code{Chan
 struct is wrapped in a \code{BufferState} enum, representing the emptyness/fullness
 of the channels, which in turn is guarded by a monitor. To allow these monitors to
 be shared between threads, they are wrapped by Rust's shared pointer, the \code{Arc}.
-Only when the last \code{Arc} pointer to a \code{BufferState} goes out of scope do the
-shared buffers get deallocated. This allows automatic memory management of shared data.
 Figure \ref{fig:soft-buffer-config} below illustrates the shared data's configuration.
 Note that there is an additional field in the \code{Channels} struct used to store the
 results of frequency spectrum analysis performed in the Controller thread. This field
@@ -898,7 +885,7 @@ is unused in the USB Buffer \code{Channels}.
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=10cm]{figures/buffer_config.drawio.png}
+  \includegraphics[width=8cm]{figures/buffer_config.drawio.png}
   \caption{Shared data configuration representing one set of ``buffers"}
   \label{fig:soft-buffer-config}
 \end{figure}
@@ -956,7 +943,6 @@ and current samples. The main decoding loop is described in the code below.
           || self.rx_buf[src_index + PACKET_SIZE - 1] != 0
       {
           // Find the next 0 and continue from there
-          ...
       } else {
           let packet = &self.rx_buf[src_index..(src_index + PACKET_SIZE)];
           let mut block = packet[0] - 1;
@@ -974,13 +960,6 @@ and current samples. The main decoding loop is described in the code below.
               } else {
                   decoded[decoded_index] = 0;
                   block = packet[decoded_index + 1];
-
-                  if block == 0 {
-                      // The 4 sample bytes cannot be zero; skip this
-                      // packet
-                      src_index += PACKET_SIZE;
-                      continue 'outer;
-                  }
               }
               decoded_index += 1;
               block -= 1;
@@ -1117,7 +1096,7 @@ The full App code is provided in Appendix \ref{appendix:software-app} and contai
 the UI implementation.
 
 \section{Testing, Evaluation \& Verification} \label{sec:testing}
-The testing and validation of the TeachEE consisted of testing the hardware/PCB,
+The testing and validation of TeachEE consisted of testing the hardware/PCB,
 FPGA, and software subsystems. The following subsections cover each subsystem of
 TeachEE in full detail. Testing was performed in an iterative manner for all
 subsystems: a design component was tested in both isolation and integration after being
@@ -1136,13 +1115,13 @@ physical inspection steps were taken.
     identify any cold or weak links, tombstoning etc.
   \item Assembly BOM check. Examine the components populated on the board.
     Ensure nothing was missed and make sure that components that were not
-    supposed to be populated are left blank per the instructions to the vendor.
-  \item Solder the linear voltage regulator in for power on testing. This is not
+    supposed to be populated are left blank, as per the instructions to the vendor.
+  \item Solder the linear voltage regulator in for power on testing. This was not
     populated initially because it is through-hole. Through-hole components
-    drive assembly costs upwards so they are done by hand for this project.
+    are expensive to assemble so they were done by hand for this project.
   \item Basic electrical check. Use a DMM to check for any short circuits
     between the power rails and ground.
-  \item Power on the TeachEE via the USB Mini port. Verify that the LEDs all
+  \item Power on TeachEE via the USB Mini port. Verify that all LEDs
     turn on and that the voltage regulator is outputting the correct voltage.
     Check for heat around the board indicating a possible short circuit.
 \end{enumerate}
@@ -1179,7 +1158,7 @@ All three assembled PCBs passed these inspection checks. Next, functional
 testing was done on the three units. The functional tests are as follows.
 
 \begin{enumerate}
-  \item Plug the TeachEE to a computer via the USB Mini connector. Open the FTDI
+  \item Plug TeachEE to a computer via the USB Mini connector. Open the FTDI
     Utility to check if the USB FIFO is detected. Ensure that the EEPROM can be
     read and that the USB device descriptor can be changed to \code{TeachEE}.
     After making the EEPROM change, unplug the device and plug back in. Check
@@ -1188,8 +1167,7 @@ testing was done on the three units. The functional tests are as follows.
     oscilloscope.
   \item Use the \code{reader.py} script found in Appendix
     \ref{appendix:python-reader} to set the FT232HQ on TeachEE to synchronous
-    data transmission mod to set the FT232HQ on TeachEE to synchronous data
-    transmission mode 40.
+    data transmission mode 40.
   \item After setting the device to synchronous mode, connect an oscilloscope to
     the FT232HQ clock testpoint on the PCB. Verify that a \SI{60}{\mega\hertz}
     clock is supplied to the FPGA. The waveform should be a triangle wave. A
@@ -1212,18 +1190,18 @@ testing was done on the three units. The functional tests are as follows.
 
 % write a little blurb about doing final assembly
 All three PCBs passed the functional tests enumerated above. At this point, all
-parts omitted from the assembly process are soldered onto the PCB. This includes
-all through-hole components on the board except for the voltage regulator which
-was soldered earlier on for the power-up test. Through-hole parts were omitted
+parts omitted from the assembly process were soldered onto the PCB. This included
+all through-hole components on the board except for the voltage regulator, which
+was soldered earlier for the power-up test. Through-hole parts were omitted
 from the assembly order to keep costs low. Moreover, due to the chip shortage,
 the hall effect current sensor had to be purchased separately and soldered
-manually. The through-hole parts that are soldered manually include all the pin
+manually. The through-hole parts that were soldered manually included all the pin
 headers for the FPGA, BNC connectors for the oscilloscope probes, and
 through-hole testpoints. To protect the PCB from any conductive surfaces or ESD,
-M3 standoff screws are installed into all of the mounting holes to elevate the
-PCB from the surface on which it rests. After this final assembly step, the PCB
-is ready for software and FPGA development. The FPGA module can be installed
-into the pin header and flashed. A fully assembled TeachEE is shown in Figure
+M3 standoff screws were installed into all of the mounting holes. After this
+final assembly step, the PCB was ready for software and FPGA development. The
+FPGA module can be installed into the pin header and flashed. A fully assembled
+TeachEE is shown in Figure
 \ref{fig:pcb-final}.
 
 \begin{figure}[H]
@@ -1238,24 +1216,24 @@ into the pin header and flashed. A fully assembled TeachEE is shown in Figure
 % Talk about FPGA automated sims, testbenches CI ETC
 
 FPGA code testing was a continuous process taking place throughout the
-development cycle. SystemVerilog modules are tested and verified using so called
-``testbenches''. Testbenches are modules that wrap around the module you would
-like to test and modulate the input signals through a variety of test cases
+development cycle. SystemVerilog modules are tested and verified using
+``testbenches''. Testbenches are modules that wrap around the module to be
+tested and modulate the input signals through a variety of test cases
 designed by the programmer. Example testbenches can be found in Appendix
 \ref{appendix:rtl-leg-tb} and \ref{appendix:rtl-vunit-tb} respectively.
 
 The verification of the code takes place on a per module basis using one
 testbench per module. This includes complex modules such as the packetizer, but
-also simple modules that wrap AXIS interfaces. This allows each module to
-evaluated and verified independently of one another. This helps ensure that they
-are in working and can be easily integrated into the broader TeachEE codebase.
+also simple modules that wrap AXIS interfaces. This allows each module to be
+evaluated and verified independently of one another, ensuring easy integration
+into the broader TeachEE codebase.
 
 Initially, testbenches were made up of a finite state machine that applied
-different inputs to the module and the outputs were manually inspected by the
-developer in ModelSim. These initial ``legacy '' testbenches are shown in
+different inputs to the module, with the outputs being manually inspected by the
+developer in ModelSim. These initial testbenches are shown in
 Appendix \ref{appendix:rtl-leg-tb}. As the FPGA development process continued,
 it quickly became difficult to manually inspect simulation waveforms due to the
-large number of outputs and multi-cycle operations taking place. An example of
+large number of outputs and multi-cycle operations. An example of
 one of the larger waveforms that needed to be manually inspected is shown in
 Figure \ref{fig:xadc-packetizer-modelsim}.
 
@@ -1267,22 +1245,21 @@ Figure \ref{fig:xadc-packetizer-modelsim}.
 \end{figure}
 
 \subsubsection{Verification Automation With VUnit}
-In order to speed up testbench development and debugging, an automated testing
-framework VUnit was introduced approximately halfway through development
-\cite{vunit}. VUnit provides macros within SystemVerilog to make assertions on
-the values of different registers and wires within the testbench. An example of
+To speed up testbench development and debugging, an automated testing
+framework, VUnit, was introduced. VUnit provides macros within SystemVerilog
+to make assertions on the values of registers and wires \cite{vunit}. An example of
 a SystemVerilog testbench written for use with VUnit is given in Appendix
 \ref{appendix:rtl-vunit-tb}. This greatly improved development speed as checks
 were automated and manual inspection was no longer required, except for specific
 debugging tasks. Moreover, VUnit also allows testbenches to be specified in a
-python script. These python scripts specify the dependencies and source files
+Python script. These Python scripts specify the dependencies and source files
 needed to run the test as well. To run a testbench, it is as simple as running
-the corresponding python script so long as the simulation tool (ModelSim) and
-VUnit package is installed. Each VUnit testbench has accompanying python file. A
-python testbench example is provided in Appendix \ref{appendix:python-vunit-tb}.
+the corresponding Python script so long as the simulation tool (ModelSim) and
+VUnit package is installed. Each VUnit testbench has an accompanying Python file. A
+Python testbench example is provided in Appendix \ref{appendix:python-vunit-tb}.
 
 Another significant benefit of using VUnit is that it makes the testbenches
-easily callable from a command-line-interface (CLI). In order to further
+easily callable from a command line interface (CLI). In order to further
 automate the testing, Continuous Integration (CI) was added to the TeachEE code
 repository. The TeachEE code is hosted in a GitHub repository
 \cite{teachee-github}. GitHub provides a tool called Actions which can be used
@@ -1291,22 +1268,21 @@ pull requests \cite{github-actions-doc}. Since the VUnit testbenches are easily
 callable from a script, a GitHub Actions script was introduced to run all the
 testbenches on each pull request. The full source code is provided in Appendix
 \ref{appendix:github-action-script}. The script installs ModelSim, Vunit and
-runs the testbenches reporting any errors automatically when new code is pushed.
-This ensured that new code did not break compatibility with older modules as the
-testbenches were run in-full each time.
+runs the testbenches, reporting any errors automatically when new code is pushed.
+This ensured that new code did not break compatibility with older modules.
 
 \subsubsection{Hardware Simulation with BFMs}
 In many cases, additional supporting modules were needed to test a specific
 module. Examples of this are the \code{ft232h}, \code{xadc_drp_axis_adapter},
-and \code{hsadc_axis_adapter}. Since all of these modules are designed to
-interact with the interface of a physical component on the PCB, we have to mock
-out that interface in order to test the module. These device mocks are called
-''Board Functional Models`' or BFMs. Each BFM is designed to respond in the same
+and \code{hsadc_axis_adapter}. Since all of these modules were designed to
+interact with the interface of a physical component on the PCB, mock interfaces
+were needed to test the module. These device mocks are called
+``Board Functional Models'' or BFMs. Each BFM is designed to respond in the same
 way to input as the actual device itself. Of course, the BFM has no real data to
 return so the data coming back will often be a preset value or known pattern.
 The BFMs are written as finite state machines built to emulate the timing
 diagrams provided by the manufacturer for a specific part. Usually, they are
-more limited in their scope compared to the full device interface to limit
+more limited in their scope compared to the full device interface to limit the
 potential for bugs. For example, \code{ft232h_bfm} only implements the write
 interface of the FT232HQ as the USB reads are not used in TeachEE. The main
 problem with BFMs is that they can produce bugs of their own. However, if the
@@ -1323,28 +1299,27 @@ FPGA firmware beyond the on-status LEDs and JTAG debugger. As a result, it was
 extraordinarily difficult to distinguish whether an issue was hardware or FPGA
 related. Eventually, it was discovered that an error in the state machine caused
 the \code{ft232h} module to start sending data before the chip was ready to
-accept it leading to lost bytes or no bytes at all. After resolving this
+accept it, leading to lost bytes or no bytes at all. After resolving this
 misunderstanding of the device interface, it was discovered that the data was
 being received but bytes were still missing. After probing the testpoints on the
 USB FIFO using an external oscilloscope, it was discovered that data is sent for
-one extra cycle after the USB FIFO stops accepting data leading to dropped
-bytes. This was not a misunderstanding of the device function but rather a
-flawed use of asynchronous assignments in the code as the undersigned was still
-a novice FPGA designer.
+one extra cycle after the USB FIFO stops accepting data, leading to dropped
+bytes. This was not a misunderstanding of the device function, but rather a
+misuse of asynchronous assignments in the code.
 
 After resolving the dropped bytes and building a reliable channel, testing the
 remaining modules in hardware was far simpler as the output of such modules
 could be fed directly to the connected computer and evaluated.
 
-Aside from Data Integrity, power-on race conditions proved an issue for this
+Aside from Data Integrity, power-on race conditions proved an issue for the
 FPGA design. Since the design is dependent on an external clock generated by the
-USB FIFO, it was often the case that the data transmission did not start up
+USB FIFO, the data transmission often did not start up
 correctly if the clock was not received in a timely manner during the boot
 sequence. The clock was not available immediately since the device first had be
 set to synchronous mode by the software to produce the clock. This issue was
 resolved by probing the clock output pin of the FT232HQ during start-up and
 triggering on the first clock edge. Once the source of the problem was
-established, a clever use of the \code{locked} output of the PLL is used to hold
+established, a clever use of the \code{locked} output of the PLL was used to hold
 all modules in reset until the clock becomes available.
 
 \subsection{Software Verification} \label{sec:software-verification} % ERIC
@@ -1371,8 +1346,7 @@ Severe performance issues were encountered while implementing the initial
 software design described in Section \ref{sec:soft-design}. The framerate of the
 UI was limited to approximately ten frames per second. This issue was caused by high
 levels of mutex contention: the USB Manager thread would repeatedly acquire the
-mutex, thereby starving the App thread. Furthermore, the App thread
-acquired the mutex at the start of a UI update cycle and released at the end.
+mutex, thereby starving the App thread.
 Because threads did not take turns, they could overwrite new data or read stale
 data. The new implementation addressed these concerns by using monitors to
 prevent redundant read/writes and limit contention, and runs at an average of fifty
@@ -1395,7 +1369,7 @@ in the UI update function. The code is provided below.
 The triggering functionality also underwent design iteration. The initial
 triggering algorithm used a moving average sliding window as the noise
 mitigation strategy. It required that the average of the last \code{WINDOW_SIZE}
-samples be lower than the currently analyzed sample in addition to requiring that the
+samples be less than the currently analyzed sample, in addition to requiring that the
 currently analyzed sample be greater than the trigger threshold. The sliding window
 iterator is shown below.
 
@@ -1423,26 +1397,26 @@ iterator is shown below.
 
 Although this algorithm functioned well, it produced slightly unstable
 waveforms and did not consistently trigger at the exact same position on every
-iteration on a signal. Furthermore, concerns were made about the validity of
-the algorithm and the team wanted a more conventional one. These issues led to
-the research and implementation of the current hysteresis-based triggering
+iteration of a signal. Furthermore, concerns were made about the validity of
+the algorithm and the team wanted a more conventional implementation. These issues
+led to the research and implementation of the current hysteresis-based triggering
 algorithm described in Section \ref{sec:soft-controller}.
 
 \subsubsection{Feature Testing}
 Every implemented feature was rigorously tested before proceeding with new features.
 For example, the packet decoding functionality was tested using bytestreams
 redirected from the hardware to a file. Because the voltage and current values
-from the file was known, it could be compared to the voltage and current values
+from the file were known, they could be compared to the voltage and current values
 after being decoded by the software algorithm. This verified that the packets
 were being decoded correctly and that the bytes were mapped to the right
 voltage/current values. Additionally, assertions were used to alert the team
 of any unexpected packet errors. These assertions led to the discovery of the
 packet encoding problem described in Section \ref{sec:fpga-bugs}. They also
 prompted additional decoder error handling as the bytestream channel was found
-not to be completely reliable.
+to not be completely reliable.
 
 Software bugs were also discovered during testing of the frequency spectrum
-analysis feature. The library-provided spectrum analysis function produced
+analysis feature. The library provided spectrum analysis function produced
 frequencies twice that of signals generated using a lab signal generator.
 This factor-of-two error was ultimately determined to be caused by an
 incorrect sample rate assumption in software. Although the hardware was
@@ -1551,8 +1525,8 @@ components. The full BOM for the PCB is provided in Appendix \ref{appendix:bom}.
 
 %% and to double check, we did indeed have scroll to zoom functionality?
 
-In the online electrical engineering labs during the COVID pandemic, Professor
-Whitehall noticed issues with the kits provided to students. There was a general
+In the online electrical engineering labs during the pandemic, an electronics
+professor noticed issues with the kits provided to students. There was a general
 lack of quality and brittleness which caused students to require replacement
 kits. Additionally, the implementation of certain features were poor; the
 display was unable to simultaneously show the frequency and time domain, and it
@@ -1561,35 +1535,36 @@ was poorly indicated which was currently being displayed.
 Beyond the lab kits, the archaic design of a typical oscilliscope can be
 improved upon. Rather than rotating physical knobs to adjust the display, it is
 more intuitive to interact with the application like you would any other:
-through the interface of a computer application.
+through the interface of a computer application. This benefits novice engineers
+that are unfamiliar with traditional oscilloscopes' interfaces.
 
-TeachEE solves these issues. As was demonstrated at the Open House, the
+TeachEE addresses these stakeholder needs. The
 application is intuitive to use, with the ability to click and drag to adjust
 the waveform display, as well zooming via mouse scroll. It can also
-simultaneously display the spatial and time domain at the same time.
+intuitively display the spatial and time domain of signals at the same time.
 
 \subsubsection{Safety}
 
-As was mentioned in Section \ref{sec:software-verification}, software has been
+As was mentioned in Section \ref{sec:software-verification}, the software has been
 throughly tested to ensure stability for users. In particular, the choice of
 Rust in the presence of complex threading models yields a high degree of
 confidence that undefined behaviour is avoided. Given that TeachEE can export
 CSV files onto the host computer, this opens a vector of damage. If these
-percautions were not taken then there is the possibility that TeachEE enters an
+precautions were not taken then there is the possibility that TeachEE enters an
 invalid state and writes to the user's computer in an undesirable way.
 
-A computer can be damaged through the USB port by devices such as "USB Killers"
+A computer can be damaged through the USB port by devices such as ``USB Killers''
 \cite{usb-killer}. Since TeachEE works with high voltage and current, it is
 important to ensure protection of the user's computer during operation. The
 computer is protected from backflow by diodes in the voltage regulator.
-Additionally, on the device itself, the analog front end clamps voltage which
+Additionally, on the device itself, the analog front end clamps voltages that
 are too high.
 
 \subsubsection{Manufacturing Cost}
 
 The viability of manufacturing TeachEE at scale is promising due to the current
 design's significant drop in unit cost at increased volume.  At scales greater
-than 100 units we estimate the cost-per-unit could drop as low as \$250. This
+than 100 units, the team estimates that the cost-per-unit could drop as low as \$250. This
 reduction in cost provides an opportunity for competitive pricing compared to
 the PicoScope\textregistered~4000, a USB oscilloscope with similar
 specifications to TeachEE. The manufacturers' price for a
@@ -1607,10 +1582,9 @@ the potential for a good return on investment.
 
 % NOTE: John please finish off this section, i just did the tables, - ethan
 The following tables outline the target hardware and software specifications of
-this project. This specifications table differs from the design section as it
-states what specifications were and were not achieved in the final
-implementation. The hardware and software specification evaluations are given in
-Tables \ref{tab:hw-spec-eval} and \ref{tab:sw-spec-eval} respectively.
+this project. The hardware and software specification evaluations are given in
+Tables \ref{tab:hw-spec-eval} and \ref{tab:sw-spec-eval} below, and show that
+the prototype meets or exceeds the specifications in all areas.
 
 \begin{table}[H]
     \caption{Hardware Specification Evaluation}
@@ -1619,53 +1593,49 @@ Tables \ref{tab:hw-spec-eval} and \ref{tab:sw-spec-eval} respectively.
         \hline
       Voltage Input Bandwidth&\SI{100}{\kilo\hertz}& Yes & Ultimately \SI{500}{\kilo\hertz} of bandwidth was achieved through the low speed ADC and \SI{20}{\mega\hertz} through the high speed ADC.\\
         \hline
-        Current Input Bandwidth&\SI{100}{\kilo\hertz}& Yes & N/A. This bandwidth matches the hall effect sensor.\\
+        Current Input Bandwidth&\SI{100}{\kilo\hertz}& Yes & This bandwidth matches the hall effect sensor.\\
         \hline 
         Measureable Current Range&\SI{-15}{\ampere} to \SI{+15}{\ampere}& Yes & Matches the specification of the sensor.\\
         \hline
         Measureable Voltage Range& \SI{0}{\volt} to \SI{3.3}{\volt} & Yes & This was achieved in both XADC and HSADC channels.\\
         \hline
-        Number of Current Input Channels& $1$ & Yes & N/A\\
+        Number of Current Input Channels& $1$ & Yes & \\
         \hline
         Number of Voltage Input Channels& $1$ & Yes & Two additional voltage channels were added using the HSADC.\\
         \hline
-        Power Input Voltage Rating& \SI{5}{\volt} & Yes & USB voltage is used as supply and the regulator is tolerant up to \SI{12}{\volt}\\
+        Power Input Voltage Rating& \SI{5}{\volt} & Yes & USB voltage is used as supply and the regulator is tolerant up to \SI{12}{\volt}.\\
         \hline
         Power Current Consumption Rating& \SI{500}{\milli\ampere} & Yes & Current draw has not exceeded \SI{500}{\milli\ampere} in any operation setting.\\
         \hline
-        Voltage Sample Rate& \SI{1}{\mega\samplepersec} & Yes & The XADC can sample at \SI{1}{\mega\samplepersec} and HSADC can sample at \SI{40}{\mega\samplepersec}\\
+        Voltage Sample Rate& \SI{1}{\mega\samplepersec} & Yes & The XADC can sample at \SI{1}{\mega\samplepersec} and HSADC can sample at \SI{40}{\mega\samplepersec}.\\
         \hline
-        Current Sample Rate& \SI{1}{\mega\samplepersec} & Yes & N/A \\
+        Current Sample Rate& \SI{1}{\mega\samplepersec} & Yes & \\
         \hline
         PCB Thickness& \SI{1.6}{\milli\metre} & Yes & Thickness was exactly 1.6mm in a four-layer stackup. \\
         \hline
-        PCB Dimensions& $\pm \SI{400}{\milli\metre\squared}$ & Yes & the tolerance given is less than the final size of the PCB.\\
+        PCB Dimensions& $\pm \SI{400}{\milli\metre\squared}$ & Yes & The tolerance given is less than the final size of the PCB.\\
         \hline
-        Voltage Sample Error & $\pm \SI{20}{\percent}$ & Yes & values match almost exactly to the Rigol scope in the Sci '65 lab through empirical testing.\\
+        Voltage Sample Error & $\pm \SI{20}{\percent}$ & Yes & Values match almost exactly to the Rigol scope in the Sci '65 lab through empirical testing.\\
         \hline
-        Current Sample Error & $\pm \SI{20}{\percent}$ & Yes & current readings match a DMM within this tolerance.\\
+        Current Sample Error & $\pm \SI{20}{\percent}$ & Yes & Current readings match a DMM within this tolerance.\\
         \hline
     \end{tabularx} 
 \label{tab:hw-spec-eval}
 \end{table}
 
-As shown above, the hardware prototype meets all specifications originally
-defined in the project blueprint. The TeachEE hardware also exceeds expectations
-in the sample rate, bandwidth, and channel count specifications.
-
 \begin{table}[H]
   \caption{Software Specification Evaluation}
-  \begin{tabularx}{\textwidth}{l|l|p{5cm}}
+  \begin{tabularx}{\textwidth}{p{8cm}|l|p{6cm}}
     Specification & Achieved? & Comments\\
     \hline
-    The software shall be able to modify the horizontal and vertical scales of the plot. & Yes & \\
-    The software shall be able to modify the trigger voltage. & Yes & \\
+    The software shall be able to modify the horizontal and vertical scales of the plot. & Yes & Multiple plot navigation methods, including touch screen and trackpad compatibility. \\
+    The software shall be able to modify the trigger voltage. & Yes & Triggering algorithm was exceptionally stable. \\
     The application shall be deployable to Windows, macOS, and Linux. & Yes & \\
     \hline
     The software shall be able to capture voltage samples and export them to a CSV file. & Yes & \\
     The software shall receive samples via the FTDI 232 in synchronous mode. & Yes & \\
     \hline
-    The software shall be able to render waveforms at a rate of \SI{30}{\hertz} on screen. & Yes & \\
+    The software shall be able to render waveforms at a rate of \SI{30}{\hertz} on screen. & Yes & Achieved \SI{50}{\hertz} with final design. \\
     \hline
   \end{tabularx} 
   \label{tab:sw-spec-eval}
@@ -1694,24 +1664,24 @@ factor in the success of the TeachEE project, and they plan to continue using
 it for future projects that require high performance and concurrency.
 
 Another key lesson learned is to avoid assuming ideal specifications for hardware
-components. For example, assuming ideal speeds for USB 2, which were not
+components, for example, assuming ideal speeds for USB 2, which were not
 achievable in practice. Such assumptions led to unexpected issues in the
-prototype. As a result, the team had make adjustments to accommodate the actual
+prototype. As a result, adjustments needed to be made to accommodate the actual
 capabilities of the components. This experience taught the team the importance
 of conducting thorough research on the specifications of hardware components
 and testing them under realistic conditions.
 
-In conclusion, the team considers TeachEE the TeachEE prototype to be a success
-and we are proud to have met or exceeded all of our product requirements. We
-believe that if TeachEE were to be launched as a product it would have the
-potential to create lasting impact on the field of engineering by reducing the
+In conclusion, the team considers the TeachEE prototype to be a success
+and are proud to have met or exceeded all of the product requirements.
+If TeachEE were to be launched as a product, it could 
+potentially create lasting impact on the field of engineering by reducing the
 barrier of entry for aspiring electrical engineers. TeachEE's low cost makes it
 more accessible to students and hobbyists who may not have access to expensive
-laboratory equipment (See Section \ref{sec:stakeholder-needs}). By providing an
+laboratory equipment (see Section \ref{sec:stakeholder-needs}). By providing an
 affordable tool for learning and experimentation, TeachEE can help to
-democratize access electrical engineering education and enable a more diverse
+democratize access to electrical engineering education and enable a more diverse
 range of individuals to engage with the discipline. For these reasons, the team
-believes further development in products like TeachEE is a worthy endeavour.
+believes further development in products like TeachEE is worthwhile.
 
 \section{Overall Team Effort}
 The following table quantifies the percentage effort each team member expended
@@ -1736,6 +1706,7 @@ on all aspects of the project.
 \end{table}
 \newpage
 
+\setstretch{1.4}
 \bibliographystyle{IEEEtran}
 \bibliography{report}
 
