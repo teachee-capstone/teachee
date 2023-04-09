@@ -135,7 +135,7 @@ As TeachEE is targeted for electrical engineering students, it must be powerful
 enough for use in a variety of practices, but also simple and intuitive enough
 for novices. It must be compact, to be carried between classes, and
 operating-system agnostic, to ensure that students can use it with any machine.
-Finally, TeachEE must be cost efficient, so that students can justify purchasing
+Finally, TeachEE must be cost-efficient, so that students can justify purchasing
 this oscilloscope as opposed to alternatives.
 
 \section{Design}
@@ -243,7 +243,7 @@ concerning in the design of the FPGA subsystem. This is because sample rates can
 be easily tuned in the FPGA with clock generation PLLs and bandwidth depends on
 the analog bandwidth of the input circuitry on the PCB.
 
-In order to transmit multiple streams, the FPGA needs to frame multi-channel
+In order to transmit multiple streams, the FPGA needs to frame multichannel
 data in a standard packet format. A multiplexer is also used in the case that
 sending all data at once oversaturates USB 2.0. With these issues
 in mind, the diagram given in Figure \ref{fig:fpga-block-diagram} provides a
@@ -272,8 +272,8 @@ selected since it uses an instance of the Chrome Web Browser to render the user
 interface, allowing developers to take advantage of the rich library and
 tooling ecosystem for frontend web development. Despite these benefits, two
 major factors necessitated a change: 1) displaying a rapidly changing
-waveform using HTML and Javascript at the required \SI{60}{\hertz} frame rate
-proved extremely difficult; 2) data transfer between Rust and Javascript
+waveform using HTML and JavaScript at the required \SI{60}{\hertz} frame rate
+proved extremely difficult; 2) data transfer between Rust and JavaScript
 resulted in increased code complexity.
 
 \code{egui} was selected as a replacement for Tauri because of its simple API
@@ -283,7 +283,7 @@ not the application state had changed. This technique sacrifices
 efficiency for a simpler programming model in which a developer expresses their
 GUI as a single pure function \(f:~\text{State}~\mapsto~\text{UI}\)
 \cite{egui}. An \emph{immediate mode} GUI is a good fit for TeachEE, since its
-UI changes frequently and independently from user-input, nullifying the
+UI changes frequently and independently of user-input, nullifying the
 aforementioned efficiency problem; even with a traditional \emph{retained mode}
 GUI, widgets would still re-render whenever a new voltage/current is received.
 
@@ -294,7 +294,7 @@ which the USB Manager and App threads communicated via a single
 shared buffer protected by a mutex. When the App thread attempted to
 render a new frame, it would frequently be blocked by the USB Manager, which
 was simultaneously writing incoming samples. The frequency and duration of this
-blocking behavior was prevalent enough to greatly reduce frame rate. To address
+blocking behaviour was prevalent enough to greatly reduce frame rate. To address
 this problem, the software was reimplemented using the three thread
 design described in Section \ref{sec:software-impl}.
 
@@ -343,7 +343,7 @@ over a switching buck converter for the following reasons:
     \item The analog to digital converters require clean voltage references to
       produce accurate readings and function correctly. Buck converters
       typically have noisier outputs that could harm performance.
-    \item The linear voltage regulator requires less components to implement,
+    \item The linear voltage regulator requires fewer components to implement,
       easing chip shortage concerns.
     \item The significantly lower efficiency of a linear regulator is not an
       issue as this regulator has a capacity of \SI{1}{\ampere}, which is more
@@ -352,7 +352,7 @@ over a switching buck converter for the following reasons:
 
 \subsubsection{USB FIFO}
 The USB FIFO is a queue that sends data out to the laptop over USB 2.0 Full
-Speed (FS), capable of up to 480 Mpbs. This circuit takes a
+Speed (FS), capable of up to 480 Mbps. This circuit takes a
 parallel byte stream from the FPGA and converts it to a USB 2.0 data stream. The
 FT232HQ USB FIFO made by FTDI is used to implement this functionality. This chip
 was selected over other USB Interface ICs for the following reasons:
@@ -368,7 +368,7 @@ was selected over other USB Interface ICs for the following reasons:
   \end{enumerate}
 
 For debugging and circuit visibility, all digital control signals on the
-FT232HQ are connected to testpoints. The schematic sheet also contains some
+FT232HQ are connected to test points. The schematic sheet also contains some
 surrounding circuitry in the form of power filtering, a clock oscillator, and
 configuration EEPROM.
 
@@ -384,7 +384,7 @@ the current sensor is connected to FPGA\_ADC0, which is one of two ADC channels
 available on the FPGA module.
 
 \subsubsection{ADC}
-The TeachEE ADC schematic sheet contains AD9288BSTZ dual channel
+The TeachEE ADC schematic sheet contains an AD9288BSTZ dual channel
 \SI{40}{\mega\samplepersec} ADC. This chip provides two additional high-speed
 voltage channels in addition to the ADC channels provided by the FPGA
 module. The data outputs for channels A and B are sent to the FPGA along
@@ -496,7 +496,7 @@ module teachee (
 \end{minted}
 \setstretch{2}
 
-As shown above, the FPGA takes in one \SI{12}{\mega\hertz} clock provided by an
+As shown above, the FPGA takes in a \SI{12}{\mega\hertz} clock provided by an
 external oscillator and the \SI{60}{\mega\hertz} clock from the FT232HQ. After
 the clocks, IO for the FT232HQ and AD9288BSTZ control signals are defined. Some
 additional pins spare pins and LED signals at the end of the interface
@@ -785,7 +785,7 @@ replicated repeatedly throughout the FPGA codebase provided in Appendix
 
 In addition to the simplicity of the protocol, there is significant library support for
 AXI Streams. In the case of TeachEE, the \code{verilog-axis} library is used
-\cite{verilog_axis_lib}. This library contains a variety of useful verilog
+\cite{verilog_axis_lib}. This library contains a variety of useful Verilog
 modules, all of which expose an AXIS interface at their inputs and outputs. The
 standard interface across all modules trivializes connecting up the library modules
 with TeachEE modules. The only modification made to these library
@@ -815,7 +815,7 @@ dropped when the rate of production deviates from the rate of consumption.
 Secondly, the FIFO is asynchronous, meaning it can use different clock signals
 for its input and output. The module has internal synchronization logic to bring
 data across clock domains. This functionality was critical in the TeachEE RTL
-design as there were multiple clock domains that needed efficient data tranfer between
+design as there were multiple clock domains that needed efficient data transfer between
 them. The top-level system, USB FIFO, HSADC, and XADC all had different
 clock signals and had their data inputs buffered by asynchronous FIFOs.
 
@@ -825,7 +825,7 @@ smaller width specified as a parameter in the module instantiation. This module
 was critical in getting the 32-bit sample stream from the XADC to fit the 8-bit
 stream accepted by the USB FIFO.
 
-The final module used from the library was the \code{cobs_encode}, which is
+The final module used from the library was \code{cobs_encode}, which is
 wrapped by \code{cobs_encode_wrapper}. This module takes an 8-bit input stream
 and outputs the same data encoded using Consistent Overhead Byte Stuffing
 (COBS). The COBS encoder is highly efficient and only creates two additional
@@ -875,7 +875,7 @@ The sequence diagram above simplifies the buffer representation. Each buffer in 
 two sets actually represents several buffers/channels in the \code{Channels}
 struct. In the current implementation, two channels are supported and every buffer
 operation operates on both channels simultaneously. Furthermore, each \code{Channels}
-struct is wrapped in a \code{BufferState} enum, representing the emptyness/fullness
+struct is wrapped in a \code{BufferState} enum, representing the emptiness/fullness
 of the channels, which in turn is guarded by a monitor. To allow these monitors to
 be shared between threads, they are wrapped by Rust's shared pointer, the \code{Arc}.
 Figure \ref{fig:soft-buffer-config} below illustrates the shared data's configuration.
@@ -1169,7 +1169,7 @@ testing was done on the three units. The functional tests are as follows.
     \ref{appendix:python-reader} to set the FT232HQ on TeachEE to synchronous
     data transmission mode 40.
   \item After setting the device to synchronous mode, connect an oscilloscope to
-    the FT232HQ clock testpoint on the PCB. Verify that a \SI{60}{\mega\hertz}
+    the FT232HQ clock test point on the PCB. Verify that a \SI{60}{\mega\hertz}
     clock is supplied to the FPGA. The waveform should be a triangle wave. A
     screen capture of the clock waveform is given in Figure \ref{fig:ftdi-clk}.
     The triangle wave is not ideal but the FPGA locks to it successfully
@@ -1197,8 +1197,8 @@ from the assembly order to keep costs low. Moreover, due to the chip shortage,
 the hall effect current sensor had to be purchased separately and soldered
 manually. The through-hole parts that were soldered manually included all the pin
 headers for the FPGA, BNC connectors for the oscilloscope probes, and
-through-hole testpoints. To protect the PCB from any conductive surfaces or ESD,
-M3 standoff screws were installed into all of the mounting holes. After this
+through-hole test points. To protect the PCB from any conductive surfaces or ESD,
+M3 standoff screws were installed into all the mounting holes. After this
 final assembly step, the PCB was ready for software and FPGA development. The
 FPGA module can be installed into the pin header and flashed. A fully assembled
 TeachEE is shown in Figure
@@ -1222,7 +1222,7 @@ tested and modulate the input signals through a variety of test cases
 designed by the programmer. Example testbenches can be found in Appendix
 \ref{appendix:rtl-leg-tb} and \ref{appendix:rtl-vunit-tb} respectively.
 
-The verification of the code takes place on a per module basis using one
+The verification of the code takes place on a per-module basis using one
 testbench per module. This includes complex modules such as the packetizer, but
 also simple modules that wrap AXIS interfaces. This allows each module to be
 evaluated and verified independently of one another, ensuring easy integration
@@ -1267,7 +1267,7 @@ to run automated scripts on new code changes introduced to the repository in
 pull requests \cite{github-actions-doc}. Since the VUnit testbenches are easily
 callable from a script, a GitHub Actions script was introduced to run all the
 testbenches on each pull request. The full source code is provided in Appendix
-\ref{appendix:github-action-script}. The script installs ModelSim, Vunit and
+\ref{appendix:github-action-script}. The script installs ModelSim and Vunit, then
 runs the testbenches, reporting any errors automatically when new code is pushed.
 This ensured that new code did not break compatibility with older modules.
 
@@ -1301,7 +1301,7 @@ related. Eventually, it was discovered that an error in the state machine caused
 the \code{ft232h} module to start sending data before the chip was ready to
 accept it, leading to lost bytes or no bytes at all. After resolving this
 misunderstanding of the device interface, it was discovered that the data was
-being received but bytes were still missing. After probing the testpoints on the
+being received but bytes were still missing. After probing the test points on the
 USB FIFO using an external oscilloscope, it was discovered that data is sent for
 one extra cycle after the USB FIFO stops accepting data, leading to dropped
 bytes. This was not a misunderstanding of the device function, but rather a
@@ -1333,7 +1333,7 @@ buffers with sawtooth waves. The generator simulates data arriving from the hard
 and allowed developers to test Controller and App functionality without TeachEE
 hardware. This greatly increased development flexibility as the developers could
 write code and immediately test it remotely. For example, the trigger functionality
-correctness was verfied with these mock bytestreams rather than the hardware. The mock
+correctness was verified with these mock bytestreams rather than the hardware. The mock
 bytestream code is provided in Appendix \ref{appendix:software-sine}. The
 second tool was an automated GitHub Action script run on every branch that builds the
 software, checks code formatting, and runs a linter to catch common mistakes. This
@@ -1343,7 +1343,7 @@ not introduce any build errors. This script is provided in Appendix
 
 \subsubsection{Design Iteration} \label{sec:soft-performance-issues}
 Severe performance issues were encountered while implementing the initial
-software design described in Section \ref{sec:soft-design}. The framerate of the
+software design described in Section \ref{sec:soft-design}. The frame rate of the
 UI was limited to approximately ten frames per second. This issue was caused by high
 levels of mutex contention: the USB Manager thread would repeatedly acquire the
 mutex, thereby starving the App thread.
@@ -1532,7 +1532,7 @@ kits. Additionally, the implementation of certain features were poor; the
 display was unable to simultaneously show the frequency and time domain, and it
 was poorly indicated which was currently being displayed. 
 
-Beyond the lab kits, the archaic design of a typical oscilliscope can be
+Beyond the lab kits, the archaic design of a typical oscilloscope can be
 improved upon. Rather than rotating physical knobs to adjust the display, it is
 more intuitive to interact with the application like you would any other:
 through the interface of a computer application. This benefits novice engineers
@@ -1546,7 +1546,7 @@ intuitively display the spatial and time domain of signals at the same time.
 \subsubsection{Safety}
 
 As was mentioned in Section \ref{sec:software-verification}, the software has been
-throughly tested to ensure stability for users. In particular, the choice of
+thoroughly tested to ensure stability for users. In particular, the choice of
 Rust in the presence of complex threading models yields a high degree of
 confidence that undefined behaviour is avoided. Given that TeachEE can export
 CSV files onto the host computer, this opens a vector of damage. If these
@@ -1595,9 +1595,9 @@ the prototype meets or exceeds the specifications in all areas.
         \hline
         Current Input Bandwidth&\SI{100}{\kilo\hertz}& Yes & This bandwidth matches the hall effect sensor.\\
         \hline 
-        Measureable Current Range&\SI{-15}{\ampere} to \SI{+15}{\ampere}& Yes & Matches the specification of the sensor.\\
+        Measurable Current Range&\SI{-15}{\ampere} to \SI{+15}{\ampere}& Yes & Matches the specification of the sensor.\\
         \hline
-        Measureable Voltage Range& \SI{0}{\volt} to \SI{3.3}{\volt} & Yes & This was achieved in both XADC and HSADC channels.\\
+        Measurable Voltage Range& \SI{0}{\volt} to \SI{3.3}{\volt} & Yes & This was achieved in both XADC and HSADC channels.\\
         \hline
         Number of Current Input Channels& $1$ & Yes & \\
         \hline
@@ -1611,7 +1611,7 @@ the prototype meets or exceeds the specifications in all areas.
         \hline
         Current Sample Rate& \SI{1}{\mega\samplepersec} & Yes & \\
         \hline
-        PCB Thickness& \SI{1.6}{\milli\metre} & Yes & Thickness was exactly 1.6mm in a four-layer stackup. \\
+        PCB Thickness& \SI{1.6}{\milli\metre} & Yes & Thickness was exactly 1.6 mm in a four-layer stackup. \\
         \hline
         PCB Dimensions& $\pm \SI{400}{\milli\metre\squared}$ & Yes & The tolerance given is less than the final size of the PCB.\\
         \hline
@@ -1672,7 +1672,7 @@ of conducting thorough research on the specifications of hardware components
 and testing them under realistic conditions.
 
 In conclusion, the team considers the TeachEE prototype to be a success
-and are proud to have met or exceeded all of the product requirements.
+and are proud to have met or exceeded all the product requirements.
 If TeachEE were to be launched as a product, it could 
 potentially create lasting impact on the field of engineering by reducing the
 barrier of entry for aspiring electrical engineers. TeachEE's low cost makes it
