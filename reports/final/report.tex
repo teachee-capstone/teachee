@@ -132,11 +132,11 @@ labs and packages it with portable software that can run on lower end computers
 with any operating system.
 
 As TeachEE is targeted for electrical engineering students, it must be powerful
-enough to be used in a variety of practices, but also simple enough to
-be intuitive to use for novices. It must also be compact, to be carried between classes,
-and portable, to ensure that students can use it with any machine. Finally, it must be
-cost efficient, so that students can justify purchasing this oscilloscope
-as opposed to alternatives.
+enough for use in a variety of practices, but also simple and intuitive enough
+for novices. It must be compact, to be carried between classes, and
+operating-system agnostic, to ensure that students can use it with any machine.
+Finally, TeachEE must be cost efficient, so that students can justify purchasing
+this oscilloscope as opposed to alternatives.
 
 \section{Design}
 %% Design – describe your functional requirements and constraints; provide
@@ -191,9 +191,9 @@ requirements.
   \label{tab:sw-reqs}
 \end{table}
 
-Based on the system requirements, the project is broken up into three
+Based on the system requirements, the project is divided into three
 subsystems; hardware, FPGA, and software. The following subsections correspond
-to each subsystem. Each section describes the subsystem's top level design and
+to each subsystem, each describing the subsystem's top level design and
 key design decisions made to comply with system requirements.
 
 % INCLUDE THE BLOCK DIAGRAMS FOR EACH OF THESE
@@ -386,8 +386,8 @@ available on the FPGA module.
 \subsubsection{ADC}
 The TeachEE ADC schematic sheet contains AD9288BSTZ dual channel
 \SI{40}{\mega\samplepersec} ADC. This chip provides two additional high-speed
-voltage channels on top of the ADC channels provided directly on board the FPGA
-module. The data outputs for both channels A and B are sent to the FPGA along
+voltage channels in addition to the ADC channels provided by the FPGA
+module. The data outputs for channels A and B are sent to the FPGA along
 with the sample clocks. This ADC was selected for its FPGA friendly control
 interface. Since the control consists of only a data bus and sample clock, it is
 trivial to write an FPGA module to collect the data in comparison to other SPI
@@ -401,7 +401,7 @@ multimeters or oscilloscopes can be connected to debug the FPGA control signals.
 
 \subsubsection{Analog Front End (AFE)}
 The Analog Front End (AFE) sits in front of the inputs of the high-speed ADC. As
-a result, the sub-circuit is duplicated twice in the top level sheet shown in Figure
+a result, this sub-circuit is duplicated twice in the top level sheet shown in Figure
 \ref{fig:hw-top-level-sheet} to cover both channels. The AFE serves the following
 purposes in the data acquisition hardware.
 
@@ -433,14 +433,14 @@ for voltage sampling.
 The FPGA module schematic had one mistake that was not discovered until the
 physical PCBs had already been manufactured and delivered. To use the
 parallel-bus interface of the FT232HQ to send data, the FPGA must lock to a
-\SI{60}{\mega\hertz} output clock from the FT232HQ. During the layout, the FPGA
+\SI{60}{\mega\hertz} output clock from the FT232HQ. During layout, the FPGA
 pin wired to this clock was swapped to a normal GPIO pin rather than an MRCC
 dedicated clock pin. As a result, the FPGA place and route was failing during
-compilation as the FPGA could not route this clock from a standard GPIO pin.
+compilation, as the FPGA could not route this clock from a standard GPIO pin.
 This issue was resolved by waiving the warnings and optimizing the SystemVerilog
 code to still pass timing without a proper clock route for the
 \SI{60}{\mega\hertz} signal. Further information on this process is given in
-Section \ref{sec:fpga-impl} on the FPGA implementation.
+Section \ref{sec:fpga-impl}.
 
 \subsubsection{Connectors}
 % Talk about LPFs and BNC connectors 
@@ -762,11 +762,11 @@ system clock, as per the specification. As shown in Figure \ref{fig:axis-read},
 the \code{tdata} bus. The consumer sees this and asserts tready on the next
 rising edge consuming the data. In the case where multiple words of data are
 queued by the producer, the \code{tdata} value will advance to the next byte
-available after each cycle where both \code{tvalid && tready} is true. This
+available after each cycle where both \code{tvalid} and \code{tready} are true. This
 allows a new read to take place every cycle if the producer has the data and the
 consumer is ready for it. This simple protocol yields strong performance and
 flexibility with minimal FPGA LUT resources used. It should be noted that for
-any AXIS transaction to take place \code{tready && tvalid} must be true.
+any AXIS transaction to take place \code{tready} and \code{tvalid} must both be true.
 
 \begin{figure}[H]
   \centering
@@ -1333,7 +1333,7 @@ buffers with sawtooth waves. The generator simulates data arriving from the hard
 and allowed developers to test Controller and App functionality without TeachEE
 hardware. This greatly increased development flexibility as the developers could
 write code and immediately test it remotely. For example, the trigger functionality
-correctness was veried on these mock bytestreams rather than the hardware. The mock
+correctness was verfied with these mock bytestreams rather than the hardware. The mock
 bytestream code is provided in Appendix \ref{appendix:software-sine}. The
 second tool was an automated GitHub Action script run on every branch that builds the
 software, checks code formatting, and runs a linter to catch common mistakes. This
@@ -1468,10 +1468,10 @@ soldering of the PCBs. Moreover, Bittele takes the generated output from the EDA
 software (Altium) and procures all the parts directly to their facility. The
 procurement cost is expanded in the budget table with the major functional
 components on the PCB. An exhaustive list is not included as there are hundreds
-of miscellaneous resistors, capacitors, and inductors whose cost is marginal.
+of miscellaneous resistors, capacitors, and inductors with marginal cost.
 
-A full unit of the PCB costed \$80 under budget. This left
-additional budget to purchase any replacement components or
+A full unit of the PCB cost \$80 less than the target budget. This left
+additional budget to purchase replacement components and
 cover unexpected expenses. Two additional backup boards were ordered in case the main
 board failed. Fortunately, the team did not encounter any hardware failures during the
 course of the project and therefore did not require any replacing of the board or its
