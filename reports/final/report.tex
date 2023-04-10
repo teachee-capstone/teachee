@@ -1532,9 +1532,11 @@ components. The full BOM for the PCB is provided in Appendix \ref{appendix:bom}.
 In the online electrical engineering labs during the pandemic, an electronics
 professor noticed issues with the kits provided to students. There was a general
 lack of quality and brittleness which caused students to require replacement
-kits. Additionally, the implementation of certain features were poor; the
-display was unable to simultaneously show the frequency and time domain, and it
-was poorly indicated which was currently being displayed. 
+kits. Additionally, the scopes and signal generators had few protections against
+extraneous inputs resulting in students accidentally breaking their tools when
+incorrectly connected. At a functional level, the scopes were missing critical
+features, they were single channel and had no ability to measure current or
+perform frequency domain analysis.
 
 Beyond the lab kits, the archaic design of a typical oscilloscope can be
 improved upon. Rather than rotating physical knobs to adjust the display, it is
@@ -1561,7 +1563,7 @@ A computer can be damaged through the USB port by devices such as ``USB Killers'
 \cite{usb-killer}. Since TeachEE works with high voltage and current, it is
 important to ensure protection of the user's computer during operation. The
 computer is protected from backflow by diodes in the voltage regulator.
-Additionally, on the device itself, the analog front end clamps voltages that
+Additionally, on the device itself, the AFE clamps voltages that
 are too high.
 
 \subsubsection{Manufacturing Cost}
