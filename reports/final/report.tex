@@ -262,7 +262,8 @@ A full breakdown of Figure \ref{fig:fpga-block-diagram} is given in Section
 \ref{sec:impl} focusing on implementation. Overall, the initial design is nearly
 identical to the final implementation. The team made use of Consistent Overhead
 Byte Stuffing (COBS) packet encoding as promised in the blueprint and added a
-standard AXI Streaming protocol for the internal FPGA datapath.
+standard Advanced Extensible Interface (AXI) Streaming protocol for the internal
+FPGA datapath.
 
 \subsection{Software} \label{sec:soft-design}% Tim
 % Initial design: Tauri, two threaded one buffer guarded with mutex
@@ -317,14 +318,14 @@ subsystem.
 
 \subsection{Hardware} % ETHAN
 The hardware solution for TeachEE is implemented in the form of a four-layer
-PCB. The PCB is designed using the EDA CAD software Altium Designer,
-the industry standard tool for PCB design. Our design takes advantage of
-Altium's hierarchical schematics. This allows the schematic to be broken up into
-multiple pages with interconnects between the different sub-circuits.
-TeachEE's top level schematic is an interconnect between all the sub-circuits of
-the PCB, and is shown in Figure
-\ref{fig:hw-top-level-sheet}. All eight pages of the
-schematic are provided in Appendix \ref{appendix:schematic}.
+PCB. The PCB is designed using the Electronic Design Automation (EDA) software
+Altium Designer, the industry standard tool for PCB design. Our design takes
+advantage of Altium's hierarchical schematics. This allows the schematic to be
+broken up into multiple pages with interconnects between the different
+sub-circuits. TeachEE's top level schematic is an interconnect between all the
+sub-circuits of the PCB, and is shown in Figure \ref{fig:hw-top-level-sheet}.
+All eight pages of the schematic are provided in Appendix
+\ref{appendix:schematic}.
 
 \begin{figure}[H]
   \centering
@@ -435,12 +436,12 @@ for voltage sampling.
 The FPGA module schematic had one mistake that was not discovered until the
 physical PCBs had already been manufactured and delivered. To use the
 parallel-bus interface of the FT232HQ to send data, the FPGA must lock to a
-\SI{60}{\mega\hertz} output clock from the FT232HQ. During layout, the FPGA
-pin wired to this clock was swapped to a normal GPIO pin rather than an MRCC
-dedicated clock pin. As a result, the FPGA place and route was failing during
-compilation, as the FPGA could not route this clock from a standard GPIO pin.
-This issue was resolved by waiving the warnings and optimizing the SystemVerilog
-code to still pass timing without a proper clock route for the
+\SI{60}{\mega\hertz} output clock from the FT232HQ. During layout, the FPGA pin
+wired to this clock was swapped to a normal GPIO pin rather than an Multi Region
+Clock Capable (MRCC) pin. As a result, the FPGA place and route was failing
+during compilation, as the FPGA could not route this clock from a standard GPIO
+pin. This issue was resolved by waiving the warnings and optimizing the
+SystemVerilog code to still pass timing without a proper clock route for the
 \SI{60}{\mega\hertz} signal. Further information on this process is given in
 Section \ref{sec:fpga-impl}.
 
@@ -764,11 +765,12 @@ system clock, as per the specification. As shown in Figure \ref{fig:axis-read},
 the \code{tdata} bus. The consumer sees this and asserts tready on the next
 rising edge consuming the data. In the case where multiple words of data are
 queued by the producer, the \code{tdata} value will advance to the next byte
-available after each cycle where both \code{tvalid} and \code{tready} are true. This
-allows a new read to take place every cycle if the producer has the data and the
-consumer is ready for it. This simple protocol yields strong performance and
-flexibility with minimal FPGA LUT resources used. It should be noted that for
-any AXIS transaction to take place \code{tready} and \code{tvalid} must both be true.
+available after each cycle where both \code{tvalid} and \code{tready} are
+asserted. This allows a new read to take place every cycle if the producer has
+the data and the consumer is ready for it. This simple protocol yields strong
+performance and flexibility with minimal FPGA Lookup Table (LUT) resources used.
+It should be noted that for any AXIS transaction to take place, \code{tready} and
+\code{tvalid} must both be true.
 
 \begin{figure}[H]
   \centering
@@ -827,15 +829,15 @@ smaller width specified as a parameter in the module instantiation. This module
 was critical in getting the 32-bit sample stream from the XADC to fit the 8-bit
 stream accepted by the USB FIFO.
 
-The final module used from the library was \code{cobs_encode}, which is
-wrapped by \code{cobs_encode_wrapper}. This module takes an 8-bit input stream
-and outputs the same data encoded using Consistent Overhead Byte Stuffing
-(COBS). The COBS encoder is highly efficient and only creates two additional
-bytes of overhead, minimizing USB link bandwidth wastage \cite{cobs}.
-To transmit samples to the computer, the 32-bit stream from the XADC
-(or 16-bit from the HSADC) is adapted to 8 bits using \code{axis_adapter}. The
-resulting 8-bit stream is fed into the COBS encoder, whose output is connected
-to the USB FIFO. These two modules make up the packet encoding stack.
+The final module used from the library was \code{cobs_encode}, which is wrapped
+by \code{cobs_encode_wrapper}. This module takes an 8-bit input stream and
+outputs the same data encoded using COBS. The COBS encoder is highly efficient
+and only creates two additional bytes of overhead, minimizing USB link bandwidth
+wastage \cite{cobs}. To transmit samples to the computer, the 32-bit stream from
+the XADC (or 16-bit from the HSADC) is adapted to 8 bits using
+\code{axis_adapter}. The resulting 8-bit stream is fed into the COBS encoder,
+whose output is connected to the USB FIFO. These two modules make up the packet
+encoding stack.
 
 Perhaps the most important benefit of AXIS over other streaming interfaces is
 its direct compatibility with the more fully-featured AXI bus. AXI is a standard
@@ -1566,14 +1568,14 @@ are too high.
 
 The viability of manufacturing TeachEE at scale is promising due to the current
 design's significant drop in unit cost at increased volume.  At scales greater
-than 100 units, the team estimates that the cost-per-unit could drop as low as \$250. This
-reduction in cost provides an opportunity for competitive pricing compared to
-the PicoScope\textregistered~4000, a USB oscilloscope with similar
+than 100 units, the team estimates that the cost-per-unit could drop as low as
+\$250. This reduction in cost provides an opportunity for competitive pricing
+compared to the PicoScope\textregistered~4000, a USB oscilloscope with similar
 specifications to TeachEE. The manufacturers' price for a
 PicoScope\textregistered~4000 starts at \$930, indicating a potential profit of
 up to 272\% if the TeachEE were sold at scale for \$930 per unit
-\cite{picoscope}. These figures suggest that TeachEE could be a viable product with
-the potential for a good return on investment.
+\cite{picoscope}. These figures suggest that TeachEE could be a viable product
+with the potential for a good return on investment.
 
 \section{Compliance with System Requirements} % John
 %% Compliance with specifications – Include your original specifications table from
