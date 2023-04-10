@@ -74,14 +74,16 @@ engineering labs, functioning as both an oscilloscope and current monitor. It bu
 together the functionality most required in Electrical Engineering labs and packages
 it with lightweight and portable software. 
 
-TeachEE's hardware consists of a four-layer custom designed PCB powered by a USB
-connection to the computer. The PCB has a two-channel 1MSPS ADC for reading low-speed
-signals and current from a hall-effect sensor. The PCB also has a two-channel 40MSPS
-ADC for observing high speed signals. Both ADCs are connected to an FPGA, which is in
-turn connected to USB 2.0 PHY. The FPGA collects sample data from both ADCs and frames
-it into packets, which are sent over the USB PHY and transmitted to the computer to be
-decoded and displayed. This allows TeachEE to leverage the student's machine to create
-a streamlined user experience. 
+TeachEE's hardware consists of a four-layer custom designed Printed Circuit
+Board (PCB) powered by a USB connection to the computer. The PCB has a
+two-channel 1MSPS ADC for reading low-speed signals and current from a
+hall-effect sensor. The PCB also has a two-channel 40MSPS Analog to Digital
+Converted (ADC) for observing high speed signals. Both ADCs are connected to a
+Field Programmable Gate Array (FPGA), which is in turn connected to USB 2.0 PHY.
+The FPGA collects sample data from both ADCs and frames it into packets, which
+are sent over the USB PHY and transmitted to the computer to be decoded and
+displayed. This allows TeachEE to leverage the student's machine to create a
+streamlined user experience. 
 
 TeachEE's software is a full stack application written in Rust. Its workload is split
 between three modules, each of which runs in its own thread. The first module is the
@@ -258,9 +260,9 @@ system-level block diagram for the FPGA design.
 
 A full breakdown of Figure \ref{fig:fpga-block-diagram} is given in Section
 \ref{sec:impl} focusing on implementation. Overall, the initial design is nearly
-identical to the final implementation. The team made use of COBS packet encoding
-as promised in the blueprint and added a standard AXI Streaming protocol for the
-internal FPGA datapath.
+identical to the final implementation. The team made use of Consistent Overhead
+Byte Stuffing (COBS) packet encoding as promised in the blueprint and added a
+standard AXI Streaming protocol for the internal FPGA datapath.
 
 \subsection{Software} \label{sec:soft-design}% Tim
 % Initial design: Tauri, two threaded one buffer guarded with mutex
